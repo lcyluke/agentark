@@ -19,6 +19,7 @@ from .commands import economy as economy_cmds
 from .commands import evolution as evolution_cmds
 from .commands.company import CompanyBuilder, list_companies
 from apex.orchestration.crew import crew as crew_group
+from .commands import autonomous as autonomous_cmds
 
 # New mode CLIs
 from apex.orchestration import (
@@ -368,3 +369,75 @@ def monitor_check(file: str, url: str, pattern: str):
             console.print(f"  {'🔴' if a.severity == 'high' else '🟡'} {a.source}: {a.message[:80]}")
     except Exception as e:
         console.print(f"[red]✗ Monitor failed: {e}[/]")
+
+
+# ─── autonomous commands ───
+@cli.group()
+def autonomous():
+    """🤖 Autonomous Engine — 7x24 self-aware operation"""
+    pass
+
+
+@autonomous.command(name="start")
+def autonomous_start():
+    """Start the autonomous engine (7x24 mode)"""
+    autonomous_cmds.start_cmd()
+
+
+@autonomous.command(name="stop")
+def autonomous_stop():
+    """Stop the autonomous engine"""
+    autonomous_cmds.stop_cmd()
+
+
+@autonomous.command(name="pause")
+def autonomous_pause():
+    """Pause task dispatch (heartbeat continues)"""
+    autonomous_cmds.pause_cmd()
+
+
+@autonomous.command(name="resume")
+def autonomous_resume():
+    """Resume task dispatch"""
+    autonomous_cmds.resume_cmd()
+
+
+@autonomous.command(name="status")
+def autonomous_status():
+    """Show full autonomous engine report"""
+    autonomous_cmds.status_cmd()
+
+
+@autonomous.command(name="schedule")
+@click.argument("name")
+@click.argument("cron")
+@click.argument("task")
+@click.option("--agent", "-a", default="", help="Agent profile to assign")
+def autonomous_schedule(name: str, cron: str, task: str, agent: str):
+    """Schedule a recurring task
+
+    NAME is a human-readable name for this schedule.
+    CRON can be a cron expression (e.g. '*/5 * * * *') or human-readable
+    interval (e.g. 'every 30m', 'every 2h').
+    TASK is the description of the task to execute.
+    """
+    autonomous_cmds.schedule_cmd(name, cron, task, agent)
+
+
+@autonomous.command(name="unschedule")
+@click.argument("task_id")
+def autonomous_unschedule(task_id: str):
+    """Remove a scheduled task by its ID"""
+    autonomous_cmds.unschedule_cmd(task_id)
+
+
+@autonomous.command(name="list-scheduled")
+def autonomous_list_scheduled():
+    """List all scheduled tasks"""
+    autonomous_cmds.list_scheduled_cmd()
+
+
+@autonomous.command(name="alerts")
+def autonomous_alerts():
+    """Show unresolved alerts"""
+    autonomous_cmds.alerts_cmd()

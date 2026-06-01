@@ -221,6 +221,35 @@ def create_app():
             })
         return jsonify(companies)
 
+    @app.route("/api/autonomous")
+    def api_autonomous():
+        """Autonomous engine status API"""
+        try:
+            from apex.orchestration.autonomous import get_engine
+            eng = get_engine()
+            report = eng.generate_report()
+            return jsonify({
+                "status": report.engine_status,
+                "uptime": report.uptime_seconds,
+                "heartbeats": [
+                    {"name": h.agent_name, "status": h.status, "load": h.load,
+                     "tasks_completed": h.tasks_completed, "tasks_failed": h.tasks_failed,
+                     "message": h.message, "last_active": h.last_active}
+                    for h in report.active_agents
+                ],
+                "scheduled_tasks": len(report.scheduled_tasks),
+                "pending_queue": report.pending_queue,
+                "total_executed": report.tasks_executed_total,
+                "succeeded": report.tasks_succeeded,
+                "failed": report.tasks_failed,
+                "knowledge_nodes": report.knowledge_nodes,
+                "evolution_patterns": report.evolution_patterns,
+                "alerts": report.alerts,
+                "recommendations": report.recommendations,
+            })
+        except Exception as e:
+            return jsonify({"status": "unavailable", "error": str(e)})
+
     @app.route("/api/health")
     def api_health():
         """Health check"""

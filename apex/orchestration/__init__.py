@@ -41,6 +41,10 @@ try:
     from .monitor import Monitor, MonitorResult
 except ImportError:
     pass
+try:
+    from .autonomous import AutonomousEngine, get_engine, AutonomousReport
+except ImportError:
+    pass
 
 __all__ = [
     "Swarm", "SwarmResult",
