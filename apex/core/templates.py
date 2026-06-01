@@ -21,7 +21,7 @@ class AgentTemplate:
     communication: str
     skills: list[str]
     tools: list[str] = field(default_factory=lambda: ["filesystem", "github", "terminal", "browser"])
-    default_model: str = "deepseek-chat"
+    default_model: str = "deepseek-v4-pro"
     icon: str = "🤖"
 
     def to_profile(self, name: str = None) -> Profile:
@@ -140,7 +140,7 @@ register(AgentTemplate(
         "roadmap-planning", "kpi-definition",
     ],
     tools=["filesystem", "browser", "notion-mcp", "airtable-mcp"],
-    default_model="deepseek-chat",
+    default_model="deepseek-v4-pro",
 ))
 
 # ─── 4. Content Operations Expert ───
@@ -164,7 +164,7 @@ register(AgentTemplate(
         "translation-localization", "prompt-engineering",
     ],
     tools=["filesystem", "browser", "x-mcp", "notion-mcp"],
-    default_model="deepseek-chat",
+    default_model="deepseek-v4-pro",
 ))
 
 # ─── 5. DevOps Engineer ───
@@ -189,5 +189,5 @@ register(AgentTemplate(
         "kubernetes-helm", "database-admin", "incident-response",
     ],
     tools=["filesystem", "github", "terminal", "docker-mcp", "k8s-mcp"],
-    default_model="deepseek-chat",
+    default_model="deepseek-v4-pro",
 ))

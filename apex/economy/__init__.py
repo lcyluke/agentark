@@ -35,18 +35,18 @@ MODEL_ROUTES = [
     ModelRoute("simple-reply", "llama3-8b", "ollama", 0, 0, 3),
     ModelRoute("simple-edit", "llama3-8b", "ollama", 0, 0, 4),
     # 🟡 Medium tasks -> DeepSeek (high cost-effectiveness)
-    ModelRoute("code-review", "deepseek-chat", "deepseek", 0.0005, 0.002, 8),
-    ModelRoute("bug-fix", "deepseek-chat", "deepseek", 0.0005, 0.002, 8),
-    ModelRoute("api-design", "deepseek-chat", "deepseek", 0.0005, 0.002, 8),
-    ModelRoute("writing", "deepseek-chat", "deepseek", 0.0005, 0.002, 8),
-    ModelRoute("data-analysis", "deepseek-chat", "deepseek", 0.0005, 0.002, 8),
+    ModelRoute("code-review", "deepseek-v4-pro", "deepseek", 0.001, 0.004, 9),
+    ModelRoute("bug-fix", "deepseek-v4-pro", "deepseek", 0.001, 0.004, 9),
+    ModelRoute("api-design", "deepseek-v4-pro", "deepseek", 0.001, 0.004, 9),
+    ModelRoute("writing", "deepseek-v4-pro", "deepseek", 0.001, 0.004, 9),
+    ModelRoute("data-analysis", "deepseek-v4-pro", "deepseek", 0.001, 0.004, 9),
     # 🔴 High-complexity tasks -> Claude
     ModelRoute("architecture", "claude-sonnet", "anthropic", 0.003, 0.015, 10),
     ModelRoute("system-design", "claude-sonnet", "anthropic", 0.003, 0.015, 10),
     # 🟣 Vision tasks -> Claude Vision
     ModelRoute("vision", "claude-sonnet", "anthropic", 0.003, 0.015, 9),
     # ⚪ Default
-    ModelRoute("default", "deepseek-chat", "deepseek", 0.0005, 0.002, 7),
+    ModelRoute("default", "deepseek-v4-pro", "deepseek", 0.001, 0.004, 8),
 ]
 
 TASK_TYPE_KEYWORDS = {

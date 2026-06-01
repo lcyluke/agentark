@@ -19,7 +19,7 @@ class DeepSeekProvider(BaseProvider):
         if not api_key:
             api_key = self._read_env_key()
 
-        model = kwargs.get("model", self.config.get("model", "deepseek-chat"))
+        model = kwargs.get("model", self.config.get("model", "deepseek-v4-pro"))
         base_url = self.config.get("base_url", self.BASE_URL)
 
         headers = {
@@ -59,9 +59,9 @@ class DeepSeekProvider(BaseProvider):
         )
 
     def estimate_cost(self, response: LLMResponse) -> float:
-        """DeepSeek pricing: $0.5/M input, $2/M output (deepseek-chat)"""
-        input_cost = response.usage.get("prompt_tokens", 0) * 0.5 / 1_000_000
-        output_cost = response.usage.get("completion_tokens", 0) * 2 / 1_000_000
+        """DeepSeek V4 Pro pricing: $1/M input, $4/M output"""
+        input_cost = response.usage.get("prompt_tokens", 0) * 1.0 / 1_000_000
+        output_cost = response.usage.get("completion_tokens", 0) * 4.0 / 1_000_000
         return round(input_cost + output_cost, 6)
 
     def _read_env_key(self) -> str:

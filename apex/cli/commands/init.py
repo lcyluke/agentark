@@ -28,7 +28,7 @@ def init_project(name: str, project_dir: Path, console: Console):
         "project": name,
         "apex_version": "0.1.0",
         "default_provider": "deepseek",
-        "default_model": "deepseek-chat",
+        "default_model": "deepseek-v4-pro",
     }
     import yaml
     with open(project_path / "apex.yaml", "w") as f:
@@ -47,7 +47,7 @@ def init_project(name: str, project_dir: Path, console: Console):
         f"  Project: [bold]{project_path}[/]\n"
         f"  Default Profile: [bold]default[/]\n"
         f"  Provider: [bold]deepseek[/]\n"
-        f"  Model: [bold]deepseek-chat[/]\n\n"
+        f"  Model: [bold]deepseek-v4-pro[/]\n\n"
         f"  Next steps:\n"
         f"  [bold]cd {name}[/]\n"
         f"  [bold]apex run \"your task\"[/]\n"

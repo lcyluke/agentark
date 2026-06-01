@@ -44,7 +44,7 @@ class Agent:
             # Check if deepseek provider, has model prefix
             prov_name = self.provider_name
             if prov_name not in provider_registry.list():
-                # Try matching - e.g. deepseek-chat maps to deepseek
+                # Try matching - e.g. deepseek-v4-pro maps to deepseek
                 for reg_name in provider_registry.list():
                     if prov_name.startswith(reg_name):
                         prov_name = reg_name

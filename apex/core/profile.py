@@ -15,7 +15,7 @@ APEX_HOME = Path(os.environ.get("APEX_HOME", Path.home() / ".apex"))
 
 @dataclass
 class ModelConfig:
-    default: str = "deepseek-chat"
+    default: str = "deepseek-v4-pro"
     fallback: str = "llama3-70b"
     vision: str = "claude-sonnet"
 
@@ -65,7 +65,7 @@ class Profile:
             name=name,
             display=data.get("display", name),
             model=ModelConfig(
-                default=m.get("default", "deepseek-chat"),
+                default=m.get("default", "deepseek-v4-pro"),
                 fallback=m.get("fallback", "llama3-70b"),
                 vision=m.get("vision", "claude-sonnet"),
             ),
