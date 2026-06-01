@@ -1,10 +1,12 @@
-"""Apex — Web UI Dashboard
-Flask + Jinja2 轻量级监控面板。
+"""Apex — Web UI Dashboard v2
+Flask + Dark Theme 完整监控面板。
+Route: /(Dashboard) /traces /agents /logs /api/*
 """
 from __future__ import annotations
 
 import json
 import os
+import time
 from pathlib import Path
 from datetime import datetime
 
@@ -24,78 +26,105 @@ def create_app():
     from apex.core.profile import ProfileManager, APEX_HOME
     from apex.orchestration.kanban import Kanban
     from apex.core.skills import SkillManager
+    from apex.core.evolution import EvolutionEngine
+    from apex.core.knowledge import KnowledgeGraph
     from apex.economy import BudgetManager
 
     pm = ProfileManager()
     kanban_db = APEX_HOME / "kanban.db"
     skills_db = APEX_HOME / "skills.db"
     economy_db = APEX_HOME / "economy.db"
+    evolution_db = APEX_HOME / "evolution.db"
+    knowledge_db = APEX_HOME / "knowledge.db"
+
+    def load_evolution():
+        if evolution_db.exists():
+            return EvolutionEngine(evolution_db)
+        return None
+
+    def load_kanban():
+        if kanban_db.exists():
+            return Kanban(kanban_db)
+        return None
+
+    def load_kg():
+        if knowledge_db.exists():
+            return KnowledgeGraph(knowledge_db)
+        return None
+
+    # ══════════════════════════════════════════
+    # Dashboard Pages
+    # ══════════════════════════════════════════
 
     @app.route("/")
     def index():
-        """Dashboard首页"""
-        profiles = pm.list()
-        profile_data = []
-        for name in profiles:
-            try:
-                p = pm.load(name)
-                profile_data.append({
-                    "name": p.name,
-                    "role": p.soul.role,
-                    "model": p.model.default,
-                    "expertise": p.soul.expertise[:3],
-                    "skills": p.skills[:3],
-                })
-            except Exception:
-                profile_data.append({"name": name, "role": "Error", "model": "?", "expertise": [], "skills": []})
+        return render_template("dashboard.html")
 
-        # Kanban stats
-        kanban_tasks = []
-        if kanban_db.exists():
-            k = Kanban(kanban_db)
-            tasks = k.list_tasks()
-            kanban_tasks = [
-                {"id": t.id, "title": t.title[:50], "assignee": t.assignee,
-                 "status": t.status, "priority": t.priority}
-                for t in tasks[:20]
-            ]
+    @app.route("/traces")
+    def traces_page():
+        """Trace浏览页"""
+        return render_template("dashboard.html", page="traces")
 
-        # Economy stats
-        economy_data = {}
-        if economy_db.exists():
-            bm = BudgetManager(economy_db)
-            accounts = ["default"]
-            for proj in accounts:
-                used, limit, remaining = bm.get_balance(proj)
-                economy_data[proj] = {
-                    "used": round(used, 4),
-                    "limit": limit,
-                    "remaining": round(remaining, 4),
-                    "usage_pct": round(used / limit * 100, 1) if limit > 0 else 0,
-                }
+    @app.route("/agents")
+    def agents_page():
+        """Agent详情页"""
+        return render_template("dashboard.html", page="agents")
 
-        return render_template("dashboard.html",
-            profiles=profile_data,
-            tasks=kanban_tasks,
-            economy=economy_data,
-            total_profiles=len(profiles),
-            total_tasks=len(kanban_tasks),
-            now=datetime.now().strftime("%Y-%m-%d %H:%M"),
-        )
+    @app.route("/logs")
+    def logs_page():
+        """实时日志页"""
+        return render_template("dashboard.html", page="logs")
+
+    # ══════════════════════════════════════════
+    # REST API
+    # ══════════════════════════════════════════
 
     @app.route("/api/status")
     def api_status():
-        """REST API — 状态"""
+        """综合状态API"""
         profiles = pm.list()
+        k = load_kanban()
+        tasks = k.list_tasks() if k else []
+        evo = load_evolution()
+        kg = load_kg()
+
+        # 经济数据
+        economy_data = {}
+        if economy_db.exists():
+            bm = BudgetManager(economy_db)
+            used, limit, remaining = bm.get_balance("default")
+            economy_data["default"] = {
+                "used": round(used, 4),
+                "limit": limit,
+                "remaining": round(remaining, 4),
+                "usage_pct": round(used / limit * 100, 1) if limit > 0 else 0,
+            }
+
+        # 进化数据
+        evo_summary = evo.summary() if evo else {"patterns_discovered": 0}
+        kg_stats = kg.stats() if kg else {"total_nodes": 0}
+
+        # 公司列表
+        companies_dir = APEX_HOME / "companies"
+        companies = [f.stem for f in companies_dir.glob("*.json")] if companies_dir.exists() else []
+
         return jsonify({
             "profiles": len(profiles),
             "version": "0.1.0",
             "status": "running",
+            "tasks": [{"id": t.id, "title": t.title[:50], "assignee": t.assignee,
+                       "status": t.status, "priority": t.priority} for t in tasks[:30]],
+            "economy": economy_data,
+            "companies": companies,
+            "patterns": evo_summary.get("patterns_discovered", 0),
+            "knowledge_nodes": kg_stats.get("total_nodes", 0),
+            "recent_tasks": [{"id": t.id, "title": t.title[:40], "status": t.status,
+                             "assignee": t.assignee} for t in tasks[:5]],
         })
 
     @app.route("/api/profiles")
     def api_profiles():
-        """REST API — Profile列表"""
+        """Profile列表API"""
         profiles = []
         for name in pm.list():
             try:
@@ -107,10 +136,95 @@ def create_app():
                     "expertise": p.soul.expertise,
                     "skills": p.skills,
                     "auto_improve": p.auto_improve,
+                    "personality": p.soul.personality,
+                    "communication": p.soul.communication,
                 })
-            except Exception:
-                profiles.append({"name": name, "error": True})
+            except Exception as e:
+                profiles.append({"name": name, "error": str(e)})
         return jsonify(profiles)
+
+    @app.route("/api/profiles/<name>")
+    def api_profile_detail(name: str):
+        """单个Profile详情"""
+        try:
+            p = pm.load(name)
+            evo = load_evolution()
+            evo_data = evo.get_agent_evolution(name) if evo else {}
+            return jsonify({
+                "name": p.name,
+                "display": p.display,
+                "model": {"default": p.model.default, "fallback": p.model.fallback, "vision": p.model.vision},
+                "token_budget": p.token_budget,
+                "soul": {"role": p.soul.role, "expertise": p.soul.expertise,
+                         "personality": p.soul.personality, "communication": p.soul.communication},
+                "skills": p.skills,
+                "auto_improve": p.auto_improve,
+                "evolution": evo_data,
+            })
+        except FileNotFoundError:
+            return jsonify({"error": f"Profile '{name}' not found"}), 404
+
+    @app.route("/api/tasks")
+    def api_tasks():
+        """任务列表API"""
+        k = load_kanban()
+        if not k:
+            return jsonify([])
+        tasks = k.list_tasks()
+        return jsonify([{
+            "id": t.id, "title": t.title, "assignee": t.assignee,
+            "status": t.status, "priority": t.priority,
+            "created_at": t.created_at, "completed_at": t.completed_at,
+            "cost": t.cost,
+        } for t in tasks])
+
+    @app.route("/api/knowledge")
+    def api_knowledge():
+        """知识图谱API"""
+        kg = load_kg()
+        if not kg:
+            return jsonify({"nodes": 0, "edges": 0, "topics": []})
+        stats = kg.stats()
+        # 获取最近活跃的知识
+        return jsonify({
+            "nodes": stats.get("total_nodes", 0),
+            "edges": stats.get("total_edges", 0),
+            "conflicts": stats.get("unresolved_conflicts", 0),
+            "distribution": stats.get("type_distribution", {}),
+        })
+
+    @app.route("/api/evolution")
+    def api_evolution():
+        """进化引擎API"""
+        evo = load_evolution()
+        if not evo:
+            return jsonify({"total_executions": 0, "patterns": 0, "agents": []})
+        summary = evo.summary()
+        return jsonify(summary)
+
+    @app.route("/api/companies")
+    def api_companies():
+        """公司列表API"""
+        companies_dir = APEX_HOME / "companies"
+        if not companies_dir.exists():
+            return jsonify([])
+        companies = []
+        for c_path in sorted(companies_dir.glob("*.json"), reverse=True):
+            with open(c_path) as f:
+                data = json.load(f)
+            companies.append({
+                "name": data.get("name"),
+                "industry": data.get("industry"),
+                "profiles": data.get("profiles", []),
+                "sop": data.get("sop", {}),
+                "created_at": data.get("created_at", 0),
+            })
+        return jsonify(companies)
+
+    @app.route("/api/health")
+    def api_health():
+        """健康检查"""
+        return jsonify({"status": "ok", "timestamp": time.time()})
 
     return app
 
@@ -119,4 +233,5 @@ def run_dashboard(host: str = "127.0.0.1", port: int = 8080, debug: bool = False
     """启动Dashboard"""
     app = create_app()
     print(f"📊 Apex Dashboard: http://{host}:{port}")
+    print(f"   API: http://{host}:{port}/api/status")
     app.run(host=host, port=port, debug=debug)

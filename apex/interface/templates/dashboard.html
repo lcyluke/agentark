@@ -9,32 +9,49 @@
   --bg: #0a0e17;
   --surface: #111827;
   --surface2: #1a2332;
+  --surface3: #1e293b;
   --border: #1e293b;
   --text: #e2e8f0;
   --text-dim: #64748b;
   --primary: #3b82f6;
   --primary-dim: #1d4ed8;
   --green: #22c55e;
+  --green-dim: #166534;
   --yellow: #eab308;
   --red: #ef4444;
   --cyan: #06b6d4;
   --purple: #a855f7;
+  --pink: #ec4899;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
-  padding: 20px;
+  min-height: 100vh;
 }
-.header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 24px; padding-bottom: 16px;
+.nav {
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  height: 56px;
+  gap: 32px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
-.header h1 { font-size: 24px; font-weight: 700; }
-.header h1 span { color: var(--primary); }
-.header .time { color: var(--text-dim); font-size: 13px; }
+.nav-brand { font-weight: 700; font-size: 18px; color: var(--primary); }
+.nav a {
+  color: var(--text-dim); text-decoration: none; font-size: 14px;
+  padding: 16px 0; border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+.nav a:hover, .nav a.active { color: var(--text); border-bottom-color: var(--primary); }
+.content { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+/* Stats row */
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
 .stat-card {
   background: var(--surface); border: 1px solid var(--border);
@@ -48,36 +65,45 @@ body {
 .stat-card.blue .value { color: var(--primary); }
 .stat-card.cyan .value { color: var(--cyan); }
 .stat-card.yellow .value { color: var(--yellow); }
-.section { margin-bottom: 24px; }
-.section h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.stat-card.purple .value { color: var(--purple); }
+.stat-card.pink .value { color: var(--pink); }
+
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-@media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+.section { margin-bottom: 24px; }
+.section-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
 .card {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 12px; padding: 16px; overflow: hidden;
 }
+
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th { text-align: left; color: var(--text-dim); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 8px 8px 0; }
 td { padding: 8px 8px 8px 0; border-top: 1px solid var(--border); }
+
 .status { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
 .status-done { background: rgba(34,197,94,0.15); color: var(--green); }
-.status-in_progress { background: rgba(234,179,8,0.15); color: var(--yellow); }
-.status-todo, .status-ready { background: rgba(59,130,246,0.15); color: var(--primary); }
+.status-in_progress, .status-ready { background: rgba(234,179,8,0.15); color: var(--yellow); }
+.status-todo { background: rgba(59,130,246,0.15); color: var(--primary); }
 .status-blocked { background: rgba(239,68,68,0.15); color: var(--red); }
-.badge {
-  display: inline-block; padding: 1px 6px; border-radius: 4px;
-  font-size: 10px; font-weight: 600;
-}
+
+.badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
 .badge-P0 { background: rgba(239,68,68,0.2); color: var(--red); }
 .badge-P1 { background: rgba(234,179,8,0.2); color: var(--yellow); }
 .badge-P2 { background: rgba(59,130,246,0.2); color: var(--primary); }
-.priority { font-size: 11px; }
+
 .bar-container { height: 6px; background: var(--surface2); border-radius: 3px; margin-top: 4px; overflow: hidden; }
 .bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+
 .agent-card {
   display: flex; align-items: center; gap: 12px;
   padding: 10px 0; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.1s;
 }
+.agent-card:hover { background: var(--surface2); padding-left: 8px; border-radius: 8px; }
 .agent-card:last-child { border-bottom: none; }
 .agent-icon { font-size: 24px; width: 36px; text-align: center; }
 .agent-info { flex: 1; }
@@ -85,135 +111,266 @@ td { padding: 8px 8px 8px 0; border-top: 1px solid var(--border); }
 .agent-role { color: var(--text-dim); font-size: 12px; }
 .agent-tags { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
 .tag { background: var(--surface2); padding: 2px 6px; border-radius: 4px; font-size: 10px; color: var(--text-dim); }
-.empty { color: var(--text-dim); text-align: center; padding: 24px; font-size: 13px; }
+
+.empty { color: var(--text-dim); text-align: center; padding: 36px; font-size: 13px; }
+
+/* Log viewer */
+.log-container {
+  background: #0d1117; border-radius: 8px; padding: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+  max-height: 400px; overflow-y: auto; line-height: 1.6;
+}
+.log-line { padding: 2px 0; }
+.log-info { color: var(--primary); }
+.log-warn { color: var(--yellow); }
+.log-error { color: var(--red); }
+.log-success { color: var(--green); }
+.log-time { color: var(--text-dim); margin-right: 8px; }
+
+/* Tab */
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+.tab {
+  padding: 8px 16px; border-radius: 8px; font-size: 13px;
+  background: var(--surface2); color: var(--text-dim); cursor: pointer;
+  border: 1px solid var(--border); transition: all 0.15s;
+}
+.tab:hover { background: var(--surface3); }
+.tab.active { background: var(--primary); color: white; border-color: var(--primary); }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>⚡ Apex <span>Dashboard</span></h1>
-  <div class="time">{{ now }}</div>
+<div class="nav">
+  <div class="nav-brand">⚡ Apex</div>
+  <a href="/" class="active">Dashboard</a>
+  <a href="/traces">Traces</a>
+  <a href="/agents">Agents</a>
+  <a href="/logs">Logs</a>
+  <div style="flex:1"></div>
+  <span style="color:var(--text-dim);font-size:12px" id="nav-time"></span>
 </div>
 
-<div class="stats">
-  <div class="stat-card blue">
-    <div class="value">{{ total_profiles }}</div>
-    <div class="label">Active Agents</div>
-  </div>
-  <div class="stat-card cyan">
-    <div class="value">{{ total_tasks }}</div>
-    <div class="label">Total Tasks</div>
-  </div>
-  <div class="stat-card green">
-    {% if economy and economy.default %}
-    <div class="value">${{ "%.4f"|format(economy.default.used) }}</div>
-    {% else %}
-    <div class="value">$0.00</div>
-    {% endif %}
-    <div class="label">Total Cost</div>
-  </div>
-  <div class="stat-card yellow">
-    <div class="value">{{ profiles|length }}</div>
-    <div class="label">Profiles</div>
-  </div>
-</div>
+<div class="content" id="app">
+  <!-- Loading -->
+  <div class="empty" id="loading">🔄 Loading...</div>
 
-<div class="grid-2">
-  <div class="section">
-    <h2>🤖 Agent Profiles</h2>
-    <div class="card">
-      {% if profiles %}
-      {% for p in profiles %}
-      <div class="agent-card">
-        <div class="agent-icon">
-          {% if '前端' in p.role or 'frontend' in p.name %}💻
-          {% elif '后端' in p.role or 'backend' in p.name %}⚙️
-          {% elif '产品' in p.role or 'pm' in p.name %}📋
-          {% elif '内容' in p.role or 'content' in p.name %}✍️
-          {% elif '运维' in p.role or 'devops' in p.name %}🔧
-          {% else %}🤖{% endif %}
+  <!-- Dashboard content (hidden until loaded) -->
+  <div id="dashboard-content" style="display:none">
+
+    <div class="stats">
+      <div class="stat-card blue">
+        <div class="value" id="stat-agents">0</div>
+        <div class="label">Active Agents</div>
+      </div>
+      <div class="stat-card cyan">
+        <div class="value" id="stat-tasks">0</div>
+        <div class="label">Total Tasks</div>
+      </div>
+      <div class="stat-card green">
+        <div class="value" id="stat-cost">$0.00</div>
+        <div class="label">Total Cost</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="value" id="stat-companies">0</div>
+        <div class="label">Companies</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="value" id="stat-patterns">0</div>
+        <div class="label">Learned Patterns</div>
+      </div>
+      <div class="stat-card pink">
+        <div class="value" id="stat-kg">0</div>
+        <div class="label">Knowledge Nodes</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="section">
+        <div class="section-title">🤖 Agents</div>
+        <div class="card" id="agents-list"><div class="empty">Loading...</div></div>
+      </div>
+      <div class="section">
+        <div class="section-title">📋 Task Board</div>
+        <div class="card" id="tasks-list"><div class="empty">Loading...</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">💰 Token Economy</div>
+      <div class="grid-3">
+        <div class="card">
+          <div style="font-size:13px; color:var(--text-dim); margin-bottom:8px;">Budget Usage</div>
+          <div id="economy-stats"><div class="empty">No data</div></div>
         </div>
+        <div class="card">
+          <div style="font-size:13px; color:var(--text-dim); margin-bottom:8px;">Model Routes</div>
+          <div id="model-routes">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:12px;">
+              <div><span style="color:var(--green)">●</span> Simple → Ollama (free)</div>
+              <div><span style="color:var(--yellow)">●</span> Dev → DeepSeek ($0.5/M)</div>
+              <div><span style="color:var(--red)">●</span> Arch → Claude ($3/M)</div>
+              <div><span style="color:var(--purple)">●</span> Vision → Claude Vision</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px; color:var(--text-dim); margin-bottom:8px;">Recent Activity</div>
+          <div id="recent-activity"><div class="empty">Waiting for tasks...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">📊 Execution Log</div>
+      <div class="card">
+        <div class="log-container" id="exec-log">
+          <div class="log-line log-info"><span class="log-time">--:--:--</span> Apex Dashboard started</div>
+          <div class="log-line log-info"><span class="log-time">--:--:--</span> Watching for executions...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── API calls ───
+async function api(path) {
+  try {
+    const r = await fetch(path);
+    return await r.json();
+  } catch(e) { return {error: e.message}; }
+}
+
+function addLog(type, msg) {
+  const el = document.getElementById('exec-log');
+  if (!el) return;
+  const time = new Date().toTimeString().slice(0,8);
+  const line = document.createElement('div');
+  line.className = `log-line log-${type}`;
+  line.innerHTML = `<span class="log-time">${time}</span> ${msg}`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ─── Format helpers ───
+function statusHTML(s) {
+  return `<span class="status status-${s}">${s}</span>`;
+}
+function priorityHTML(p) {
+  const label = `P${p}`;
+  return `<span class="badge badge-P${p}">${label}</span>`;
+}
+
+// ─── Load dashboard ───
+async function loadDashboard() {
+  try {
+    // Load profiles
+    const profiles = await api('/api/profiles');
+    if (profiles.error) { addLog('error', `API error: ${profiles.error}`); return; }
+    
+    const agentsEl = document.getElementById('agents-list');
+    agentsEl.innerHTML = profiles.map(p => `
+      <div class="agent-card" onclick="location.href='/agents?name=${p.name}'">
+        <div class="agent-icon">${getIcon(p.role, p.name)}</div>
         <div class="agent-info">
-          <div class="agent-name">{{ p.name }}</div>
-          <div class="agent-role">{{ p.role }} · {{ p.model }}</div>
+          <div class="agent-name">${p.name}</div>
+          <div class="agent-role">${p.role || '—'} · ${p.model}</div>
           <div class="agent-tags">
-            {% for skill in p.skills[:4] %}
-            <span class="tag">{{ skill[:20] }}</span>
-            {% endfor %}
-            {% if p.expertise %}
-            {% for exp in p.expertise[:2] %}
-            <span class="tag">{{ exp[:15] }}</span>
-            {% endfor %}
-            {% endif %}
+            ${(p.skills || []).slice(0,4).map(s => `<span class="tag">${s}</span>`).join('')}
+            ${(p.expertise || []).slice(0,2).map(e => `<span class="tag">${e}</span>`).join('')}
           </div>
         </div>
       </div>
-      {% endfor %}
-      {% else %}
-      <div class="empty">还没有Agent，运行 <code>apex template list</code> 开始创建</div>
-      {% endif %}
-    </div>
-  </div>
+    `).join('');
+    document.getElementById('stat-agents').textContent = profiles.length;
 
-  <div class="section">
-    <h2>📋 Task Board</h2>
-    <div class="card">
-      {% if tasks %}
-      <table>
-        <thead><tr><th>Task</th><th>Owner</th><th>Status</th><th>P</th></tr></thead>
-        <tbody>
-          {% for t in tasks %}
-          <tr>
-            <td>{{ t.title[:35] }}{% if t.title|length > 35 %}…{% endif %}</td>
-            <td>{{ t.assignee or '-' }}</td>
-            <td><span class="status status-{{ t.status }}">{{ t.status }}</span></td>
-            <td><span class="badge badge-P{{ t.priority }}">P{{ t.priority }}</span></td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      {% else %}
-      <div class="empty">任务看板为空</div>
-      {% endif %}
-    </div>
-  </div>
-</div>
+    // Load tasks from kanban
+    const statusResp = await api('/api/status');
+    const tasks = statusResp.tasks || [];
+    const tasksEl = document.getElementById('tasks-list');
+    if (tasks.length > 0) {
+      tasksEl.innerHTML = `<table><thead><tr><th>Task</th><th>Owner</th><th>Status</th><th>P</th></tr></thead><tbody>
+        ${tasks.map(t => `<tr><td>${trunc(t.title,35)}</td><td>${t.assignee || '—'}</td><td>${statusHTML(t.status)}</td><td>${priorityHTML(t.priority)}</td></tr>`).join('')}
+      </tbody></table>`;
+    } else {
+      tasksEl.innerHTML = '<div class="empty">No tasks yet. Run <code>apex run "task"</code></div>';
+    }
+    document.getElementById('stat-tasks').textContent = tasks.length;
 
-<div class="section">
-  <h2>💰 Token Economy</h2>
-  <div class="grid-2">
-    <div class="card">
-      <h3 style="font-size:13px; color:var(--text-dim); margin-bottom:8px;">预算使用</h3>
-      {% if economy and economy.default %}
-      <div style="display:flex; justify-content:space-between; font-size:13px;">
-        <span>已用: <strong>${{ "%.4f"|format(economy.default.used) }}</strong></span>
-        <span>限额: ${{ "%.2f"|format(economy.default.limit) }}</span>
-        <span>剩余: <strong style="color:var(--green)">${{ "%.4f"|format(economy.default.remaining) }}</strong></span>
-      </div>
-      <div class="bar-container">
-        <div class="bar-fill" style="width:{{ economy.default.usage_pct }}%; background: {% if economy.default.usage_pct > 80 %}var(--red){% elif economy.default.usage_pct > 50 %}var(--yellow){% else %}var(--green){% endif %};"></div>
-      </div>
-      <div style="text-align:right; font-size:11px; color:var(--text-dim); margin-top:4px;">{{ economy.default.usage_pct }}%</div>
-      {% else %}
-      <div class="empty">还没有消耗数据</div>
-      {% endif %}
-    </div>
-    <div class="card">
-      <h3 style="font-size:13px; color:var(--text-dim); margin-bottom:8px;">模型路由规则</h3>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:12px;">
-        <div><span style="color:var(--green)">●</span> 简单回复 → Ollama (免费)</div>
-        <div><span style="color:var(--yellow)">●</span> 开发任务 → DeepSeek ($0.5/M)</div>
-        <div><span style="color:var(--red)">●</span> 架构设计 → Claude ($3/M)</div>
-        <div><span style="color:var(--purple)">●</span> 视觉分析 → Claude Vision</div>
-      </div>
-    </div>
-  </div>
-</div>
+    // Economy
+    const economy = statusResp.economy || {};
+    if (economy.default) {
+      const e = economy.default;
+      const pct = e.usage_pct || 0;
+      const barColor = pct > 80 ? 'var(--red)' : pct > 50 ? 'var(--yellow)' : 'var(--green)';
+      document.getElementById('economy-stats').innerHTML = `
+        <div style="display:flex; justify-content:space-between; font-size:13px;">
+          <span>Used: <strong>$${e.used}</strong></span>
+          <span>Limit: $${e.limit}</span>
+          <span>Remaining: <strong style="color:var(--green)">$${e.remaining}</strong></span>
+        </div>
+        <div class="bar-container"><div class="bar-fill" style="width:${pct}%; background:${barColor};"></div></div>
+        <div style="text-align:right; font-size:11px; color:var(--text-dim); margin-top:4px;">${pct}%</div>`;
+      document.getElementById('stat-cost').textContent = `$${e.used}`;
+    }
 
-<div style="text-align:center; padding:24px; color:var(--text-dim); font-size:12px;">
-  Apex v0.1.0 — One person, infinite capacity.
-  <br><span style="font-size:10px;">API: <code>/api/status</code> <code>/api/profiles</code></span>
-</div>
+    // Companies
+    const companies = statusResp.companies || [];
+    document.getElementById('stat-companies').textContent = companies.length;
 
+    // Patterns
+    const patterns = statusResp.patterns || 0;
+    document.getElementById('stat-patterns').textContent = patterns;
+
+    // Knowledge graph
+    const kg = statusResp.knowledge_nodes || 0;
+    document.getElementById('stat-kg').textContent = kg;
+
+    // Recent activity
+    const recentEl = document.getElementById('recent-activity');
+    if (statusResp.recent_tasks && statusResp.recent_tasks.length > 0) {
+      recentEl.innerHTML = statusResp.recent_tasks.slice(0,5).map(t => `
+        <div style="padding:6px 0; border-bottom:1px solid var(--border); font-size:12px;">
+          <div>${t.title}</div>
+          <div style="color:var(--text-dim); font-size:11px;">${t.status} · ${t.assignee || '—'}</div>
+        </div>
+      `).join('');
+    }
+
+    // Hide loading
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('dashboard-content').style.display = 'block';
+    addLog('success', `Dashboard loaded — ${profiles.length} agents, ${tasks.length} tasks`);
+
+  } catch(e) {
+    document.getElementById('loading').innerHTML = `❌ Failed to load: ${e.message}`;
+    addLog('error', `Load failed: ${e.message}`);
+  }
+}
+
+function getIcon(role, name) {
+  const r = (role + name).toLowerCase();
+  if (r.includes('前端') || r.includes('frontend')) return '💻';
+  if (r.includes('后端') || r.includes('backend')) return '⚙️';
+  if (r.includes('产品') || r.includes('pm')) return '📋';
+  if (r.includes('内容') || r.includes('content')) return '✍️';
+  if (r.includes('运维') || r.includes('devops')) return '🔧';
+  return '🤖';
+}
+
+function trunc(s, n) { return s && s.length > n ? s.slice(0,n) + '…' : s; }
+
+// ─── Auto refresh every 10s ───
+document.addEventListener('DOMContentLoaded', () => {
+  loadDashboard();
+  document.getElementById('nav-time').textContent = new Date().toLocaleString('zh-CN');
+  setInterval(() => {
+    document.getElementById('nav-time').textContent = new Date().toLocaleString('zh-CN');
+  }, 1000);
+  // Refresh dashboard every 10s
+  setInterval(loadDashboard, 10000);
+});
+</script>
 </body>
 </html>
