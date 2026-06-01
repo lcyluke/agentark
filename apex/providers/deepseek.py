@@ -65,12 +65,12 @@ class DeepSeekProvider(BaseProvider):
         return round(input_cost + output_cost, 6)
 
     def _read_env_key(self) -> str:
-        """从.env或环境变量读取API Key"""
+        """Read API Key from .env or environment variables"""
         import os
         key = os.environ.get("DEEPSEEK_API_KEY", "")
         if key:
             return key
-        # 尝试从 .apex/.env 读取
+        # Try reading from .apex/.env
         env_path = os.path.expanduser("~/.apex/.env")
         if os.path.exists(env_path):
             with open(env_path) as f:
@@ -81,7 +81,7 @@ class DeepSeekProvider(BaseProvider):
 
 
 class OllamaProvider(BaseProvider):
-    """本地Ollama Provider — 零成本"""
+    """Local Ollama Provider — zero cost"""
 
     BASE_URL = "http://localhost:11434"
 
@@ -116,9 +116,9 @@ class OllamaProvider(BaseProvider):
         )
 
     def estimate_cost(self, response: LLMResponse) -> float:
-        return 0.0  # 本地，免费
+        return 0.0  # Local, free
 
 
-# 注册Provider
+# Register Providers
 registry.register("deepseek", DeepSeekProvider)
 registry.register("ollama", OllamaProvider)

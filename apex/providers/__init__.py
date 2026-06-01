@@ -1,5 +1,5 @@
 """Apex — Providers"""
 from .base import BaseProvider, LLMResponse, registry
 
-# 导入所有Provider以触发注册
+# Import all Providers to trigger registration
 from . import deepseek

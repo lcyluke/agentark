@@ -1,4 +1,4 @@
-"""Apex — economy CLI命令"""
+"""Apex — economy CLI command"""
 from __future__ import annotations
 
 import os
@@ -15,17 +15,17 @@ console = Console()
 
 
 def status_cmd():
-    """查看经济系统状态"""
+    """View economy system status"""
     bm = BudgetManager()
     
     accounts = ["default"]
     
-    table = Table(title="💰 Token Economy — 预算状态", box=None)
-    table.add_column("项目", style="cyan")
-    table.add_column("月度限额", style="yellow")
-    table.add_column("已用", style="red")
-    table.add_column("剩余", style="green")
-    table.add_column("使用率", style="white")
+    table = Table(title="💰 Token Economy — Budget Status", box=None)
+    table.add_column("Project", style="cyan")
+    table.add_column("Monthly Limit", style="yellow")
+    table.add_column("Used", style="red")
+    table.add_column("Remaining", style="green")
+    table.add_column("Usage", style="white")
     
     for proj in accounts:
         used, limit, remaining = bm.get_balance(proj)
@@ -41,38 +41,38 @@ def status_cmd():
     
     console.print(table)
     
-    # 今日成本
+    # Today's cost
     report = bm.get_daily_report()
-    console.print(Panel(report, title="📅 今日统计"))
+    console.print(Panel(report, title="📅 Today's Statistics"))
     
-    # 预警
+    # Warnings
     for proj in accounts:
         warning = bm.check_warning(proj)
         if warning:
             console.print(f"[yellow]⚠ {warning}[/]")
     
-    # 模型路由表
-    route_table = Table(title="🔄 智能路由规则", box=None)
-    route_table.add_column("任务类型", style="cyan")
-    route_table.add_column("模型", style="green")
-    route_table.add_column("成本/1K输入", style="yellow")
-    route_table.add_column("质量分", style="white")
+    # Model routing table
+    route_table = Table(title="🔄 Smart Routing Rules", box=None)
+    route_table.add_column("Task Type", style="cyan")
+    route_table.add_column("Model", style="green")
+    route_table.add_column("Cost/1K Input", style="yellow")
+    route_table.add_column("Quality Score", style="white")
     
     for route in MODEL_ROUTES:
-        cost_str = f"${route.cost_per_1k_input:.4f}" if route.cost_per_1k_input > 0 else "[green]免费[/]"
+        cost_str = f"${route.cost_per_1k_input:.4f}" if route.cost_per_1k_input > 0 else "[green]Free[/]"
         route_table.add_row(route.task_type, route.model, cost_str, "⭐" * (route.quality_score // 2))
     
     console.print(route_table)
 
 
 def classify_cmd(task: str):
-    """测试任务分类"""
+    """Test task classification"""
     task_type = classify_task(task)
     from apex.economy import select_model
     route = select_model(task)
     
-    console.print(f"[bold]任务:[/] {task}")
-    console.print(f"[bold]分类:[/] [cyan]{task_type}[/]")
-    console.print(f"[bold]推荐模型:[/] [green]{route.model}[/] ({route.provider})")
-    console.print(f"[bold]质量分:[/] {'⭐' * (route.quality_score // 2)}")
-    console.print(f"[bold]预估成本:[/] [yellow]${route.cost_per_1k_input:.4f}/1K输入[/]")
+    console.print(f"[bold]Task:[/] {task}")
+    console.print(f"[bold]Classification:[/] [cyan]{task_type}[/]")
+    console.print(f"[bold]Recommended Model:[/] [green]{route.model}[/] ({route.provider})")
+    console.print(f"[bold]Quality Score:[/] {'⭐' * (route.quality_score // 2)}")
+    console.print(f"[bold]Estimated Cost:[/] [yellow]${route.cost_per_1k_input:.4f}/1K Input[/]")

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -351,11 +351,11 @@ async function loadDashboard() {
 
 function getIcon(role, name) {
   const r = (role + name).toLowerCase();
-  if (r.includes('前端') || r.includes('frontend')) return '💻';
-  if (r.includes('后端') || r.includes('backend')) return '⚙️';
-  if (r.includes('产品') || r.includes('pm')) return '📋';
-  if (r.includes('内容') || r.includes('content')) return '✍️';
-  if (r.includes('运维') || r.includes('devops')) return '🔧';
+  if (r.includes('frontend')) return '💻';
+  if (r.includes('backend')) return '⚙️';
+  if (r.includes('pm')) return '📋';
+  if (r.includes('content')) return '✍️';
+  if (r.includes('devops')) return '🔧';
   return '🤖';
 }
 
@@ -364,9 +364,9 @@ function trunc(s, n) { return s && s.length > n ? s.slice(0,n) + '…' : s; }
 // ─── Auto refresh every 10s ───
 document.addEventListener('DOMContentLoaded', () => {
   loadDashboard();
-  document.getElementById('nav-time').textContent = new Date().toLocaleString('zh-CN');
+  document.getElementById('nav-time').textContent = new Date().toLocaleString('en-US');
   setInterval(() => {
-    document.getElementById('nav-time').textContent = new Date().toLocaleString('zh-CN');
+    document.getElementById('nav-time').textContent = new Date().toLocaleString('en-US');
   }, 1000);
   // Refresh dashboard every 10s
   setInterval(loadDashboard, 10000);

@@ -1,5 +1,5 @@
-"""Apex — 通用Profile格式 (UPF)
-每个Agent的完整身份定义。
+"""Apex — Universal Profile Format (UPF)
+Complete identity definition for each Agent.
 """
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ class ToolConfig:
 
 @dataclass
 class Profile:
-    """一个Agent的完整Profile定义"""
+    """An Agent's complete Profile definition"""
     name: str
     display: str = ""
     model: ModelConfig = field(default_factory=ModelConfig)
@@ -120,7 +120,7 @@ class Profile:
 
 
 class ProfileManager:
-    """管理所有Profiles的生命周期"""
+    """Manage the lifecycle of all Profiles"""
 
     def __init__(self, home: Path = APEX_HOME):
         self.home = home
@@ -129,14 +129,14 @@ class ProfileManager:
         self._cache: dict[str, Profile] = {}
 
     def list(self) -> list[str]:
-        """列出所有注册的Profiles"""
+        """List all registered Profiles"""
         names = []
         for f in self.profiles_dir.glob("*.yaml"):
             names.append(f.stem)
         return sorted(names)
 
     def load(self, name: str) -> Profile:
-        """加载一个Profile"""
+        """Load a Profile"""
         if name in self._cache:
             return self._cache[name]
         path = self.profiles_dir / f"{name}.yaml"
@@ -149,29 +149,29 @@ class ProfileManager:
         return profile
 
     def save(self, profile: Profile):
-        """保存一个Profile"""
+        """Save a Profile"""
         path = self.profiles_dir / f"{profile.name}.yaml"
         with open(path, "w") as f:
             yaml.dump(profile.to_dict(), f, default_flow_style=False, allow_unicode=True)
         self._cache[profile.name] = profile
 
     def create_default(self, name: str, role: str = "", expertise: list[str] = None) -> Profile:
-        """创建一个默认Profile"""
+        """Create a default Profile"""
         profile = Profile(
             name=name,
             display=role or name,
             soul=SoulConfig(
                 role=role or name,
                 expertise=expertise or [],
-                personality="专业、可靠、高效",
-                communication="直接、带具体方案",
+                personality="Professional, reliable, efficient",
+                communication="Direct, with concrete solutions",
             ),
         )
         self.save(profile)
         return profile
 
     def delete(self, name: str):
-        """删除一个Profile"""
+        """Delete a Profile"""
         path = self.profiles_dir / f"{name}.yaml"
         if path.exists():
             path.unlink()

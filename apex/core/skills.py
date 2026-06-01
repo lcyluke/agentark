@@ -1,5 +1,5 @@
-"""Apex — 技能系统
-可进化的技能包，从执行反馈中自动优化。
+"""Apex — Skill System
+Evolvable skill packages that auto-optimize from execution feedback.
 """
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ class Skill:
 
 
 class SkillManager:
-    """管理所有技能包"""
+    """Manage all skill packages"""
 
     def __init__(self, db_path: Path):
         self.db_path = db_path
@@ -52,7 +52,7 @@ class SkillManager:
         self._conn.commit()
 
     def register(self, skill: Skill):
-        """注册一个技能"""
+        """Register a skill"""
         self._conn.execute(
             """INSERT OR REPLACE INTO skills
                (name, description, prompt_template, examples, pitfalls, confidence, use_count, success_count)
@@ -103,7 +103,7 @@ class SkillManager:
         return skills
 
     def record_use(self, name: str, success: bool):
-        """记录一次使用"""
+        """Record a usage"""
         skill = self.get(name)
         if not skill:
             return

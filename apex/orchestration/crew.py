@@ -1,9 +1,9 @@
-"""Apex — Crew模式（班组模式）
-角色组队实时协作 + 动态组队引擎 + 零点击组队。
+"""Apex — Crew Mode (Team Mode)
+Role-based real-time collaboration + Dynamic team design engine + Zero-click team assembly.
 
 Crew vs Swarm:
-  Swarm = 并行独立Worker + 验证 + 合成（适合独立任务分解）
-  Crew  = 角色之间实时对话协作（适合需要讨论反馈的任务）
+  Swarm = Parallel independent Workers + Verifier + Synthesizer (suitable for decomposable independent tasks)
+  Crew  = Real-time chat collaboration between roles (suitable for tasks needing discussion and feedback)
 """
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ console = Console()
 
 @dataclass
 class CrewMember:
-    """Crew中的一名成员"""
+    """A member of the Crew"""
     name: str
     profile: Profile
     role_description: str
@@ -39,7 +39,7 @@ class CrewMember:
 
 @dataclass
 class CrewResult:
-    """Crew执行结果"""
+    """Crew execution result"""
     goal: str
     members: list[CrewMember] = field(default_factory=list)
     discussion_log: list[dict] = field(default_factory=list)
@@ -48,94 +48,94 @@ class CrewResult:
 
 
 class DynamicTeamDesigner:
-    """动态组队引擎 — 零点击组队核心"""
+    """Dynamic team design engine — Zero-click team assembly core"""
 
     def __init__(self):
         pass
 
     def design_team(self, goal: str) -> dict:
-        """根据任务自动设计最优团队"""
+        """Automatically design optimal team based on task"""
         goal_lower = goal.lower()
 
-        # 关键词匹配规则
+        # Keyword matching rules
         team_designs = {
             "web": {
-                "goal": f"构建Web应用: {goal}",
+                "goal": f"Build Web Application: {goal}",
                 "members": [
-                    ("pm", "产品经理", "需求分析和PRD"),
-                    ("frontend", "前端开发工程师", "UI组件和页面实现"),
-                    ("backend", "后端架构师", "API和数据库设计"),
+                    ("pm", "Product Manager", "Requirements analysis and PRD"),
+                    ("frontend", "Frontend Developer", "UI components and page implementation"),
+                    ("backend", "Backend Architect", "API and database design"),
                 ],
-                "verifier": ("devops", "架构审查"),
+                "verifier": ("devops", "Architecture Review"),
             },
             "app": {
-                "goal": f"开发应用: {goal}",
+                "goal": f"Develop Application: {goal}",
                 "members": [
-                    ("pm", "产品经理", "定义MVP范围"),
-                    ("frontend", "前端开发工程师", "界面开发"),
-                    ("backend", "后端架构师", "API开发"),
+                    ("pm", "Product Manager", "Define MVP scope"),
+                    ("frontend", "Frontend Developer", "Interface development"),
+                    ("backend", "Backend Architect", "API development"),
                 ],
-                "verifier": ("devops", "部署方案审查"),
+                "verifier": ("devops", "Deployment Plan Review"),
             },
             "deploy": {
-                "goal": f"部署上线: {goal}",
+                "goal": f"Deploy to Production: {goal}",
                 "members": [
-                    ("devops", "DevOps运维工程师", "部署方案和CI/CD"),
-                    ("backend", "后端架构师", "环境配置确认"),
+                    ("devops", "DevOps Engineer", "Deployment plan and CI/CD"),
+                    ("backend", "Backend Architect", "Environment configuration confirmation"),
                 ],
-                "verifier": ("pm", "验证"),
+                "verifier": ("pm", "Verification"),
             },
             "content": {
-                "goal": f"内容创作: {goal}",
+                "goal": f"Content Creation: {goal}",
                 "members": [
-                    ("content", "内容运营专家", "文案撰写"),
-                    ("pm", "产品经理", "内容策略对齐"),
+                    ("content", "Content Operations Specialist", "Copywriting"),
+                    ("pm", "Product Manager", "Content strategy alignment"),
                 ],
                 "verifier": None,
             },
             "api": {
-                "goal": f"API开发: {goal}",
+                "goal": f"API Development: {goal}",
                 "members": [
-                    ("backend", "后端架构师", "API设计和实现"),
-                    ("devops", "DevOps运维工程师", "部署和监控"),
+                    ("backend", "Backend Architect", "API design and implementation"),
+                    ("devops", "DevOps Engineer", "Deployment and monitoring"),
                 ],
-                "verifier": ("pm", "API文档审查"),
+                "verifier": ("pm", "API Documentation Review"),
             },
             "data": {
-                "goal": f"数据分析: {goal}",
+                "goal": f"Data Analysis: {goal}",
                 "members": [
-                    ("backend", "后端架构师", "数据管道设计"),
-                    ("pm", "产品经理", "数据指标定义"),
+                    ("backend", "Backend Architect", "Data pipeline design"),
+                    ("pm", "Product Manager", "Data metric definition"),
                 ],
                 "verifier": None,
             },
         }
 
-        # 智能匹配
+        # Intelligent matching
         for key, design in team_designs.items():
             if key in goal_lower:
                 return design
 
-        # 默认：用AI推理组队（如果有DeepSeek）
+        # Default: use AI to design team (if DeepSeek available)
         default = {
-            "goal": f"项目: {goal}",
+            "goal": f"Project: {goal}",
             "members": [
-                ("pm", "产品经理", "需求分析和项目管理"),
-                ("frontend", "前端开发工程师", "前端开发"),
-                ("backend", "后端架构师", "后端开发"),
+                ("pm", "Product Manager", "Requirements analysis and project management"),
+                ("frontend", "Frontend Developer", "Frontend development"),
+                ("backend", "Backend Architect", "Backend development"),
             ],
-            "verifier": ("devops", "质量审查"),
+            "verifier": ("devops", "Quality Review"),
         }
         return default
 
     def design_team_from_scratch(self, goal: str) -> dict:
-        """用AI推理组队（更精确，但耗时）"""
-        # Phase 2: 调用LLM做更精准的团队设计
+        """Use AI reasoning to design team (more precise, but slower)"""
+        # Phase 2: call LLM for more precise team design
         return self.design_team(goal)
 
 
 class Crew:
-    """班组模式执行器 — 多角色实时协作"""
+    """Crew mode executor — Multi-role real-time collaboration"""
 
     def __init__(self, members: list[CrewMember], verifier: Optional[CrewMember] = None):
         self.members = members
@@ -145,7 +145,7 @@ class Crew:
 
     @classmethod
     def from_template_names(cls, names: list[str], goal: str) -> "Crew":
-        """从模板名列表创建Crew"""
+        """Create Crew from a list of template names"""
         pm = ProfileManager()
         members = []
         for name in names:
@@ -158,7 +158,7 @@ class Crew:
                     role_description=template.display,
                 ))
             else:
-                # 尝试直接加载Profile
+                # Try to load Profile directly
                 try:
                     profile = pm.load(name)
                     members.append(CrewMember(
@@ -167,12 +167,12 @@ class Crew:
                         role_description=profile.soul.role or name,
                     ))
                 except FileNotFoundError:
-                    console.print(f"[red]✗ 找不到Agent '{name}'[/]")
+                    console.print(f"[red]✗ Agent '{name}' not found[/]")
         return cls(members=members)
 
     @classmethod
     def auto_design(cls, goal: str) -> "Crew":
-        """零点击组队 — 自动设计团队"""
+        """Zero-click team assembly — automatically design team"""
         designer = DynamicTeamDesigner()
         design = designer.design_team(goal)
         pm = ProfileManager()
@@ -189,7 +189,7 @@ class Crew:
                     profile = pm.load(template_name)
                     member = CrewMember(name=template_name, profile=profile, role_description=role)
                 except FileNotFoundError:
-                    console.print(f"[yellow]⚠ 跳过: {template_name}[/]")
+                    console.print(f"[yellow]⚠ Skipped: {template_name}[/]")
                     continue
             members.append(member)
 
@@ -204,33 +204,33 @@ class Crew:
         return cls(members=members, verifier=verifier)
 
     def run(self, goal: str) -> CrewResult:
-        """执行Crew协作"""
+        """Execute Crew collaboration"""
         result = CrewResult(goal=goal, members=self.members)
 
-        console.print(f"\n[bold]🎭 Crew组建完成![/]")
-        console.print(f"   目标: [bold]{goal[:80]}{'...' if len(goal) > 80 else ''}[/]")
-        console.print(f"   成员: {', '.join(f'{m.name}({m.role_description})' for m in self.members)}")
+        console.print(f"\n[bold]🎭 Crew assembled![/]")
+        console.print(f"   Goal: [bold]{goal[:80]}{'...' if len(goal) > 80 else ''}[/]")
+        console.print(f"   Members: {', '.join(f'{m.name}({m.role_description})' for m in self.members)}")
         if self.verifier:
-            console.print(f"   验证: {self.verifier.name}({self.verifier.role_description})")
+            console.print(f"   Verifier: {self.verifier.name}({self.verifier.role_description})")
         console.print()
 
-        # Phase 1: 各成员独立工作（分头调研/设计）
-        console.print("[bold]📋 Phase 1: 各成员分头工作[/]")
+        # Phase 1: Each member works independently
+        console.print("[bold]📋 Phase 1: Members work independently[/]")
         console.print("-" * 40)
 
         with ThreadPoolExecutor(max_workers=len(self.members)) as executor:
             future_map = {}
             for member in self.members:
                 agent = Agent(member.profile)
-                task_prompt = f"""你是{member.role_description}（{member.name}）。
-项目目标: {goal}
+                task_prompt = f"""You are {member.role_description} ({member.name}).
+Project Goal: {goal}
 
-请从你的专业角度完成以下工作：
-1. 分析任务需求中与你专业相关的部分
-2. 给出专业方案和建议
-3. 列出你需要其他角色配合的事项
+Please complete the following work from your professional perspective:
+1. Analyze the parts of the task requirements relevant to your expertise
+2. Provide professional solutions and recommendations
+3. List items requiring cooperation from other roles
 
-请输出完整、专业、可直接使用的方案。"""
+Please output a complete, professional, and directly usable solution."""
                 future = executor.submit(agent.run, task_prompt)
                 future_map[future] = member
 
@@ -238,37 +238,37 @@ class Crew:
                 member = future_map[future]
                 try:
                     member.output = future.result()
-                    console.print(f"   ✅ {member.name} — 完成")
+                    console.print(f"   ✅ {member.name} — Completed")
                 except Exception as e:
-                    member.output = f"错误: {e}"
-                    console.print(f"   ❌ {member.name} — 失败: {e}")
+                    member.output = f"Error: {e}"
+                    console.print(f"   ❌ {member.name} — Failed: {e}")
 
-        # Phase 2: 圆桌讨论（每个成员看到其他人的输出，互相反馈）
+        # Phase 2: Round-table discussion (each member sees others' output, provides feedback)
         if len(self.members) >= 2:
-            console.print(f"\n[bold]💬 Phase 2: 圆桌讨论[/]")
+            console.print(f"\n[bold]💬 Phase 2: Round-table Discussion[/]")
             console.print("-" * 40)
 
             for i, member in enumerate(self.members):
                 others_output = "\n\n".join(
-                    f"=== {m.name}({m.role_description})的方案 ===\n{m.output[:1500]}"
+                    f"=== {m.name}({m.role_description})'s Solution ===\n{m.output[:1500]}"
                     for j, m in enumerate(self.members)
                     if j != i
                 )
 
                 agent = Agent(member.profile)
-                review_prompt = f"""你是{member.role_description}（{member.name}）。
-项目目标: {goal}
+                review_prompt = f"""You are {member.role_description} ({member.name}).
+Project Goal: {goal}
 
-以下是你的团队成员的方案。请阅读并给出：
-1. 你赞同的部分
-2. 你发现的问题或风险
-3. 你建议的修改
-4. 需要你配合才能实现的部分
+Below are your team members' solutions. Please review and provide:
+1. Parts you agree with
+2. Issues or risks you identify
+3. Suggested modifications
+4. Items requiring your cooperation to implement
 
-其他人的方案:
+Other team members' solutions:
 {others_output}
 
-请输出你的反馈意见（专业、直接、可执行）。"""
+Please output your feedback (professional, direct, actionable)."""
                 try:
                     feedback = agent.run(review_prompt)
                     self.discussion_log.append({
@@ -277,12 +277,12 @@ class Crew:
                         "content": feedback,
                     })
                     result.discussion_log = self.discussion_log
-                    console.print(f"   💬 {member.name} — 反馈完成")
+                    console.print(f"   💬 {member.name} — Feedback completed")
                 except Exception as e:
-                    console.print(f"   ⚠️ {member.name} — 反馈失败: {e}")
+                    console.print(f"   ⚠️ {member.name} — Feedback failed: {e}")
 
-        # Phase 3: 最终整合（PM或第一个成员做最终输出）
-        console.print(f"\n[bold]📦 Phase 3: 最终整合[/]")
+        # Phase 3: Final synthesis (PM or first member produces final output)
+        console.print(f"\n[bold]📦 Phase 3: Final Synthesis[/]")
         console.print("-" * 40)
 
         lead = max(self.members, key=lambda m: len(m.output))
@@ -295,49 +295,49 @@ class Crew:
 
         feedback_section = ""
         if self.discussion_log:
-            feedback_section = "\n\n=== 讨论反馈 ===\n" + "\n\n".join(
-                f"来自 {log['from']}: {log['content'][:1000]}"
+            feedback_section = "\n\n=== Discussion Feedback ===\n" + "\n\n".join(
+                f"From {log['from']}: {log['content'][:1000]}"
                 for log in self.discussion_log
             )
 
-        synthesis_prompt = f"""你是项目整合负责人。
-项目目标: {goal}
+        synthesis_prompt = f"""You are the project integration lead.
+Project Goal: {goal}
 
-请整合以下各角色的方案为一份完整的交付方案：
+Please integrate the solutions from all roles into a complete deliverable:
 
 {all_outputs}
 {feedback_section}
 
-请以{lead.role_description}的视角输出一份结构化的整合方案：
-1. 整体架构/方案概述
-2. 各模块详细设计
-3. 模块间关系
-4. 实施建议和优先级
-5. 风险点和应对"""
+From the perspective of a {lead.role_description}, output a structured integration plan:
+1. Overall architecture/solution overview
+2. Detailed design of each module
+3. Relationships between modules
+4. Implementation suggestions and priorities
+5. Risk points and mitigation"""
         try:
             result.final_output = agent.run(synthesis_prompt)
-            console.print(f"   ✅ 整合完成")
+            console.print(f"   ✅ Synthesis completed")
         except Exception as e:
-            result.final_output = f"整合失败: {e}"
-            console.print(f"   ❌ 整合失败: {e}")
+            result.final_output = f"Synthesis failed: {e}"
+            console.print(f"   ❌ Synthesis failed: {e}")
 
-        # Phase 4: 验证（可选）
+        # Phase 4: Verification (optional)
         if self.verifier:
-            console.print(f"\n[bold]🔍 Phase 4: 验证 ({self.verifier.name})[/]")
+            console.print(f"\n[bold]🔍 Phase 4: Verification ({self.verifier.name})[/]")
             console.print("-" * 40)
 
             v_agent = Agent(self.verifier.profile)
-            verify_prompt = f"""请审查以下项目方案的质量和完整性。
-项目目标: {goal}
+            verify_prompt = f"""Please review the quality and completeness of the following project deliverable.
+Project Goal: {goal}
 
-方案:
+Deliverable:
 {result.final_output[:4000]}
 
-请给出:
-1. 整体质量评分（1-10）
-2. 发现的问题（严重/中等/轻微）
-3. 必须修改的事项
-4. 总体结论：批准/有条件批准/打回"""
+Please provide:
+1. Overall quality score (1-10)
+2. Issues found (critical/moderate/minor)
+3. Items that must be changed
+4. Overall conclusion: Approved / Conditionally Approved / Rejected"""
             try:
                 verify_output = v_agent.run(verify_prompt)
                 self.discussion_log.append({
@@ -345,31 +345,31 @@ class Crew:
                     "type": "verification",
                     "content": verify_output,
                 })
-                console.print(f"   ✅ 验证完成")
+                console.print(f"   ✅ Verification completed")
             except Exception as e:
-                console.print(f"   ⚠️ 验证失败: {e}")
+                console.print(f"   ⚠️ Verification failed: {e}")
 
-        console.print(f"\n[bold green]✅ Crew协作完成![/]")
+        console.print(f"\n[bold green]✅ Crew collaboration complete![/]")
         return result
 
 
-# ─── CLI命令 ───
+# ─── CLI Commands ───
 @click.group()
 def crew():
-    """管理Crew班组"""
+    """Manage Crew teams"""
     pass
 
 
 @crew.command(name="create")
 @click.argument("goal")
-@click.option("--members", "-m", help="成员（逗号分隔模板名）")
+@click.option("--members", "-m", help="Members (comma-separated template names)")
 def crew_create(goal: str, members: str):
-    """创建并执行一个Crew"""
+    """Create and execute a Crew"""
     if members:
         names = [n.strip() for n in members.split(",")]
         c = Crew.from_template_names(names, goal)
     else:
-        console.print("[bold]🎯 零点击组队中...[/]")
+        console.print("[bold]🎯 Zero-click team assembly in progress...[/]")
         c = Crew.auto_design(goal)
 
     result = c.run(goal)
@@ -377,7 +377,7 @@ def crew_create(goal: str, members: str):
     if result.final_output:
         console.print(Panel(
             result.final_output[:3000],
-            title=f"📦 Crew交付物: {goal[:50]}...",
+            title=f"📦 Crew Deliverable: {goal[:50]}...",
             border_style="green",
         ))
 
@@ -385,19 +385,19 @@ def crew_create(goal: str, members: str):
 @crew.command(name="design")
 @click.argument("goal")
 def crew_design(goal: str):
-    """预览自动设计的团队"""
+    """Preview the automatically designed team"""
     designer = DynamicTeamDesigner()
     design = designer.design_team(goal)
 
-    table = Table(title=f"🎯 推荐团队: {goal[:50]}", box=None)
-    table.add_column("角色", style="cyan")
-    table.add_column("模板", style="green")
-    table.add_column("职责", style="white")
+    table = Table(title=f"🎯 Recommended Team: {goal[:50]}", box=None)
+    table.add_column("Role", style="cyan")
+    table.add_column("Template", style="green")
+    table.add_column("Responsibility", style="white")
 
     for t_name, role, task in design["members"]:
         table.add_row(role, t_name, task)
 
     console.print(table)
     if design.get("verifier"):
-        console.print(f"\n验证者: [bold]{design['verifier'][0]}[/]({design['verifier'][1]})")
-    console.print(f"\n[dim]使用: [bold]apex crew create \"{goal}\" --members {'/'.join(m[0] for m in design['members'])}[/][/dim]")
+        console.print(f"\nVerifier: [bold]{design['verifier'][0]}[/]({design['verifier'][1]})")
+    console.print(f"\n[dim]Usage: [bold]apex crew create \"{goal}\" --members {'/'.join(m[0] for m in design['members'])}[/][/dim]")

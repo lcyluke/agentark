@@ -1,5 +1,5 @@
-"""Apex — Swarm模式（蜂群模式）
-并行Worker → Verifier → Synthesizer 三阶段交付。
+"""Apex — Swarm Mode (Hive Mode)
+Parallel Workers -> Verifier -> Synthesizer three-stage delivery.
 """
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ class SwarmResult:
 
 
 class Swarm:
-    """蜂群模式 — 并行Worker → Verifier → Synthesizer"""
+    """Swarm mode — Parallel Workers -> Verifier -> Synthesizer"""
 
     def __init__(self, kanban: Kanban):
         self.kanban = kanban
@@ -38,29 +38,29 @@ class Swarm:
         synthesizer: Optional[tuple[str, Profile]] = None,
         max_parallel: int = 3,
     ) -> SwarmResult:
-        """执行一个Swarm
+        """Execute a Swarm
 
         Args:
-            goal: Swarm目标描述
+            goal: Swarm goal description
             workers: [(name, profile, task), ...]
-            verifier: (name, profile) — 验证者
-            synthesizer: (name, profile) — 合成者
-            max_parallel: 最大并行数
+            verifier: (name, profile) — verifier
+            synthesizer: (name, profile) — synthesizer
+            max_parallel: Maximum parallel workers
         """
         result = SwarmResult()
 
-        # Phase 1: 并行Worker
+        # Phase 1: Parallel Workers
         print(f"\n{'='*50}")
         print(f"🚀 Apex Swarm: {goal}")
         print(f"{'='*50}")
-        print(f"   Worker数: {len(workers)}")
+        print(f"   Workers: {len(workers)}")
         if verifier:
-            print(f"   验证者: {verifier[0]}")
+            print(f"   Verifier: {verifier[0]}")
         if synthesizer:
-            print(f"   合成者: {synthesizer[0]}")
+            print(f"   Synthesizer: {synthesizer[0]}")
         print(f"{'='*50}\n")
 
-        # 创建Kanban任务
+        # Create Kanban tasks
         kanban_tasks = []
         for name, profile, task_desc in workers:
             t = self.kanban.create_task(
@@ -71,8 +71,8 @@ class Swarm:
             )
             kanban_tasks.append(t)
 
-        # 并行执行
-        print("📋 Phase 1: Worker并行执行")
+        # Parallel execution
+        print("📋 Phase 1: Workers executing in parallel")
         print("-" * 40)
 
         with ThreadPoolExecutor(max_workers=max_parallel) as executor:
@@ -94,7 +94,7 @@ class Swarm:
                         "output": output,
                     })
                     self.kanban.update_task(task_id, status=TASK_STATUS_DONE, output=output)
-                    print(f"   ✅ {name} — 完成")
+                    print(f"   ✅ {name} — Completed")
                 except Exception as e:
                     result.worker_outputs.append({
                         "name": name,
@@ -102,83 +102,83 @@ class Swarm:
                         "output": f"ERROR: {e}",
                     })
                     self.kanban.update_task(task_id, status=TASK_STATUS_FAILED, output=str(e))
-                    print(f"   ❌ {name} — 失败: {e}")
+                    print(f"   ❌ {name} — Failed: {e}")
 
-        # Phase 2: Verifier（验证者）
+        # Phase 2: Verifier
         if verifier and result.worker_outputs:
-            print(f"\n🔍 Phase 2: 验证者 ({verifier[0]})")
+            print(f"\n🔍 Phase 2: Verifier ({verifier[0]})")
             print("-" * 40)
             name, profile = verifier
             agent = Agent(profile, api_key=self._get_api_key())
-            verifier_task = f"""验证以下工作的质量和完整性。
-项目目标: {goal}
+            verifier_task = f"""Verify the quality and completeness of the following work.
+Project Goal: {goal}
 
-各Worker输出:
+Worker Outputs:
 """
             for wo in result.worker_outputs:
                 verifier_task += f"""
---- {wo['name']}的输出 ---
+--- {wo['name']}'s Output ---
 {wo['output'][:2000]}
 """
 
             verifier_task += """
-请给出:
-1. 每个Worker输出的质量评分（1-10）
-2. 发现的问题和改进建议
-3. 整体质量结论：通过/需要修改/不通过
+Please provide:
+1. Quality score for each Worker output (1-10)
+2. Issues found and improvement suggestions
+3. Overall quality conclusion: Pass / Needs Revision / Fail
 """
             try:
                 result.verifier_output = agent.run(verifier_task)
-                print(f"   ✅ 验证完成")
+                print(f"   ✅ Verification completed")
             except Exception as e:
-                result.verifier_output = f"验证失败: {e}"
-                print(f"   ❌ 验证失败: {e}")
+                result.verifier_output = f"Verification failed: {e}"
+                print(f"   ❌ Verification failed: {e}")
 
-        # Phase 3: Synthesizer（合成者）
+        # Phase 3: Synthesizer
         if synthesizer:
-            print(f"\n📦 Phase 3: 合成者 ({synthesizer[0]})")
+            print(f"\n📦 Phase 3: Synthesizer ({synthesizer[0]})")
             print("-" * 40)
             name, profile = synthesizer
             agent = Agent(profile, api_key=self._get_api_key())
-            synthesizer_task = f"""请整合以下工作成果为一个完整的交付物。
-项目目标: {goal}
+            synthesizer_task = f"""Please integrate the following work outputs into a complete deliverable.
+Project Goal: {goal}
 
-各Worker输出:
+Worker Outputs:
 """
             for wo in result.worker_outputs:
                 synthesizer_task += f"""
---- {wo['name']}的输出 ---
+--- {wo['name']}'s Output ---
 {wo['output'][:2000]}
 """
 
             if result.verifier_output:
                 synthesizer_task += f"""
---- 验证者反馈 ---
+--- Verifier Feedback ---
 {result.verifier_output[:2000]}
 """
 
             synthesizer_task += """
-请产出:
-1. 整合后的完整方案/交付物
-2. 各模块之间的关系说明
-3. 下一步建议
+Please produce:
+1. Integrated complete solution/deliverable
+2. Explanation of relationships between modules
+3. Next step recommendations
 """
             try:
                 result.synthesizer_output = agent.run(synthesizer_task)
-                print(f"   ✅ 合成完成")
+                print(f"   ✅ Synthesis completed")
             except Exception as e:
-                result.synthesizer_output = f"合成失败: {e}"
-                print(f"   ❌ 合成失败: {e}")
+                result.synthesizer_output = f"Synthesis failed: {e}"
+                print(f"   ❌ Synthesis failed: {e}")
 
-        # 汇总
+        # Summary
         result.success = True
         print(f"\n{'='*50}")
-        print(f"✅ Swarm 完成! 总成本: ${result.total_cost:.4f}")
+        print(f"✅ Swarm complete! Total cost: ${result.total_cost:.4f}")
         print(f"{'='*50}")
 
         return result
 
     def _get_api_key(self) -> str:
-        """从环境获取API Key"""
+        """Get API Key from environment"""
         import os
         return os.environ.get("DEEPSEEK_API_KEY", "")

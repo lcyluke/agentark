@@ -1,6 +1,6 @@
-"""Apex — Token Economy（Token经济系统）
-智能预算分配 + 按任务价值路由模型 + 成本看板。
-核心目标：省95%费用的同时保持95%+的能力。
+"""Apex — Token Economy (Token Economics)
+Intelligent budget allocation + Task-value-based model routing + Cost dashboard.
+Core goal: Save 95% of costs while maintaining 95%+ capability.
 """
 from __future__ import annotations
 
@@ -16,11 +16,11 @@ from apex.core.profile import Profile, APEX_HOME
 
 @dataclass
 class ModelRoute:
-    """模型路由规则"""
+    """Model routing rule"""
     task_type: str
     model: str
     provider: str
-    cost_per_1k_input: float  # 美元
+    cost_per_1k_input: float  # USD
     cost_per_1k_output: float
     quality_score: int  # 1-10
 
@@ -29,42 +29,42 @@ class ModelRoute:
                 output_tokens * self.cost_per_1k_output / 1000)
 
 
-# ─── 预设模型路由表 ───
+# ─── Default model routing table ───
 MODEL_ROUTES = [
-    # 🟢 低成本任务 → 本地免费
+    # 🟢 Low-cost tasks -> Local free
     ModelRoute("simple-reply", "llama3-8b", "ollama", 0, 0, 3),
     ModelRoute("simple-edit", "llama3-8b", "ollama", 0, 0, 4),
-    # 🟡 中等任务 → DeepSeek（高性价比）
+    # 🟡 Medium tasks -> DeepSeek (high cost-effectiveness)
     ModelRoute("code-review", "deepseek-chat", "deepseek", 0.0005, 0.002, 8),
     ModelRoute("bug-fix", "deepseek-chat", "deepseek", 0.0005, 0.002, 8),
     ModelRoute("api-design", "deepseek-chat", "deepseek", 0.0005, 0.002, 8),
     ModelRoute("writing", "deepseek-chat", "deepseek", 0.0005, 0.002, 8),
     ModelRoute("data-analysis", "deepseek-chat", "deepseek", 0.0005, 0.002, 8),
-    # 🔴 高复杂度任务 → Claude
+    # 🔴 High-complexity tasks -> Claude
     ModelRoute("architecture", "claude-sonnet", "anthropic", 0.003, 0.015, 10),
     ModelRoute("system-design", "claude-sonnet", "anthropic", 0.003, 0.015, 10),
-    # 🟣 视觉任务 → Claude Vision
+    # 🟣 Vision tasks -> Claude Vision
     ModelRoute("vision", "claude-sonnet", "anthropic", 0.003, 0.015, 9),
-    # ⚪ 默认
+    # ⚪ Default
     ModelRoute("default", "deepseek-chat", "deepseek", 0.0005, 0.002, 7),
 ]
 
 TASK_TYPE_KEYWORDS = {
-    "architecture": ["架构", "设计模式", "系统设计", "architecture", "scalability"],
-    "system-design": ["系统架构", "技术选型", "分布式", "database design", "schema"],
-    "code-review": ["审查", "review", "code review", "代码审查"],
-    "bug-fix": ["bug", "修复", "fix", "错误", "调试", "debug"],
-    "api-design": ["api", "rest", "graphql", "endpoint", "接口设计"],
-    "writing": ["文案", "文档", "博客", "文章", "content", "copywriting"],
-    "data-analysis": ["数据分析", "统计", "data", "analyze", "分析"],
-    "simple-reply": ["hello", "hi", "简单", "回复", "格式"],
-    "simple-edit": ["重命名", "格式化", "rename", "format", "小修改"],
-    "vision": ["图片", "图像", "image", "vision", "截图", "screenshot"],
+    "architecture": ["architecture", "design pattern", "system design", "architecture", "scalability"],
+    "system-design": ["system architecture", "technology selection", "distributed", "database design", "schema"],
+    "code-review": ["review", "review", "code review", "code review"],
+    "bug-fix": ["bug", "fix", "fix", "error", "debug", "debug"],
+    "api-design": ["api", "rest", "graphql", "endpoint", "api design"],
+    "writing": ["copy", "documentation", "blog", "article", "content", "copywriting"],
+    "data-analysis": ["data analysis", "statistics", "data", "analyze", "analysis"],
+    "simple-reply": ["hello", "hi", "simple", "reply", "format"],
+    "simple-edit": ["rename", "format", "rename", "format", "minor edit"],
+    "vision": ["image", "image", "image", "vision", "screenshot", "screenshot"],
 }
 
 
 def classify_task(task: str) -> str:
-    """智能分类任务类型"""
+    """Intelligently classify task type"""
     task_lower = task.lower()
     for task_type, keywords in TASK_TYPE_KEYWORDS.items():
         if any(kw in task_lower for kw in keywords):
@@ -73,15 +73,15 @@ def classify_task(task: str) -> str:
 
 
 def select_model(task: str, budget_remaining: float = 1.0) -> ModelRoute:
-    """根据任务和预算选择最优性价比模型"""
+    """Select the best cost-effective model based on task and budget"""
     task_type = classify_task(task)
 
-    # 找到匹配的路由
+    # Find matching route
     for route in MODEL_ROUTES:
         if route.task_type == task_type:
-            # 预算检查
+            # Budget check
             if route.cost_per_1k_input > 0 and budget_remaining < 0.01 and route.cost_per_1k_input > 0.001:
-                # 预算不足时降级
+                # Downgrade when budget is low
                 for fallback in MODEL_ROUTES:
                     if fallback.task_type == "default":
                         return fallback
@@ -90,18 +90,18 @@ def select_model(task: str, budget_remaining: float = 1.0) -> ModelRoute:
     return MODEL_ROUTES[-1]  # default
 
 
-# ─── 预算管理 ───
+# ─── Budget Management ───
 @dataclass
 class BudgetAccount:
-    """预算账户"""
+    """Budget account"""
     project: str
-    monthly_limit: float  # 美元
+    monthly_limit: float  # USD
     used: float = 0.0
-    warning_threshold: float = 0.8  # 80%触发预警
+    warning_threshold: float = 0.8  # 80% triggers warning
 
 
 class BudgetManager:
-    """预算管理器 — 类似银行系统"""
+    """Budget manager — similar to a banking system"""
 
     def __init__(self, db_path: Path = APEX_HOME / "economy.db"):
         self.db_path = db_path
@@ -144,7 +144,7 @@ class BudgetManager:
         return BudgetAccount(project=project, monthly_limit=monthly_limit)
 
     def record_usage(self, project: str, amount: float, task_type: str = "", model: str = "", task: str = ""):
-        """记录一次Token消耗"""
+        """Record a token consumption"""
         self._conn.execute(
             "UPDATE accounts SET used = used + ? WHERE project = ?",
             (amount, project),
@@ -157,27 +157,27 @@ class BudgetManager:
         self._conn.commit()
 
     def get_balance(self, project: str) -> tuple[float, float, float]:
-        """获取余额信息 (used, limit, remaining)"""
+        """Get balance info (used, limit, remaining)"""
         account = self.get_or_create_account(project)
         remaining = account.monthly_limit - account.used
         return account.used, account.monthly_limit, max(0, remaining)
 
     def check_warning(self, project: str) -> Optional[str]:
-        """检查是否需要预警"""
+        """Check if a warning is needed"""
         account = self.get_or_create_account(project)
         if account.monthly_limit == 0:
             return None
         ratio = account.used / account.monthly_limit
         if ratio >= 1.0:
-            return f"🔴 {project}: 月度预算已用完 (${account.used:.2f}/${account.monthly_limit:.2f})"
+            return f"🔴 {project}: Monthly budget exhausted (${account.used:.2f}/${account.monthly_limit:.2f})"
         elif ratio >= account.warning_threshold:
-            return f"🟡 {project}: 预算使用已达{ratio:.0%} (${account.used:.2f}/${account.monthly_limit:.2f})"
+            return f"🟡 {project}: Budget usage at {ratio:.0%} (${account.used:.2f}/${account.monthly_limit:.2f})"
         return None
 
     def get_daily_report(self) -> str:
-        """生成今日成本报告"""
+        """Generate today's cost report"""
         today = datetime.now().strftime("%Y-%m-%d")
-        # 获取今日交易
+        # Get today's transactions
         cursor = self._conn.execute(
             """SELECT project, SUM(amount), COUNT(*) FROM transactions
                WHERE date(created_at) = date('now')
@@ -185,18 +185,18 @@ class BudgetManager:
         )
         rows = cursor.fetchall()
         if not rows:
-            return "📊 今日无Token消耗"
+            return "📊 No token consumption today"
 
-        report = "📊 **今日成本报告**\n"
+        report = "📊 **Today's Cost Report**\n"
         total = 0.0
         for project, amount, count in rows:
             total += amount
-            report += f"  • {project}: ${amount:.4f} ({count}次调用)\n"
-        report += f"  ─────────────\n  **今日总计: ${total:.4f}**"
+            report += f"  • {project}: ${amount:.4f} ({count} calls)\n"
+        report += f"  ─────────────\n  **Daily Total: ${total:.4f}**"
         return report
 
     def transfer_budget(self, from_project: str, to_project: str, amount: float) -> bool:
-        """跨项目调拨预算"""
+        """Transfer budget across projects"""
         from_acc = self.get_or_create_account(from_project)
         to_acc = self.get_or_create_account(to_project)
         available = from_acc.monthly_limit - from_acc.used
@@ -209,13 +209,13 @@ class BudgetManager:
 
 
 class TokenRouter:
-    """智能路由 — 按任务类型自动选择最优模型"""
+    """Intelligent router — automatically select the best model based on task type"""
 
     def __init__(self, budget_mgr: BudgetManager = None):
         self.budget_mgr = budget_mgr or BudgetManager()
 
     def route(self, task: str, profile: Profile = None, project: str = "default") -> dict:
-        """为任务选择最优路由"""
+        """Select the optimal route for a task"""
         task_type = classify_task(task)
         _, _, remaining = self.budget_mgr.get_balance(project) if self.budget_mgr else (0, 5, 5)
 

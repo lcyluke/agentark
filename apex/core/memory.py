@@ -1,5 +1,5 @@
-"""Apex — 混合内存系统
-短期(SQLite) + 长期(向量) + 共享(知识图谱)
+"""Apex — Hybrid Memory System
+Short-term (SQLite) + Long-term (Vector) + Shared (Knowledge Graph)
 """
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from typing import Optional
 
 
 class Memory:
-    """Agent内存系统"""
+    """Agent memory system"""
 
     def __init__(self, db_path: Path):
         self.db_path = db_path
@@ -37,7 +37,7 @@ class Memory:
         self._conn.commit()
 
     def remember(self, key: str, value: str, source: str = "", confidence: float = 1.0):
-        """存储一条记忆"""
+        """Store a memory"""
         self._conn.execute(
             "INSERT INTO memories (key, value, source, confidence) VALUES (?, ?, ?, ?)",
             (key, value, source, confidence),
@@ -45,7 +45,7 @@ class Memory:
         self._conn.commit()
 
     def recall(self, key: str) -> Optional[str]:
-        """回忆一条记忆"""
+        """Recall a memory"""
         cursor = self._conn.execute(
             "SELECT value FROM memories WHERE key = ? ORDER BY confidence DESC LIMIT 1",
             (key,),
@@ -61,7 +61,7 @@ class Memory:
         return None
 
     def search(self, query: str, limit: int = 10) -> list[dict]:
-        """搜索记忆（FTS5简单搜索）"""
+        """Search memories (FTS5 simple search)"""
         cursor = self._conn.execute(
             """SELECT key, value, source, confidence FROM memories
                WHERE key LIKE ? OR value LIKE ?
@@ -74,11 +74,11 @@ class Memory:
         ]
 
     def forget(self, key: str):
-        """删除一条记忆"""
+        """Delete a memory"""
         self._conn.execute("DELETE FROM memories WHERE key = ?", (key,))
         self._conn.commit()
 
     def clear(self):
-        """清空所有记忆"""
+        """Clear all memories"""
         self._conn.execute("DELETE FROM memories")
         self._conn.commit()

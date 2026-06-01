@@ -1,15 +1,15 @@
 """Apex — One-Click Company (OCC)
-一行命令创建一家AI公司。
+Create an AI company with one command.
 
-apex company create "AI SaaS创业公司"
-  → 自动创建全部5+个Profile
-  → 自动配置Kanban
-  → 自动设计SOP
-  → 自动生成团队配置
-  → 启动
+apex company create "AI SaaS startup"
+  → Auto-create 5+ Profiles
+  → Auto-configure Kanban
+  → Auto-design SOP
+  → Auto-generate team config
+  → Launch
 
-apex company start "帮我写MVP"
-  → 2小时后，MVP上线
+apex company start "Help me write an MVP"
+  → 2 hours later, MVP goes live
 """
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ console = Console()
 
 @dataclass
 class Company:
-    """一家AI公司的完整定义"""
+    """Complete definition of an AI company"""
     name: str
     description: str = ""
     industry: str = "tech"
@@ -48,78 +48,78 @@ class Company:
 
 COMPANY_TEMPLATES = {
     "saas": {
-        "description": "SaaS创业公司 — 从0到1构建产品",
+        "description": "SaaS startup — Build a product from 0 to 1",
         "profiles": ["pm", "frontend", "backend", "devops", "content"],
         "sop": {
-            "name": "SaaS产品开发流程",
+            "name": "SaaS Product Development Process",
             "steps": [
-                "需求分析 → PRD",
-                "架构设计 → 技术方案",
-                "前后端并行开发 → 代码",
-                "集成测试 → 测试报告",
-                "部署上线 → 生产环境",
-                "内容发布 → 官网/文档",
-                "监控运维 → 运维报告",
+                "Requirements Analysis → PRD",
+                "Architecture Design → Tech Spec",
+                "Frontend & Backend Parallel Development → Code",
+                "Integration Testing → Test Report",
+                "Deploy → Production",
+                "Content Publishing → Website/Docs",
+                "Monitoring & Operations → Ops Report",
             ]
         }
     },
     "ai_product": {
-        "description": "AI产品公司 — 模型+应用一体化",
+        "description": "AI Product Company — Model + Application Integration",
         "profiles": ["pm", "frontend", "backend", "devops", "content"],
         "sop": {
-            "name": "AI产品开发流程",
+            "name": "AI Product Development Process",
             "steps": [
-                "数据准备 & 标注",
-                "模型训练 & 评估",
-                "API服务封装",
-                "前端应用开发",
-                "集成测试",
-                "部署上线",
-                "用户反馈收集",
+                "Data Preparation & Labeling",
+                "Model Training & Evaluation",
+                "API Service Packaging",
+                "Frontend Application Development",
+                "Integration Testing",
+                "Deploy",
+                "User Feedback Collection",
             ]
         }
     },
     "content": {
-        "description": "内容创作公司 — 多平台内容矩阵",
+        "description": "Content Creation Company — Multi-platform Content Matrix",
         "profiles": ["pm", "content", "frontend"],
         "sop": {
-            "name": "内容创作流程",
+            "name": "Content Creation Process",
             "steps": [
-                "选题策划 → 选题库",
-                "内容创作 → 初稿",
-                "审核修改 → 终稿",
-                "多平台分发 → 发布",
-                "数据复盘 → 优化报告",
+                "Topic Planning → Topic Library",
+                "Content Creation → First Draft",
+                "Review & Revision → Final Draft",
+                "Multi-platform Distribution → Publish",
+                "Data Review → Optimization Report",
             ]
         }
     },
     "ecommerce": {
-        "description": "电商平台公司 — 从商品到交易",
+        "description": "E-commerce Company — From Products to Transactions",
         "profiles": ["pm", "frontend", "backend", "devops", "content"],
         "sop": {
-            "name": "电商平台开发流程",
+            "name": "E-commerce Platform Development Process",
             "steps": [
-                "商品管理系统",
-                "购物车 & 订单",
-                "支付对接",
-                "用户系统",
-                "前端店铺",
-                "运营后台",
-                "部署 & 监控",
+                "Product Management System",
+                "Shopping Cart & Orders",
+                "Payment Integration",
+                "User System",
+                "Frontend Storefront",
+                "Operations Dashboard",
+                "Deployment & Monitoring",
             ]
         }
     },
     "freelance": {
-        "description": "个人开发者工作室 — 一个人接项目",
+        "description": "Solo Developer Studio — One person takes on projects",
         "profiles": ["pm", "frontend", "backend", "devops"],
         "sop": {
-            "name": "项目交付流程",
+            "name": "Project Delivery Process",
             "steps": [
-                "需求沟通 → 报价",
-                "技术方案 → 排期",
-                "开发实现 → 交付",
-                "测试验收 → 上线",
-                "后期维护",
+                "Requirements Discussion → Quote",
+                "Technical Plan → Schedule",
+                "Development → Delivery",
+                "Testing & Acceptance → Launch",
+                "Post-launch Maintenance",
             ]
         }
     },
@@ -127,14 +127,14 @@ COMPANY_TEMPLATES = {
 
 
 class CompanyBuilder:
-    """AI公司建造者"""
+    """AI Company Builder"""
 
     def __init__(self):
         self.pm = ProfileManager()
         self.kanban = Kanban(APEX_HOME / "kanban.db")
 
     def create(self, name: str, industry: str = "saas") -> Company:
-        """创建一家AI公司"""
+        """Create an AI company"""
 
         template = COMPANY_TEMPLATES.get(industry, COMPANY_TEMPLATES["saas"])
 
@@ -146,14 +146,14 @@ class CompanyBuilder:
             created_at=time.time(),
         )
 
-        # Step 1: 创建Profile
+        # Step 1: Create Profiles
         pm = ProfileManager()
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             console=console,
         ) as progress:
-            task = progress.add_task(f"🏗️ 正在组建: {name}...", total=len(template["profiles"]) + 3)
+            task = progress.add_task(f"🏗️ Assembling: {name}...", total=len(template["profiles"]) + 3)
 
             for tmpl_name in template["profiles"]:
                 t = get_template(tmpl_name)
@@ -162,24 +162,24 @@ class CompanyBuilder:
                     profile = t.to_profile(profile_name)
                     pm.save(profile)
                     company.profiles.append(profile_name)
-                    progress.update(task, description=f"  ✅ 创建 {t.display} ({profile_name})", advance=1)
+                    progress.update(task, description=f"  ✅ Created {t.display} ({profile_name})", advance=1)
                 else:
-                    progress.update(task, description=f"  ⚠️ 跳过 {tmpl_name}（模板不存在）", advance=1)
+                    progress.update(task, description=f"  ⚠️ Skipped {tmpl_name} (template not found)", advance=1)
 
-            # Step 2: 创建初始Kanban任务
-            progress.update(task, description="  📋 初始化Kanban...", advance=1)
+            # Step 2: Initialize Kanban tasks
+            progress.update(task, description="  📋 Initializing Kanban...", advance=1)
             for i, step in enumerate(template["sop"]["steps"]):
                 assignee = company.profiles[i % len(company.profiles)] if company.profiles else ""
                 self.kanban.create_task(
                     title=f"[{name}] {step}",
                     assignee=assignee,
                     priority=1 if i == 0 else 2,
-                    description=f"SOP步骤{i+1}: {step}",
+                    description=f"SOP Step {i+1}: {step}",
                     status="todo",
                 )
 
-            # Step 3: 保存Company配置
-            progress.update(task, description="  💾 保存公司配置...", advance=1)
+            # Step 3: Save Company config
+            progress.update(task, description="  💾 Saving company config...", advance=1)
             config_path = APEX_HOME / "companies" / f"{name}.json"
             config_path.parent.mkdir(parents=True, exist_ok=True)
             with open(config_path, "w") as f:
@@ -192,27 +192,27 @@ class CompanyBuilder:
                     "created_at": company.created_at,
                 }, f, indent=2, ensure_ascii=False)
 
-            progress.update(task, description=f"  ✅ {name} 组建完成!", advance=1)
+            progress.update(task, description=f"  ✅ {name} assembled!", advance=1)
 
-        # 显示结果
+        # Display result
         self._show_company_summary(company, template)
 
         return company
 
     def _show_company_summary(self, company: Company, template: dict):
-        """显示公司摘要"""
-        table = Table(title=f"🏢 {company.name} — AI公司", box=None, border_style="cyan")
-        table.add_column("部门", style="cyan")
-        table.add_column("角色", style="green")
-        table.add_column("职责", style="white")
-        table.add_column("已就绪", style="green")
+        """Display company summary"""
+        table = Table(title=f"🏢 {company.name} — AI Company", box=None, border_style="cyan")
+        table.add_column("Department", style="cyan")
+        table.add_column("Role", style="green")
+        table.add_column("Duty", style="white")
+        table.add_column("Ready", style="green")
 
         tmpl_role_map = {
-            "pm": ("📋 产品部", "产品经理", "需求分析、PRD"),
-            "frontend": ("💻 前端部", "前端开发", "UI实现"),
-            "backend": ("⚙️ 后端部", "后端开发", "API/数据库"),
-            "content": ("✍️ 内容部", "内容运营", "文案/SEO"),
-            "devops": ("🔧 运维部", "DevOps", "部署/监控"),
+            "pm": ("📋 Product", "Product Manager", "Requirements Analysis, PRD"),
+            "frontend": ("💻 Frontend", "Frontend Dev", "UI Implementation"),
+            "backend": ("⚙️ Backend", "Backend Dev", "API/Database"),
+            "content": ("✍️ Content", "Content Ops", "Copywriting/SEO"),
+            "devops": ("🔧 DevOps", "DevOps", "Deployment/Monitoring"),
         }
 
         for p_name in company.profiles:
@@ -223,55 +223,55 @@ class CompanyBuilder:
         console.print(table)
 
         info = Panel.fit(
-            f"[bold]行业:[/] {company.industry} | "
+            f"[bold]Industry:[/] {company.industry} | "
             f"[bold]SOP:[/] {template['sop']['name']} "
-            f"({len(template['sop']['steps'])}步)\n"
-            f"[bold]命令:[/] apex company start \"{company.name}\" \"第一个任务\"\n"
-            f"[bold]团队:[/] {', '.join(company.profiles)}",
-            title=f"🎯 {company.name} 已上线!",
+            f"({len(template['sop']['steps'])} steps)\n"
+            f"[bold]Command:[/] apex company start \"{company.name}\" \"first task\"\n"
+            f"[bold]Team:[/] {', '.join(company.profiles)}",
+            title=f"🎯 {company.name} is live!",
         )
         console.print(info)
 
     def start(self, name: str, goal: str):
-        """启动公司执行第一个任务"""
+        """Start the company to execute the first task"""
         config_path = APEX_HOME / "companies" / f"{name}.json"
         if not config_path.exists():
-            console.print(f"[red]✗ 公司 '{name}' 不存在。先用 'apex company create' 创建[/]")
+            console.print(f"[red]✗ Company '{name}' does not exist. Create one with 'apex company create' first[/]")
             return
 
         with open(config_path) as f:
             config = json.load(f)
 
-        console.print(f"\n[bold]🚀 {name} 启动中...")
-        console.print(f"   目标: {goal}")
-        console.print(f"   SOP: {config['sop']['name']} ({len(config['sop']['steps'])}步)")
+        console.print(f"\n[bold]🚀 Starting {name}...")
+        console.print(f"   Goal: {goal}")
+        console.print(f"   SOP: {config['sop']['name']} ({len(config['sop']['steps'])} steps)")
         console.print()
 
-        # 用第一个Profile做PM，主导任务分解
+        # Use the first Profile as PM to lead task decomposition
         profiles = config.get("profiles", [])
         if not profiles:
-            console.print("[red]✗ 公司没有Profile[/]")
+            console.print("[red]✗ Company has no profiles[/]")
             return
 
         pm_profile = self.pm.load(profiles[0])
         from apex.core.runtime import Agent
         pm_agent = Agent(pm_profile)
 
-        # 自动分解任务
-        decomposition_prompt = f"""你是{name}公司的产品经理。
-公司SOP: {config['sop']['name']}
-公司团队: {', '.join(profiles)}
+        # Automatically decompose tasks
+        decomposition_prompt = f"""You are the product manager of {name}.
+Company SOP: {config['sop']['name']}
+Company Team: {', '.join(profiles)}
 
-请将以下目标分解为Kanban任务，每个任务指定负责人：
+Please decompose the following goal into Kanban tasks, assign each task to a team member:
 
-目标: {goal}
+Goal: {goal}
 
-输出JSON格式:
+Output JSON format:
 {{
-  "goal": "目标简述",
+  "goal": "Goal summary",
   "tasks": [
-    {{"title": "任务1", "assignee": "pm_profile_name", "description": "..."}},
-    {{"title": "任务2", "assignee": "frontend_profile_name", "description": "..."}}
+    {{"title": "Task 1", "assignee": "pm_profile_name", "description": "..."}},
+    {{"title": "Task 2", "assignee": "frontend_profile_name", "description": "..."}}
   ]
 }}"""
 
@@ -282,10 +282,10 @@ class CompanyBuilder:
             if json_match:
                 plan = json.loads(json_match.group())
             else:
-                console.print("[red]✗ 无法解析任务分解[/]")
+                console.print("[red]✗ Failed to parse task decomposition[/]")
                 return
 
-            # 创建Kanban任务
+            # Create Kanban tasks
             for t in plan.get("tasks", []):
                 self.kanban.create_task(
                     title=f"[{name}] {t['title']}",
@@ -294,31 +294,31 @@ class CompanyBuilder:
                     status="ready",
                 )
 
-            console.print(f"\n[bold green]✅ {name} 已启动! {len(plan.get('tasks',[]))}个任务已创建[/]")
-            console.print(f"   查看: [bold]apex status[/]")
-            console.print(f"   监控: [bold]apex dashboard[/]")
+            console.print(f"\n[bold green]✅ {name} started! {len(plan.get('tasks',[]))} tasks created[/]")
+            console.print(f"   View: [bold]apex status[/]")
+            console.print(f"   Monitor: [bold]apex dashboard[/]")
 
         except Exception as e:
-            console.print(f"[red]✗ 启动失败: {e}[/]")
+            console.print(f"[red]✗ Failed to start: {e}[/]")
 
 
 def list_companies():
-    """列出所有已创建的公司"""
+    """List all created companies"""
     companies_dir = APEX_HOME / "companies"
     if not companies_dir.exists():
-        console.print("[yellow]还没有创建过公司[/]")
+        console.print("[yellow]No companies created yet[/]")
         return
 
     companies = list(companies_dir.glob("*.json"))
     if not companies:
-        console.print("[yellow]还没有创建过公司[/]")
+        console.print("[yellow]No companies created yet[/]")
         return
 
-    table = Table(title="🏢 AI公司列表", box=None)
-    table.add_column("名称", style="cyan")
-    table.add_column("行业", style="green")
-    table.add_column("团队规模", style="yellow")
-    table.add_column("创建时间")
+    table = Table(title="🏢 AI Companies List", box=None)
+    table.add_column("Name", style="cyan")
+    table.add_column("Industry", style="green")
+    table.add_column("Team Size", style="yellow")
+    table.add_column("Created At")
 
     for c_path in companies:
         with open(c_path) as f:

@@ -1,13 +1,13 @@
-"""Apex — 动态技能进化引擎（DSE）
-不是写死的system prompt，Agent从每次执行中学习并自动进化。
+"""Apex — Dynamic Skill Evolution Engine (DSE)
+Not a hardcoded system prompt — the Agent learns from each execution and evolves automatically.
 
-核心循环:
-  执行任务 → 分析反馈 → 提炼模式 → 更新Skills → 共享到知识库 → 下次更强
+Core loop:
+  Execute task → Analyze feedback → Extract patterns → Update Skills → Share to knowledge base → Stronger next time
 
-进化指标:
-  - 相同错误概率降低90%+
-  - 代码质量从70分提升到95分（100次迭代后）
-  - 解决速度提升3倍+
+Evolution metrics:
+  - Same error rate reduced by 90%+
+  - Code quality improved from 70 to 95 (after 100 iterations)
+  - Resolution speed increased 3x+
 """
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ from apex.core.skills import SkillManager, Skill
 
 @dataclass
 class ExecutionRecord:
-    """一次执行的完整记录"""
+    """Complete record of one execution"""
     agent_name: str
     task: str
     task_type: str
@@ -34,7 +34,7 @@ class ExecutionRecord:
     success: bool
     duration_ms: int
     error: str = ""
-    quality_score: float = 0.0  # AI自评或人工评分
+    quality_score: float = 0.0  # AI self-evaluation or human score
     tokens_used: int = 0
     model: str = ""
     timestamp: float = 0.0
@@ -42,17 +42,17 @@ class ExecutionRecord:
 
 @dataclass
 class EvolutionInsight:
-    """进化洞察 — 从执行中提炼的模式"""
+    """Evolution insight — a pattern extracted from execution"""
     pattern: str
-    trigger: str          # 什么情况下触发
-    action: str           # 应该怎么做
+    trigger: str          # What triggers this pattern
+    action: str           # What to do
     confidence: float
-    source_count: int     # 来自多少次执行
-    improvement: float    # 带来多少提升
+    source_count: int     # How many executions contributed
+    improvement: float    # How much improvement was gained
 
 
 class EvolutionEngine:
-    """技能进化引擎 — Agent变聪明的核心"""
+    """Skill evolution engine — the core of Agent intelligence"""
 
     def __init__(self, db_path: Path = APEX_HOME / "evolution.db"):
         self.db_path = db_path
@@ -112,11 +112,11 @@ class EvolutionEngine:
         self._conn.commit()
 
     # ══════════════════════════════════════════
-    # 记录执行
+    # Record execution
     # ══════════════════════════════════════════
 
     def record(self, record: ExecutionRecord):
-        """记录一次执行"""
+        """Record an execution"""
         self._conn.execute("""
             INSERT INTO executions (agent_name, task, task_type, prompt, output,
                 success, duration_ms, error, quality_score, tokens_used, model)
@@ -129,7 +129,7 @@ class EvolutionEngine:
         ))
         self._conn.commit()
 
-        # 记录质量历史
+        # Record quality history
         exec_num = self._conn.execute(
             "SELECT COUNT(*) FROM executions WHERE agent_name=?",
             (record.agent_name,),
@@ -140,21 +140,21 @@ class EvolutionEngine:
         """, (record.agent_name, exec_num, record.quality_score))
         self._conn.commit()
 
-        # 触发模式分析
+        # Trigger pattern analysis
         self._analyze_patterns(record)
 
     # ══════════════════════════════════════════
-    # 模式分析与进化
+    # Pattern analysis and evolution
     # ══════════════════════════════════════════
 
     def _analyze_patterns(self, record: ExecutionRecord):
-        """分析执行记录，提炼模式"""
+        """Analyze execution record and extract patterns"""
         patterns_found = []
 
-        # 1. 错误模式检测
+        # 1. Error pattern detection
         if record.error:
             error_lower = record.error.lower()
-            # 常见错误类型
+            # Common error types
             error_patterns = [
                 ("api_key_missing", ["api_key", "api key", "unauthorized", "401", "403", "auth"]),
                 ("model_not_found", ["model not found", "not found", "404", "does not exist"]),
@@ -166,21 +166,21 @@ class EvolutionEngine:
             ]
             for pattern_name, keywords in error_patterns:
                 if any(kw in error_lower for kw in keywords):
-                    patterns_found.append((f"错误:{pattern_name}", error_lower[:100]))
+                    patterns_found.append((f"error:{pattern_name}", error_lower[:100]))
 
-        # 2. 成功模式检测
+        # 2. Success pattern detection
         if record.success and record.output:
             output_lower = record.output.lower()
             success_patterns = [
-                ("代码审查通过", ["looks good", "lgtm", "approved", "通过", "没问题"]),
-                ("架构方案完整", ["architecture", "设计", "方案"]),
-                ("测试通过", ["passed", "pass", "success", "tests", "✅"]),
+                ("code_review_approved", ["looks good", "lgtm", "approved", "passed", "looks fine", "good to go"]),
+                ("architecture_complete", ["architecture", "design", "solution", "structure"]),
+                ("tests_passed", ["passed", "pass", "success", "tests", "\u2705"]),
             ]
             for pattern_name, keywords in success_patterns:
                 if any(kw in output_lower for kw in keywords):
-                    patterns_found.append((f"成功:{pattern_name}", output_lower[:100]))
+                    patterns_found.append((f"success:{pattern_name}", output_lower[:100]))
 
-        # 3. 保存发现的模式
+        # 3. Save discovered patterns
         for pattern, context in patterns_found:
             existing = self._conn.execute(
                 "SELECT id, source_count FROM patterns WHERE pattern=?",
@@ -195,11 +195,11 @@ class EvolutionEngine:
                 self._conn.execute("""
                     INSERT INTO patterns (pattern, trigger, action, confidence, source_count)
                     VALUES (?, ?, ?, ?, ?)
-                """, (pattern, context[:100], f"自动模式:{pattern}", 0.3, 1))
+                """, (pattern, context[:100], f"auto_pattern:{pattern}", 0.3, 1))
             self._conn.commit()
 
     def get_agent_evolution(self, agent_name: str) -> dict:
-        """获取Agent的进化报告"""
+        """Get evolution report for an Agent"""
         total = self._conn.execute(
             "SELECT COUNT(*) FROM executions WHERE agent_name=?",
             (agent_name,),
@@ -210,7 +210,7 @@ class EvolutionEngine:
         ).fetchone()[0]
         success_rate = success / total if total > 0 else 0
 
-        # 质量趋势
+        # Quality trend
         quality_history = self._conn.execute(
             "SELECT execution_num, quality_score FROM quality_history WHERE agent_name=? ORDER BY execution_num",
             (agent_name,),
@@ -225,7 +225,7 @@ class EvolutionEngine:
         }
 
     def get_skill_recommendations(self, task: str) -> list[str]:
-        """基于历史任务推荐技能（越用越准）"""
+        """Recommend skills based on task history (gets more accurate with use)"""
         task_lower = task.lower()
         cursor = self._conn.execute("""
             SELECT task, output, quality_score FROM executions
@@ -237,23 +237,23 @@ class EvolutionEngine:
             prev_task, output, score = row
             similarity = len(set(task_lower.split()) & set(prev_task.lower().split()))
             if similarity >= 2:
-                recommendations.append(f"参考历史成功任务（质量{score:.1f}）:\n{output[:200]}")
+                recommendations.append(f"Reference past successful task (quality {score:.1f}):\n{output[:200]}")
         return recommendations
 
     def evolve_prompt(self, agent_name: str, task: str, current_prompt: str) -> str:
-        """基于进化历史优化Prompt"""
+        """Optimize Prompt based on evolution history"""
         recommendations = self.get_skill_recommendations(task)
         if recommendations:
-            evolved = current_prompt + "\n\n---\n📚 进化经验参考:\n" + "\n".join(recommendations[:2])
+            evolved = current_prompt + "\n\n---\n\U0001f4da Evolution experience reference:\n" + "\n".join(recommendations[:2])
             return evolved
         return current_prompt
 
     # ══════════════════════════════════════════
-    # 报告
+    # Reports
     # ══════════════════════════════════════════
 
     def summary(self) -> dict:
-        """进化系统总结"""
+        """Evolution system summary"""
         total = self._conn.execute("SELECT COUNT(*) FROM executions").fetchone()[0]
         patterns_count = self._conn.execute("SELECT COUNT(*) FROM patterns").fetchone()[0]
         agents = self._conn.execute(

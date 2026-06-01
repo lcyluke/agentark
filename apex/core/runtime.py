@@ -1,5 +1,5 @@
-"""Apex — 核心Agent运行时
-每个Agent是一个持久化的智能体，有自己的Profile、Memory、Skills。
+"""Apex — Core Agent Runtime
+Each Agent is a persistent intelligent agent with its own Profile, Memory, and Skills.
 """
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ import time
 
 @dataclass
 class AgentContext:
-    """Agent的执行上下文"""
+    """Agent execution context"""
     session_id: str = ""
     task: str = ""
     messages: list[dict] = field(default_factory=list)
@@ -23,7 +23,7 @@ class AgentContext:
 
 
 class Agent:
-    """一个可运行的Agent实例"""
+    """A runnable Agent instance"""
 
     def __init__(
         self,
@@ -41,28 +41,28 @@ class Agent:
     def provider(self):
         if self._provider is None:
             config = {"api_key": self.api_key}
-            # 检查是否deepseek provider、有model前缀
+            # Check if deepseek provider, has model prefix
             prov_name = self.provider_name
             if prov_name not in provider_registry.list():
-                # 尝试匹配 - 比如 deepseek-chat 对应 deepseek
+                # Try matching - e.g. deepseek-chat maps to deepseek
                 for reg_name in provider_registry.list():
                     if prov_name.startswith(reg_name):
                         prov_name = reg_name
                         break
                 else:
-                    prov_name = "deepseek"  # 默认
+                    prov_name = "deepseek"  # default
             self._provider = provider_registry.get(prov_name, config)
         return self._provider
 
     def run(self, task: str, **kwargs) -> str:
-        """执行一个任务"""
+        """Execute a task"""
         self.context.task = task
         self.context.messages = [
             {"role": "system", "content": self._build_system_prompt()},
             {"role": "user", "content": task},
         ]
 
-        self._trace("start", f"开始任务: {task}")
+        self._trace("start", f"Starting task: {task}")
         start_time = time.time()
         success = True
         error_msg = ""
@@ -74,13 +74,13 @@ class Agent:
                 **kwargs,
             )
             self.context.cost += self.provider.estimate_cost(response)
-            self._trace("complete", f"完成 (${self.provider.estimate_cost(response):.6f})")
+            self._trace("complete", f"Completed (${self.provider.estimate_cost(response):.6f})")
 
-            # 技能进化（如果启用自动改进）
+            # Skill evolution (if auto-improve is enabled)
             if self.profile.auto_improve:
                 self._auto_learn(task, response.content)
 
-            # 记录到进化引擎
+            # Record to evolution engine
             self._record_evolution(task, response.content, True, start_time)
 
             return response.content
@@ -88,9 +88,9 @@ class Agent:
         except Exception as e:
             success = False
             error_msg = str(e)
-            # 尝试fallback模型
+            # Try fallback model
             if self.profile.model.fallback:
-                self._trace("fallback", f"主模型失败，降级到 {self.profile.model.fallback}")
+                self._trace("fallback", f"Primary model failed, falling back to {self.profile.model.fallback}")
                 try:
                     response = self.provider.chat(
                         self.context.messages,
@@ -98,18 +98,18 @@ class Agent:
                         **kwargs,
                     )
                     self.context.cost += self.provider.estimate_cost(response)
-                    self._trace("complete", f"完成(fallback) (${self.provider.estimate_cost(response):.6f})")
+                    self._trace("complete", f"Completed (fallback) (${self.provider.estimate_cost(response):.6f})")
                     self._record_evolution(task, response.content, True, start_time)
                     return response.content
                 except Exception as e2:
-                    self._trace("error", f"Fallback也失败: {e2}")
+                    self._trace("error", f"Fallback also failed: {e2}")
                     error_msg = f"{e2}"
             self._record_evolution(task, error_msg, False, start_time, error=error_msg)
             raise
 
     def _record_evolution(self, task: str, output: str, success: bool,
                           start_time: float, error: str = ""):
-        """记录执行到进化引擎"""
+        """Record execution to the evolution engine"""
         try:
             evo = EvolutionEngine()
             record = ExecutionRecord(
@@ -127,10 +127,10 @@ class Agent:
             )
             evo.record(record)
         except Exception:
-            pass  # 进化记录失败不影响主流程
+            pass  # Evolution record failure does not affect main flow
 
     def chat(self, messages: list[dict], **kwargs) -> LLMResponse:
-        """直接聊天接口（用于多Agent对话）"""
+        """Direct chat interface (for multi-Agent conversations)"""
         system_prompt = self._build_system_prompt()
         full_messages = [{"role": "system", "content": system_prompt}] + messages
 
@@ -145,29 +145,29 @@ class Agent:
     def _build_system_prompt(self) -> str:
         p = self.profile
         parts = [
-            f"你是{p.soul.role or p.display}。",
+            f"You are {p.soul.role or p.display}.",
         ]
         if p.soul.expertise:
-            parts.append(f"你的专长: {', '.join(p.soul.expertise)}。")
+            parts.append(f"Your expertise: {', '.join(p.soul.expertise)}.")
         if p.soul.personality:
-            parts.append(f"性格: {p.soul.personality}。")
+            parts.append(f"Personality: {p.soul.personality}.")
         if p.soul.communication:
-            parts.append(f"沟通风格: {p.soul.communication}。")
+            parts.append(f"Communication style: {p.soul.communication}.")
         if p.skills:
-            parts.append(f"技能包: {', '.join(p.skills)}。")
-        parts.append("\n请用专业、直接、可执行的方式完成任务。")
+            parts.append(f"Skill package: {', '.join(p.skills)}.")
+        parts.append("\nPlease complete tasks in a professional, direct, and actionable manner.")
         return "\n".join(parts)
 
     def _trace(self, event: str, detail: str):
         self.context.trace.append({"event": event, "detail": detail, "cost": self.context.cost})
 
     def _auto_learn(self, task: str, result: str):
-        """自动从执行中学习（简化版）"""
-        # Phase 2: 实现技能进化
+        """Auto-learn from execution (simplified version)"""
+        # Phase 2: Implement skill evolution
         pass
 
     def summarize(self) -> dict:
-        """当前会话摘要"""
+        """Current session summary"""
         return {
             "agent": self.profile.name,
             "role": self.profile.soul.role,

@@ -1,5 +1,5 @@
-"""Apex — 智能Kanban
-任务队列 + 状态管理 + AI建议。
+"""Apex — Intelligent Kanban
+Task queue + Status management + AI suggestions.
 """
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ class Task:
 
 
 class Kanban:
-    """智能看板 — 管理Agent任务队列"""
+    """Intelligent Kanban — Manage Agent task queue"""
 
     def __init__(self, db_path: Path):
         self.db_path = db_path
@@ -65,7 +65,7 @@ class Kanban:
         self._conn.commit()
 
     def create_task(self, title: str, **kwargs) -> Task:
-        """创建任务"""
+        """Create a task"""
         task_id = kwargs.get("id", f"t_{uuid.uuid4().hex[:8]}")
         task = Task(
             id=task_id,
@@ -92,7 +92,7 @@ class Kanban:
         return task
 
     def update_task(self, task_id: str, **updates):
-        """更新任务"""
+        """Update a task"""
         allowed = {"status", "assignee", "output", "cost", "title", "description", "priority"}
         sets = []
         values = []
@@ -125,7 +125,7 @@ class Kanban:
         )
 
     def list_tasks(self, status: str = None, assignee: str = None) -> list[Task]:
-        """列出任务"""
+        """List tasks"""
         query = "SELECT * FROM tasks"
         params = []
         conditions = []
@@ -151,7 +151,7 @@ class Kanban:
         return tasks
 
     def get_ready_tasks(self) -> list[Task]:
-        """获取所有可就绪的任务（依赖已满足的）"""
+        """Get all tasks that are ready (dependencies satisfied)"""
         tasks = self.list_tasks(status=TASK_STATUS_TODO)
         ready = []
         for task in tasks:
@@ -171,13 +171,13 @@ class Kanban:
         return ready
 
     def ai_suggestions(self) -> list[str]:
-        """简单的AI建议（Phase 2: 真正的AI驱动）"""
+        """Simple AI suggestions (Phase 2: true AI-driven)"""
         suggestions = []
         tasks = self.list_tasks()
         in_progress = [t for t in tasks if t.status == TASK_STATUS_IN_PROGRESS]
         todo = [t for t in tasks if t.status == TASK_STATUS_TODO]
         if len(in_progress) >= 3:
-            suggestions.append(f"当前有{len(in_progress)}个任务在进行中，建议集中处理避免并行过多")
+            suggestions.append(f"Currently {len(in_progress)} tasks in progress. Recommend focusing on fewer tasks to avoid excessive parallelism.")
         if todo:
-            suggestions.append(f"还有{len(todo)}个待办任务等待分配")
+            suggestions.append(f"Still {len(todo)} todo tasks waiting for assignment.")
         return suggestions

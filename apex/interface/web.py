@@ -1,5 +1,5 @@
 """Apex — Web UI Dashboard v2
-Flask + Dark Theme 完整监控面板。
+Flask + Dark Theme full monitoring dashboard.
 Route: /(Dashboard) /traces /agents /logs /api/*
 """
 from __future__ import annotations
@@ -17,7 +17,7 @@ except ImportError:
 
 
 def create_app():
-    """创建Flask应用"""
+    """Create Flask application"""
     if Flask is None:
         raise ImportError("Flask not installed. Run: pip install flask")
 
@@ -62,17 +62,17 @@ def create_app():
 
     @app.route("/traces")
     def traces_page():
-        """Trace浏览页"""
+        """Trace browsing page"""
         return render_template("dashboard.html", page="traces")
 
     @app.route("/agents")
     def agents_page():
-        """Agent详情页"""
+        """Agent details page"""
         return render_template("dashboard.html", page="agents")
 
     @app.route("/logs")
     def logs_page():
-        """实时日志页"""
+        """Real-time logs page"""
         return render_template("dashboard.html", page="logs")
 
     # ══════════════════════════════════════════
@@ -81,14 +81,14 @@ def create_app():
 
     @app.route("/api/status")
     def api_status():
-        """综合状态API"""
+        """Comprehensive status API"""
         profiles = pm.list()
         k = load_kanban()
         tasks = k.list_tasks() if k else []
         evo = load_evolution()
         kg = load_kg()
 
-        # 经济数据
+        # Economy data
         economy_data = {}
         if economy_db.exists():
             bm = BudgetManager(economy_db)
@@ -100,11 +100,11 @@ def create_app():
                 "usage_pct": round(used / limit * 100, 1) if limit > 0 else 0,
             }
 
-        # 进化数据
+        # Evolution data
         evo_summary = evo.summary() if evo else {"patterns_discovered": 0}
         kg_stats = kg.stats() if kg else {"total_nodes": 0}
 
-        # 公司列表
+        # Company list
         companies_dir = APEX_HOME / "companies"
         companies = [f.stem for f in companies_dir.glob("*.json")] if companies_dir.exists() else []
 
@@ -124,7 +124,7 @@ def create_app():
 
     @app.route("/api/profiles")
     def api_profiles():
-        """Profile列表API"""
+        """Profile list API"""
         profiles = []
         for name in pm.list():
             try:
@@ -145,7 +145,7 @@ def create_app():
 
     @app.route("/api/profiles/<name>")
     def api_profile_detail(name: str):
-        """单个Profile详情"""
+        """Single Profile details"""
         try:
             p = pm.load(name)
             evo = load_evolution()
@@ -166,7 +166,7 @@ def create_app():
 
     @app.route("/api/tasks")
     def api_tasks():
-        """任务列表API"""
+        """Task list API"""
         k = load_kanban()
         if not k:
             return jsonify([])
@@ -180,12 +180,12 @@ def create_app():
 
     @app.route("/api/knowledge")
     def api_knowledge():
-        """知识图谱API"""
+        """Knowledge graph API"""
         kg = load_kg()
         if not kg:
             return jsonify({"nodes": 0, "edges": 0, "topics": []})
         stats = kg.stats()
-        # 获取最近活跃的知识
+        # Get recently active knowledge
         return jsonify({
             "nodes": stats.get("total_nodes", 0),
             "edges": stats.get("total_edges", 0),
@@ -195,7 +195,7 @@ def create_app():
 
     @app.route("/api/evolution")
     def api_evolution():
-        """进化引擎API"""
+        """Evolution engine API"""
         evo = load_evolution()
         if not evo:
             return jsonify({"total_executions": 0, "patterns": 0, "agents": []})
@@ -204,7 +204,7 @@ def create_app():
 
     @app.route("/api/companies")
     def api_companies():
-        """公司列表API"""
+        """Company list API"""
         companies_dir = APEX_HOME / "companies"
         if not companies_dir.exists():
             return jsonify([])
@@ -223,14 +223,14 @@ def create_app():
 
     @app.route("/api/health")
     def api_health():
-        """健康检查"""
+        """Health check"""
         return jsonify({"status": "ok", "timestamp": time.time()})
 
     return app
 
 
 def run_dashboard(host: str = "127.0.0.1", port: int = 8080, debug: bool = False):
-    """启动Dashboard"""
+    """Start Dashboard"""
     app = create_app()
     print(f"📊 Apex Dashboard: http://{host}:{port}")
     print(f"   API: http://{host}:{port}/api/status")

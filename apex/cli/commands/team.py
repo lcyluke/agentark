@@ -1,4 +1,4 @@
-"""Apex — team 命令"""
+"""Apex — team command"""
 from __future__ import annotations
 
 from pathlib import Path
@@ -12,29 +12,29 @@ from apex.core.profile import ProfileManager
 
 
 def create_cmd(name: str):
-    """创建一个新Agent"""
+    """Create a new Agent"""
     console = Console()
     pm = ProfileManager()
 
     if name in pm.list():
-        console.print(f"[yellow]⚠ Profile '{name}' 已存在[/]")
+        console.print(f"[yellow]⚠ Profile '{name}' already exists[/]")
         return
 
-    role = Prompt.ask("角色名称", default=name)
-    expertise_str = Prompt.ask("专长（逗号分隔）", default="")
+    role = Prompt.ask("Role name", default=name)
+    expertise_str = Prompt.ask("Expertise (comma-separated)", default="")
     expertise = [e.strip() for e in expertise_str.split(",") if e.strip()]
 
     pm.create_default(name, role=role, expertise=expertise)
-    console.print(f"[green]✅ Profile '{name}' 创建成功 (Role: {role})[/]")
+    console.print(f"[green]✅ Profile '{name}' created successfully (Role: {role})[/]")
 
 
 def list_cmd():
-    """列出所有Agent"""
+    """List all Agents"""
     console = Console()
     pm = ProfileManager()
     profiles = pm.list()
 
-    table = Table(title="Agent列表", box=None)
+    table = Table(title="Agent List", box=None)
     table.add_column("Name", style="cyan")
     table.add_column("Role", style="green")
     table.add_column("Model", style="yellow")
@@ -45,12 +45,12 @@ def list_cmd():
             p = pm.load(name)
             table.add_row(name, p.soul.role or "-", p.model.default, ", ".join(p.skills[:3]) or "-")
         except Exception:
-            table.add_row(name, "[red]加载失败[/]", "", "")
+            table.add_row(name, "[red]Failed to load[/]", "", "")
     console.print(table)
 
 
 def show_cmd(name: str):
-    """显示Agent详情"""
+    """Show Agent details"""
     console = Console()
     pm = ProfileManager()
 
@@ -70,4 +70,4 @@ def show_cmd(name: str):
         )
         console.print(info)
     except FileNotFoundError:
-        console.print(f"[red]✗ Profile '{name}' 不存在[/]")
+        console.print(f"[red]✗ Profile '{name}' does not exist[/]")

@@ -1,11 +1,11 @@
-"""Apex — 自愈工作流增强版（Self-Healing Workflow v2）
-三振出局规则 + 知识积累 + 自动降级 + 进化反馈。
+"""Apex — Self-Healing Workflow Enhanced (Self-Healing Workflow v2)
+Three-strike rule + Knowledge accumulation + Auto-degradation + Evolutionary feedback.
 
-当Agent出错时:
-  1. 第一次出错 → 自动修复
-  2. 第二次出错 → 切换方案
-  3. 第三次出错 → 降级模型 → 通知人类
-  4. 无论结果 → 知识写入KG → 进化引擎记录
+When an Agent encounters an error:
+  1. First error -> Auto-fix
+  2. Second error -> Switch strategy
+  3. Third error -> Degrade model -> Notify human
+  4. Regardless of outcome -> Write knowledge to KG -> Evolution engine records
 """
 from __future__ import annotations
 
@@ -33,13 +33,13 @@ class HealingResult:
 
 
 class SelfHealingExecutor:
-    """自愈执行器 v2 — 完整生命周期"""
+    """Self-Healing Executor v2 — Full lifecycle"""
 
     MAX_ATTEMPTS = 3
     STRATEGIES = [
-        "direct",           # 第一次：直接重试
-        "switch_model",     # 第二次：切换模型/参数
-        "simplify_task",    # 第三次：简化任务再重试
+        "direct",           # First: direct retry
+        "switch_model",     # Second: switch model/parameters
+        "simplify_task",    # Third: simplify task then retry
     ]
 
     def __init__(self, agent: Agent, kanban: Kanban = None):
@@ -60,24 +60,24 @@ class SelfHealingExecutor:
                 healer_profile = Profile(
                     name="healer",
                     soul=SoulConfig(
-                        role="故障修复专家",
+                        role="Fault Repair Expert",
                         expertise=["debugging", "error-analysis", "system-recovery", "root-cause"],
-                        personality="冷静、系统化思维、永不放弃",
+                        personality="Calm, systematic thinker, never gives up",
                     ),
                 )
             self._healer = Agent(healer_profile)
         return self._healer
 
     def run(self, task: str, max_attempts: int = MAX_ATTEMPTS, **kwargs) -> HealingResult:
-        """自愈执行 — 三振出局规则"""
+        """Self-healing execution — Three-strike rule"""
         result = HealingResult()
         start_time = time.time()
         strategy_idx = 0
 
-        # 1. 查知识图谱看有没有已知修复
-        kg_hint = self.kg.query(f"修复 {task[:60]}")
+        # 1. Check knowledge graph for known fixes
+        kg_hint = self.kg.query(f"Fix {task[:60]}")
         if kg_hint.confidence > 0.5:
-            result.fixes.append(f"📚 知识图谱建议: {kg_hint.answer[:200]}")
+            result.fixes.append(f"📚 Knowledge Graph Suggestion: {kg_hint.answer[:200]}")
 
         for attempt in range(1, max_attempts + 1):
             result.attempts = attempt
@@ -85,30 +85,30 @@ class SelfHealingExecutor:
             result.strategy_used = strategy
 
             try:
-                # 应用策略
+                # Apply strategy
                 if strategy == "direct":
                     output = self.agent.run(task, **kwargs)
 
                 elif strategy == "switch_model":
-                    # 切到fallback模型
+                    # Switch to fallback model
                     fallback = self.agent.profile.model.fallback
                     output = self.agent.run(task, model=fallback, **kwargs)
                     result.model_downgraded = True
 
                 elif strategy == "simplify_task":
-                    # 简化任务
+                    # Simplify task
                     healer = self._get_healer()
                     simplified = healer.run(
-                        f"将以下任务拆解为更简单的子任务（一次只做一件事）:\n\n{task}"
+                        f"Break down the following task into simpler sub-tasks (one thing at a time):\n\n{task}"
                     )
-                    output = self.agent.run(f"请完成以下简化版任务:\n{simplified}", **kwargs)
+                    output = self.agent.run(f"Please complete the following simplified task:\n{simplified}", **kwargs)
 
-                # 成功！
+                # Success!
                 result.success = True
                 result.final_output = output
                 duration_ms = int((time.time() - start_time) * 1000)
 
-                # 记录到进化引擎
+                # Record to evolution engine
                 self._record_evolution(task, output, True, duration_ms, strategy)
                 return result
 
@@ -117,12 +117,12 @@ class SelfHealingExecutor:
                 result.errors.append(error_msg)
                 strategy_idx += 1
 
-                # 自动诊断
+                # Auto-diagnose
                 fix = self._diagnose(error_msg, task, attempt)
                 if fix:
                     result.fixes.append(fix)
 
-                # 知识图谱积累
+                # Knowledge graph accumulation
                 self.kg.learn_from_experience(
                     agent_name=self.agent.profile.name,
                     task=task,
@@ -130,7 +130,7 @@ class SelfHealingExecutor:
                     fix=fix,
                 )
 
-                # 更新Kanban
+                # Update Kanban
                 if self.kanban:
                     tasks = self.kanban.list_tasks()
                     for t in tasks:
@@ -140,20 +140,20 @@ class SelfHealingExecutor:
 
                 time.sleep(1)
 
-        # 三振出局
+        # Three strikes out
         result.success = False
         duration_ms = int((time.time() - start_time) * 1000)
         result.final_output = (
-            f"❌ 执行失败（已自动修复{max_attempts}次均无效）\n"
-            f"最后错误: {result.errors[-1] if result.errors else '未知'}\n"
-            f"尝试策略: {', '.join(self.STRATEGIES[:strategy_idx+1])}\n"
-            f"建议: 联系人类确认"
+            f"❌ Execution failed (auto-fix attempted {max_attempts} times, all ineffective)\n"
+            f"Last error: {result.errors[-1] if result.errors else 'Unknown'}\n"
+            f"Strategies attempted: {', '.join(self.STRATEGIES[:strategy_idx+1])}\n"
+            f"Suggestion: Contact human for confirmation"
         )
 
-        # 记录失败到进化引擎
+        # Record failure to evolution engine
         self._record_evolution(task, result.final_output, False, duration_ms, "failed")
 
-        # 更新Kanban为失败
+        # Update Kanban as failed
         if self.kanban:
             tasks = self.kanban.list_tasks()
             for t in tasks:
@@ -164,36 +164,36 @@ class SelfHealingExecutor:
         return result
 
     def _diagnose(self, error: str, task: str, attempt: int) -> str:
-        """诊断错误 — 先查KG再问LLM"""
-        # 先查知识图谱
-        kg_result = self.kg.query(f"如何修复 {error[:60]}")
-        if kg_result.confidence > 0.5 and "没有找到" not in kg_result.answer:
-            return f"📚 知识图谱: {kg_result.answer[:300]}"
+        """Diagnose error — check KG first, then ask LLM"""
+        # Check knowledge graph first
+        kg_result = self.kg.query(f"How to fix {error[:60]}")
+        if kg_result.confidence > 0.5 and "not found" not in kg_result.answer.lower():
+            return f"📚 Knowledge Graph: {kg_result.answer[:300]}"
 
-        # 再问LLM
+        # Then ask LLM
         healer = self._get_healer()
         try:
-            diag_prompt = f"""一个Agent执行任务时出错。请一键诊断并给出最直接的修复方案。
+            diag_prompt = f"""An Agent encountered an error while executing a task. Please diagnose and provide the most direct fix.
 
-任务: {task[:200]}
-错误: {error[:300]}
-第{attempt}次重试
+Task: {task[:200]}
+Error: {error[:300]}
+Attempt #{attempt}
 
-输出格式（简洁）:
-根因: ...
-修复: ...
+Output format (concise):
+Root Cause: ...
+Fix: ...
 """
             return healer.run(diag_prompt)[:500]
         except Exception:
-            return f"简单重试（第{attempt}次）"
+            return f"Simple retry (Attempt #{attempt})"
 
     def _record_evolution(self, task: str, output: str, success: bool,
                           duration_ms: int, strategy: str):
-        """记录到进化引擎"""
+        """Record to evolution engine"""
         record = ExecutionRecord(
             agent_name=self.agent.profile.name,
             task=task,
-            task_type="healing" if "修复" in task else "general",
+            task_type="healing" if "fix" in task.lower() else "general",
             prompt=task[:200],
             output=output[:500],
             success=success,

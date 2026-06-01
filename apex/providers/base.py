@@ -1,5 +1,5 @@
-"""Apex — Provider抽象层
-支持任意LLM Provider的热插拔。
+"""Apex — Provider Abstraction Layer
+Supports hot-plugging of any LLM Provider.
 """
 from __future__ import annotations
 
@@ -17,28 +17,28 @@ class LLMResponse:
 
 
 class BaseProvider(ABC):
-    """所有Provider必须实现的基类"""
+    """Base class that all Providers must implement"""
 
     def __init__(self, config: dict):
         self.config = config
 
     @abstractmethod
     def chat(self, messages: list[dict], **kwargs) -> LLMResponse:
-        """发送聊天请求"""
+        """Send a chat request"""
         ...
 
     @abstractmethod
     def name(self) -> str:
-        """Provider名称"""
+        """Provider name"""
         ...
 
     def estimate_cost(self, response: LLMResponse) -> float:
-        """估算API调用成本（美元）"""
+        """Estimate API call cost (USD)"""
         return 0.0
 
 
 class ProviderRegistry:
-    """Provider注册表 — 支持动态注册"""
+    """Provider registry — supports dynamic registration"""
 
     def __init__(self):
         self._providers: dict[str, type[BaseProvider]] = {}
@@ -48,7 +48,7 @@ class ProviderRegistry:
         self._providers[name] = provider_cls
 
     def get(self, name: str, config: dict = None) -> BaseProvider:
-        """获取Provider实例（带缓存）"""
+        """Get Provider instance (with caching)"""
         cache_key = f"{name}:{str(config)}"
         if cache_key in self._instances:
             return self._instances[cache_key]
@@ -65,5 +65,5 @@ class ProviderRegistry:
         return list(self._providers.keys())
 
 
-# 全局注册表
+# Global registry
 registry = ProviderRegistry()

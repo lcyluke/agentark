@@ -1,14 +1,14 @@
 """Apex — MCP Hub
-Agent与外部世界的连接器。跨语言、跨机器、跨框架。
-任何支持MCP的工具/服务都可以无缝接入。
+Connector between Agent and the external world. Cross-language, cross-machine, cross-framework.
+Any tool/service supporting MCP can be seamlessly integrated.
 
-内置MCP工具:
-  - filesystem: 文件读写搜索
-  - github: 代码仓库管理
-  - browser: 网页浏览
-  - shell: 命令执行
-  - http: API调用
-  - search: 知识图谱查询
+Built-in MCP tools:
+  - filesystem: file read/write/search
+  - github: code repository management
+  - browser: web browsing
+  - shell: command execution
+  - http: API calls
+  - search: knowledge graph queries
 """
 from __future__ import annotations
 
@@ -24,14 +24,14 @@ from abc import ABC, abstractmethod
 
 @dataclass
 class MCPTool:
-    """MCP工具定义"""
+    """MCP tool definition"""
     name: str
     description: str
     parameters: dict
     handler: Callable = None
 
     def to_openai_tool(self) -> dict:
-        """转成OpenAI工具格式"""
+        """Convert to OpenAI tool format"""
         return {
             "type": "function",
             "function": {
@@ -44,7 +44,7 @@ class MCPTool:
 
 @dataclass
 class MCPResult:
-    """MCP调用结果"""
+    """MCP call result"""
     success: bool
     output: str = ""
     error: str = ""
@@ -52,7 +52,7 @@ class MCPResult:
 
 
 class BaseMCPHandler(ABC):
-    """MCP处理器基类"""
+    """Base MCP handler class"""
 
     @abstractmethod
     def handle(self, **kwargs) -> MCPResult:
@@ -60,11 +60,11 @@ class BaseMCPHandler(ABC):
 
 
 # ══════════════════════════════════════════
-# 内置MCP工具实现
+# Built-in MCP tool implementations
 # ══════════════════════════════════════════
 
 class FileSystemMCP(BaseMCPHandler):
-    """文件系统操作"""
+    """Filesystem operations"""
 
     def handle(self, action: str = "read", path: str = "", content: str = "",
                pattern: str = "", **kwargs) -> MCPResult:
@@ -75,12 +75,12 @@ class FileSystemMCP(BaseMCPHandler):
                     with open(path) as f:
                         data = f.read()
                     return MCPResult(success=True, output=data[:5000])
-                return MCPResult(success=False, error=f"文件不存在: {path}")
+                return MCPResult(success=False, error=f"File not found: {path}")
             elif action == "write":
                 os.makedirs(os.path.dirname(path), exist_ok=True)
                 with open(path, "w") as f:
                     f.write(content)
-                return MCPResult(success=True, output=f"已写入 {len(content)} 字符到 {path}")
+                return MCPResult(success=True, output=f"Written {len(content)} characters to {path}")
             elif action == "list":
                 dir_path = path or "."
                 files = os.listdir(dir_path)
@@ -94,13 +94,13 @@ class FileSystemMCP(BaseMCPHandler):
                             results.append(os.path.join(root, f))
                 return MCPResult(success=True, output="\n".join(results[:30]))
             else:
-                return MCPResult(success=False, error=f"未知操作: {action}")
+                return MCPResult(success=False, error=f"Unknown action: {action}")
         except Exception as e:
             return MCPResult(success=False, error=str(e))
 
 
 class ShellMCP(BaseMCPHandler):
-    """命令执行"""
+    """Command execution"""
 
     def handle(self, command: str = "", workdir: str = "", timeout: int = 30, **kwargs) -> MCPResult:
         try:
@@ -121,13 +121,13 @@ class ShellMCP(BaseMCPHandler):
                 error=result.stderr[:1000] if result.returncode != 0 else "",
             )
         except subprocess.TimeoutExpired:
-            return MCPResult(success=False, error=f"命令超时({timeout}s): {command[:100]}")
+            return MCPResult(success=False, error=f"Command timed out ({timeout}s): {command[:100]}")
         except Exception as e:
             return MCPResult(success=False, error=str(e))
 
 
 class KnowledgeMCP(BaseMCPHandler):
-    """知识图谱查询"""
+    """Knowledge graph query"""
 
     def __init__(self):
         from apex.core.knowledge import KnowledgeGraph
@@ -145,21 +145,21 @@ class KnowledgeMCP(BaseMCPHandler):
                 )
             elif action == "learn":
                 self.kg.learn(entity, source="mcp")
-                return MCPResult(success=True, output=f"已学习实体: {entity}")
+                return MCPResult(success=True, output=f"Learned entity: {entity}")
             elif action == "relate":
                 self.kg.relate(entity, relation, target, source="mcp")
-                return MCPResult(success=True, output=f"已建立关系: {entity} --({relation})--> {target}")
+                return MCPResult(success=True, output=f"Created relation: {entity} --({relation})--> {target}")
             elif action == "stats":
                 stats = self.kg.stats()
                 return MCPResult(success=True, output=json.dumps(stats, indent=2))
             else:
-                return MCPResult(success=False, error=f"未知操作: {action}")
+                return MCPResult(success=False, error=f"Unknown action: {action}")
         except Exception as e:
             return MCPResult(success=False, error=str(e))
 
 
 class HTTPSMCP(BaseMCPHandler):
-    """HTTP API调用"""
+    """HTTP API calls"""
 
     def handle(self, method: str = "GET", url: str = "", headers: dict = None,
                body: str = "", timeout: int = 30, **kwargs) -> MCPResult:
@@ -182,28 +182,28 @@ class HTTPSMCP(BaseMCPHandler):
 
 
 # ══════════════════════════════════════════
-# MCP Hub — 注册中心
+# MCP Hub — Registry
 # ══════════════════════════════════════════
 
 class MCPHub:
-    """MCP Hub — 所有工具的入口"""
+    """MCP Hub — Entry point for all tools"""
 
     def __init__(self):
         self._tools: dict[str, MCPTool] = {}
         self._register_builtins()
 
     def _register_builtins(self):
-        """注册内置MCP工具"""
+        """Register built-in MCP tools"""
         self.register(MCPTool(
             name="filesystem",
-            description="文件系统操作：读取、写入、列出文件",
+            description="Filesystem operations: read, write, list files",
             parameters={
                 "type": "object",
                 "properties": {
                     "action": {"type": "string", "enum": ["read", "write", "list", "search"]},
-                    "path": {"type": "string", "description": "文件路径"},
-                    "content": {"type": "string", "description": "写入内容（write时）"},
-                    "pattern": {"type": "string", "description": "搜索模式（search时）"},
+                    "path": {"type": "string", "description": "File path"},
+                    "content": {"type": "string", "description": "Content to write (for write action)"},
+                    "pattern": {"type": "string", "description": "Search pattern (for search action)"},
                 },
                 "required": ["action", "path"],
             },
@@ -211,13 +211,13 @@ class MCPHub:
         ))
         self.register(MCPTool(
             name="shell",
-            description="执行Shell命令",
+            description="Execute shell commands",
             parameters={
                 "type": "object",
                 "properties": {
-                    "command": {"type": "string", "description": "要执行的命令"},
-                    "workdir": {"type": "string", "description": "工作目录"},
-                    "timeout": {"type": "integer", "description": "超时秒数"},
+                    "command": {"type": "string", "description": "Command to execute"},
+                    "workdir": {"type": "string", "description": "Working directory"},
+                    "timeout": {"type": "integer", "description": "Timeout in seconds"},
                 },
                 "required": ["command"],
             },
@@ -225,15 +225,15 @@ class MCPHub:
         ))
         self.register(MCPTool(
             name="knowledge",
-            description="知识图谱查询和学习",
+            description="Knowledge graph query and learning",
             parameters={
                 "type": "object",
                 "properties": {
                     "action": {"type": "string", "enum": ["query", "learn", "relate", "stats"]},
-                    "query": {"type": "string", "description": "查询内容"},
-                    "entity": {"type": "string", "description": "实体名称"},
-                    "relation": {"type": "string", "description": "关系类型"},
-                    "target": {"type": "string", "description": "目标实体"},
+                    "query": {"type": "string", "description": "Query content"},
+                    "entity": {"type": "string", "description": "Entity name"},
+                    "relation": {"type": "string", "description": "Relation type"},
+                    "target": {"type": "string", "description": "Target entity"},
                 },
                 "required": ["action"],
             },
@@ -241,15 +241,15 @@ class MCPHub:
         ))
         self.register(MCPTool(
             name="http",
-            description="HTTP API调用",
+            description="HTTP API calls",
             parameters={
                 "type": "object",
                 "properties": {
                     "method": {"type": "string", "enum": ["GET", "POST", "PUT", "DELETE"]},
-                    "url": {"type": "string", "description": "请求URL"},
-                    "headers": {"type": "object", "description": "请求头"},
-                    "body": {"type": "string", "description": "请求体"},
-                    "timeout": {"type": "integer", "description": "超时秒数"},
+                    "url": {"type": "string", "description": "Request URL"},
+                    "headers": {"type": "object", "description": "Request headers"},
+                    "body": {"type": "string", "description": "Request body"},
+                    "timeout": {"type": "integer", "description": "Timeout in seconds"},
                 },
                 "required": ["url"],
             },
@@ -257,32 +257,32 @@ class MCPHub:
         ))
 
     def register(self, tool: MCPTool):
-        """注册一个MCP工具"""
+        """Register an MCP tool"""
         self._tools[tool.name] = tool
 
     def get(self, name: str) -> Optional[MCPTool]:
         return self._tools.get(name)
 
     def call(self, name: str, **kwargs) -> MCPResult:
-        """调用一个MCP工具"""
+        """Call an MCP tool"""
         tool = self.get(name)
         if not tool:
-            return MCPResult(success=False, error=f"未知MCP工具: {name}")
+            return MCPResult(success=False, error=f"Unknown MCP tool: {name}")
         if not tool.handler:
-            return MCPResult(success=False, error=f"MCP工具 '{name}' 没有处理器")
+            return MCPResult(success=False, error=f"MCP tool '{name}' has no handler")
         return tool.handler(**kwargs)
 
     def list_tools(self) -> list[dict]:
-        """列出所有可用工具"""
+        """List all available tools"""
         return [
             {"name": t.name, "description": t.description, "parameters": t.parameters}
             for t in self._tools.values()
         ]
 
     def to_openai_tools(self) -> list[dict]:
-        """导出为OpenAI工具格式"""
+        """Export to OpenAI tool format"""
         return [t.to_openai_tool() for t in self._tools.values()]
 
 
-# 全局MCP Hub
+# Global MCP Hub
 hub = MCPHub()

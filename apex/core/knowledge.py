@@ -1,13 +1,13 @@
-"""Apex — 知识图谱记忆（KGM）
-真正的图结构记忆系统，不是向量数据库伪装。
-教会一个Agent = 教会所有Agent。
+"""Apex — Knowledge Graph Memory (KGM)
+True graph-structured memory system, not a vector database in disguise.
+Teach one Agent = Teach all Agents.
 
-核心能力:
-  1. 实体-关系-实体三元组存储
-  2. 跨Agent知识共享 — A学到的东西B自动知道
-  3. 自动推理 — 从已有知识推导新知识
-  4. 置信度衰减 — 旧知识自动降权
-  5. 冲突检测 — 发现矛盾知识并解决
+Core capabilities:
+  1. Entity-Relation-Entity triple storage
+  2. Cross-Agent knowledge sharing — what A learns, B automatically knows
+  3. Auto-inference — derive new knowledge from existing knowledge
+  4. Confidence decay — old knowledge automatically downgraded
+  5. Conflict detection — discover and resolve contradictory knowledge
 """
 from __future__ import annotations
 
@@ -25,11 +25,11 @@ from apex.core.profile import APEX_HOME
 
 @dataclass
 class KnowledgeNode:
-    """知识节点"""
+    """Knowledge node"""
     id: int = 0
-    entity: str = ""          # 实体名称
-    entity_type: str = ""     # 实体类型（技术/概念/工具/规则）
-    source: str = ""          # 来源（哪个Agent/task）
+    entity: str = ""          # Entity name
+    entity_type: str = ""     # Entity type (technology/concept/tool/rule)
+    source: str = ""          # Source (which Agent/task)
     confidence: float = 1.0
     created_at: float = 0.0
     accessed_at: float = 0.0
@@ -38,12 +38,12 @@ class KnowledgeNode:
 
 @dataclass
 class KnowledgeEdge:
-    """知识边 — 实体之间的关系"""
+    """Knowledge edge — relationship between entities"""
     id: int = 0
     source_entity: str = ""
-    relation: str = ""        # 关系类型（支持/不支持/替代/推荐/危险/必须）
+    relation: str = ""        # Relation type (supports/conflicts/replaces/recommends/dangerous/required)
     target_entity: str = ""
-    context: str = ""         # 上下文说明
+    context: str = ""         # Context description
     confidence: float = 1.0
     source: str = ""
     created_at: float = 0.0
@@ -51,7 +51,7 @@ class KnowledgeEdge:
 
 @dataclass
 class QueryResult:
-    """查询结果"""
+    """Query result"""
     answer: str = ""
     evidence: list[dict] = field(default_factory=list)
     confidence: float = 0.0
@@ -59,7 +59,7 @@ class QueryResult:
 
 
 class KnowledgeGraph:
-    """知识图谱 — 所有Agent共享的大脑"""
+    """Knowledge Graph — the shared brain of all Agents"""
 
     def __init__(self, db_path: Path = APEX_HOME / "knowledge.db"):
         self.db_path = db_path
@@ -69,7 +69,7 @@ class KnowledgeGraph:
         self._init_db()
 
     def _init_db(self):
-        # 节点表
+        # Nodes table
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS nodes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,7 +83,7 @@ class KnowledgeGraph:
                 access_count INTEGER DEFAULT 0
             )
         """)
-        # 边表
+        # Edges table
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS edges (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -98,14 +98,14 @@ class KnowledgeGraph:
                 FOREIGN KEY (target_entity) REFERENCES nodes(entity)
             )
         """)
-        # 全文搜索
+        # Full-text search
         self._conn.execute("""
             CREATE VIRTUAL TABLE IF NOT EXISTS knowledge_fts USING fts5(
                 entity, description, context, source,
                 content='nodes', content_rowid='id'
             )
         """)
-        # 冲突表
+        # Conflicts table
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS conflicts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -121,12 +121,12 @@ class KnowledgeGraph:
         self._conn.commit()
 
     # ══════════════════════════════════════════
-    # 写入
+    # Write
     # ══════════════════════════════════════════
 
     def learn(self, entity: str, entity_type: str = "concept",
               description: str = "", source: str = ""):
-        """学习一个新实体"""
+        """Learn a new entity"""
         now = time.time()
         self._conn.execute("""
             INSERT INTO nodes (entity, entity_type, description, source, created_at, accessed_at)
@@ -139,19 +139,19 @@ class KnowledgeGraph:
 
     def relate(self, source_entity: str, relation: str, target_entity: str,
                context: str = "", confidence: float = 1.0, source: str = ""):
-        """建立实体间关系
+        """Establish a relationship between entities
 
-        relation类型:
-          - "支持" / "不支持" — 技术兼容性
-          - "替代" / "替代方案" — 替代关系
-          - "推荐" / "不推荐" — 最佳实践
-          - "危险" / "警告" — 需要注意
-          - "必须" / "禁止" — 强制规则
-          - "依赖" / "被依赖" — 依赖关系
-          - "属于" / "包含" — 层级关系
-          - "例子" — 示例关系
+        relation types:
+          - "supports" / "conflicts" — technical compatibility
+          - "replaces" / "alternative" — substitution relationships
+          - "recommends" / "discourages" — best practices
+          - "dangerous" / "warning" — things to watch out for
+          - "required" / "forbidden" — mandatory rules
+          - "depends_on" / "depended_by" — dependency relationships
+          - "belongs_to" / "contains" — hierarchical relationships
+          - "example" — example relationship
         """
-        # 自动创建不存在的实体
+        # Auto-create entities that don't exist yet
         self.learn(source_entity, source="auto")
         self.learn(target_entity, source="auto")
 
@@ -162,73 +162,73 @@ class KnowledgeGraph:
         """, (source_entity, relation, target_entity, context, confidence, source, now))
         self._conn.commit()
 
-        # 检测冲突
+        # Detect conflicts
         self._detect_conflict(source_entity, relation, target_entity, context)
 
     def learn_from_experience(self, agent_name: str, task: str, error: str, fix: str):
-        """从执行经验中学习（核心进化能力）"""
-        # 提取关键实体
+        """Learn from execution experience (core evolution capability)"""
+        # Extract key entities
         entities = self._extract_entities(error)
         fix_entities = self._extract_entities(fix)
 
-        # 注册错误知识
-        self.learn(f"错误:{error[:60]}", "error",
-                   f"{agent_name}在任务'{task[:50]}'中遇到: {error[:200]}",
+        # Register error knowledge
+        self.learn(f"error:{error[:60]}", "error",
+                   f"{agent_name} encountered in task '{task[:50]}': {error[:200]}",
                    source=agent_name)
 
-        # 注册修复知识
+        # Register fix knowledge
         if fix:
-            self.learn(f"修复:{fix[:60]}", "fix",
-                       f"{agent_name}的修复方案: {fix[:200]}",
+            self.learn(f"fix:{fix[:60]}", "fix",
+                       f"{agent_name}'s fix solution: {fix[:200]}",
                        source=agent_name)
 
             for ent in entities:
                 for f_ent in fix_entities:
                     if ent and f_ent:
-                        self.relate(ent, "修复方案", f_ent,
-                                    context=f"在{task[:50]}中",
+                        self.relate(ent, "fix_solution", f_ent,
+                                    context=f"in {task[:50]}",
                                     confidence=0.7, source=agent_name)
 
-        # 注册坑（pitfall）
-        pitfall_key = f"坑:{error[:50]}"
+        # Register pitfall
+        pitfall_key = f"pitfall:{error[:50]}"
         self.learn(pitfall_key, "pitfall",
-                   f"{agent_name}踩过的坑: {error[:200]}",
+                   f"{agent_name}'s pitfall encountered: {error[:200]}",
                    source=agent_name)
 
     def _extract_entities(self, text: str) -> list[str]:
-        """从文本中提取可能的实体（支持中文）"""
+        """Extract possible entities from text (supports Chinese)"""
         if not text:
             return []
         entities = set()
-        # 引号内容
+        # Quoted content
         for m in re.finditer(r'["\u201c\u201d\u2018\u2019]([^"\u201c\u201d\u2018\u2019]{2,50})["\u201c\u201d\u2018\u2019]', text):
             entities.add(m.group(1).strip())
-        # 中文词组（2-6个中文字符）
+        # Chinese phrases (2-6 Chinese characters)
         for m in re.finditer(r'[\u4e00-\u9fff]{2,15}', text):
             entities.add(m.group())
-        # 大写驼峰词
+        # Uppercase camelCase words
         for m in re.finditer(r'\b[A-Z][a-zA-Z]+(?:[A-Z][a-zA-Z]+)*\b', text):
             entities.add(m.group())
-        # 技术术语（含点、斜杠、横杠）
+        # Technical terms (containing dots, slashes, hyphens)
         for m in re.finditer(r'\b([a-zA-Z]+[./_-][a-zA-Z0-9]+)\b', text):
             entities.add(m.group())
         return [e for e in entities if len(e) > 1][:15]
 
     # ══════════════════════════════════════════
-    # 查询
+    # Query
     # ══════════════════════════════════════════
 
     def query(self, question: str, max_depth: int = 3) -> QueryResult:
-        """查询知识图谱 — 自动推理"""
+        """Query the knowledge graph — auto-inference"""
         result = QueryResult()
 
-        # 1. 提取查询关键词
+        # 1. Extract query keywords
         keywords = self._extract_entities(question)
         if not keywords:
-            # 用全文搜索兜底
+            # Fall back to full-text search
             keywords = [question[:50]]
 
-        # 2. 搜索相关实体
+        # 2. Search related entities
         relevant_entities = set()
         for kw in keywords:
             cursor = self._conn.execute(
@@ -244,21 +244,21 @@ class KnowledgeGraph:
                         "content": row[1][:200],
                     })
 
-        # 3. 搜索关系路径
+        # 3. Search relationship paths
         reasoning_paths = []
         for entity in list(relevant_entities)[:5]:
             paths = self._traverse(entity, max_depth)
             reasoning_paths.extend(paths)
 
-        # 4. 综合答案
+        # 4. Synthesize answer
         if result.evidence or reasoning_paths:
             result.confidence = min(1.0, len(result.evidence) * 0.2 + len(reasoning_paths) * 0.1)
 
-            # 构建答案
+            # Build answer
             parts = []
             if reasoning_paths:
                 for path in reasoning_paths[:3]:
-                    parts.append(f"  • {path}")
+                    parts.append(f"  \u2022 {path}")
 
             relation_hints = []
             for path in reasoning_paths:
@@ -267,11 +267,11 @@ class KnowledgeGraph:
             result.reasoning_path = relation_hints[:5]
 
             if parts:
-                result.answer = "📚 知识图谱中找到以下关联:\n" + "\n".join(parts)
+                result.answer = "\U0001f4da Found the following associations in the knowledge graph:\n" + "\n".join(parts)
             else:
-                result.answer = f"找到 {len(result.evidence)} 条相关记录"
+                result.answer = f"Found {len(result.evidence)} related records"
 
-            # 更新访问计数
+            # Update access counts
             for ev in result.evidence[:3]:
                 if ev.get("entity"):
                     self._conn.execute(
@@ -280,14 +280,14 @@ class KnowledgeGraph:
                     )
                     self._conn.commit()
         else:
-            result.answer = f"知识图谱中没有找到与'{question}'直接相关的信息"
+            result.answer = f"No information directly related to '{question}' found in the knowledge graph"
             result.confidence = 0.0
 
         return result
 
     def _traverse(self, entity: str, depth: int, path: list[str] = None,
                   visited: set = None) -> list[str]:
-        """遍历知识图谱，找到推理路径"""
+        """Traverse the knowledge graph to find reasoning paths"""
         if path is None:
             path = []
         if visited is None:
@@ -321,7 +321,7 @@ class KnowledgeGraph:
 
             results.append(edge_str)
 
-            # 继续遍历
+            # Continue traversing
             if depth > 1:
                 sub_results = self._traverse(next_entity, depth - 1, path + [edge_str], visited)
                 results.extend(sub_results)
@@ -329,20 +329,20 @@ class KnowledgeGraph:
         return results
 
     def recall(self, question: str, top_k: int = 3) -> list[str]:
-        """快速回忆 — 给Agent用的简化接口"""
+        """Quick recall — simplified interface for Agents"""
         result = self.query(question)
         if result.evidence:
             return [e["content"] for e in result.evidence[:top_k]]
         return []
 
     # ══════════════════════════════════════════
-    # 冲突检测与解决
+    # Conflict detection and resolution
     # ══════════════════════════════════════════
 
     def _detect_conflict(self, entity: str, relation: str, target: str, context: str):
-        """检测知识冲突"""
-        if relation in ("不支持", "禁止", "不推荐"):
-            opposite = {"不支持": "支持", "禁止": "必须", "不推荐": "推荐"}
+        """Detect knowledge conflicts"""
+        if relation in ("conflicts", "forbidden", "discourages"):
+            opposite = {"conflicts": "supports", "forbidden": "required", "discourages": "recommends"}
             opp_rel = opposite.get(relation)
             if opp_rel:
                 cursor = self._conn.execute(
@@ -350,7 +350,7 @@ class KnowledgeGraph:
                     (entity, opp_rel, target),
                 )
                 for row in cursor.fetchall():
-                    # 记录冲突
+                    # Record conflict
                     self._conn.execute("""
                         INSERT INTO conflicts (entity_a, relation, entity_b, claim_a, claim_b)
                         VALUES (?, ?, ?, ?, ?)
@@ -358,12 +358,12 @@ class KnowledgeGraph:
                     self._conn.commit()
 
     def resolve_conflicts(self):
-        """自动解决知识冲突（置信度优先）"""
+        """Auto-resolve knowledge conflicts (confidence wins)"""
         cursor = self._conn.execute(
             "SELECT * FROM conflicts WHERE resolved=0"
         )
         for row in cursor.fetchall():
-            # 比较两条边的置信度
+            # Compare confidence of both edges
             cur_a = self._conn.execute(
                 "SELECT confidence FROM edges WHERE source_entity=? AND relation=? AND target_entity=?",
                 (row[1], row[2], row[3]),
@@ -372,24 +372,24 @@ class KnowledgeGraph:
                 "SELECT confidence FROM edges WHERE source_entity=? AND relation=? AND target_entity=?",
                 (row[1], row[2], row[3]),
             ).fetchone()
-            # 置信度高者胜出
+            # Higher confidence wins
             self._conn.execute(
                 "UPDATE conflicts SET resolved=1, resolution=? WHERE id=?",
-                ("置信度决策", row[0]),
+                ("confidence-based decision", row[0]),
             )
             self._conn.commit()
 
     # ══════════════════════════════════════════
-    # 统计与维护
+    # Statistics and maintenance
     # ══════════════════════════════════════════
 
     def stats(self) -> dict:
-        """知识图谱统计"""
+        """Knowledge graph statistics"""
         nodes = self._conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
         edges = self._conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
         conflicts = self._conn.execute("SELECT COUNT(*) FROM conflicts WHERE resolved=0").fetchone()[0]
 
-        # 按类型统计
+        # Statistics by type
         type_stats = {}
         cursor = self._conn.execute(
             "SELECT entity_type, COUNT(*) FROM nodes GROUP BY entity_type ORDER BY COUNT(*) DESC"
@@ -397,7 +397,7 @@ class KnowledgeGraph:
         for row in cursor.fetchall():
             type_stats[row[0]] = row[1]
 
-        # 活跃知识（最近7天被访问）
+        # Active knowledge (accessed in last 7 days)
         week_ago = time.time() - 7 * 86400
         active = self._conn.execute(
             "SELECT COUNT(*) FROM nodes WHERE accessed_at > ?",
@@ -413,7 +413,7 @@ class KnowledgeGraph:
         }
 
     def forget_old(self, days: int = 90, min_confidence: float = 0.3):
-        """遗忘长期不用的低置信度知识"""
+        """Forget old low-confidence knowledge that hasn't been used"""
         cutoff = time.time() - days * 86400
         self._conn.execute(
             "DELETE FROM nodes WHERE accessed_at < ? AND confidence < ?",
@@ -426,13 +426,13 @@ class KnowledgeGraph:
         self._conn.commit()
 
     def get_recommendations(self, entity: str) -> list[str]:
-        """基于知识图谱给出建议"""
-        result = self.query(f"与{entity}相关的知识")
+        """Get recommendations based on the knowledge graph"""
+        result = self.query(f"Knowledge related to {entity}")
         return result.reasoning_path[:5]
 
     def sync_to_agent(self, agent_name: str, question: str) -> str:
-        """将知识图谱中的相关知识同步到Agent的上下文中"""
+        """Sync relevant knowledge from the knowledge graph into an Agent's context"""
         result = self.query(question)
         if result.answer and result.confidence > 0.3:
-            return f"[知识图谱记忆] {result.answer}"
+            return f"[Knowledge Graph Memory] {result.answer}"
         return ""
