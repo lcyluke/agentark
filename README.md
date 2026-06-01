@@ -154,6 +154,85 @@ User Input → CLI/API → Orchestration Layer → Agent Runtime → LLM Provide
 
 ---
 
+### 📁 Source Code Map
+
+```
+apex/
+├── __init__.py              # Package entry — exports public API
+├── __main__.py              # CLI entry: `python -m apex`
+│
+├── cli/                     # 🖥️ CLI Layer — User interface
+│   ├── main.py              # Click CLI framework: all 13 command groups
+│   └── commands/            # Command implementations
+│       ├── init.py          #   `apex init` — project scaffolding
+│       ├── run.py           #   `apex run` — single & swarm execution
+│       ├── team.py          #   `apex team` — agent CRUD management
+│       ├── template.py      #   `apex template` — pre-built agent library
+│       ├── status.py        #   `apex status` — system dashboard
+│       ├── economy.py       #   `apex economy` — token budget & routing
+│       ├── evolution.py     #   `apex evolution` — learning statistics
+│       └── company.py       #   `apex company` — one-click AI company
+│
+├── core/                    # 🧠 Core Engine — Agent DNA
+│   ├── profile.py           # Profile (UPF): agent identity, SOUL, config
+│   ├── runtime.py           # Agent Runtime: execute tasks, manage context
+│   ├── memory.py            # Memory: short-term (SQLite) + long-term (KG)
+│   ├── skills.py            # Skills: executable knowledge packages
+│   ├── templates.py         # 5 pre-built agent templates (frontend/backend/PM/content/devops)
+│   ├── knowledge.py         # Knowledge Graph: shared cross-agent memory
+│   └── evolution.py         # Evolution Engine: learn from every execution
+│
+├── orchestration/           # 🔄 Orchestration — Multi-Agent Patterns
+│   ├── swarm.py             # Swarm: parallel → verify → synthesize
+│   ├── crew.py              # Crew: role-based collaboration + team designer
+│   ├── kanban.py            # Kanban: smart task board with dependencies
+│   ├── healing.py           # Self-Healing: 3-strike auto-recovery
+│   ├── chain.py             # Chain: sequential pipeline with handoff verification
+│   ├── debate.py            # Debate: multi-perspective analysis & refinement
+│   ├── router.py            # Router: task classification & dispatch routing
+│   ├── supervisor.py        # Supervisor: hierarchical delegation with review
+│   └── monitor.py           # Monitor: anomaly detection & reactive agents
+│
+├── economy/                 # 💰 Token Economy — Cost Intelligence
+│   └── __init__.py          # Budget Manager, Smart Router, Cost Tracker
+│
+├── mcp/                     # 🔌 MCP Hub — Tool Integration
+│   └── hub.py               # Tool registry: filesystem, shell, http, knowledge
+│
+├── providers/               # 🤖 LLM Providers — Model Adapters
+│   ├── base.py              # Abstract provider with plugin registry
+│   ├── deepseek.py          # DeepSeek API + Ollama local (free)
+│   └── __init__.py          # Auto-registration
+│
+├── interface/               # 🌐 Web Interface — Visual Dashboard
+│   ├── web.py               # Flask app: 13 REST API endpoints
+│   └── templates/           # HTML/CSS/JS frontend
+│       └── dashboard.html   #   Dark-theme SPA dashboard
+│
+├── tests/                   # 🧪 Test Suite
+│   └── __init__.py
+│
+├── pyproject.toml           # 📦 Package: dependencies, scripts, metadata
+├── README.md                # 📘 This file
+├── CONTRIBUTING.md          # 🤝 Contribution guide
+└── .github/workflows/       # ⚙️ CI/CD: test + publish pipelines
+    └── ci.yml
+```
+
+**Design principles per directory:**
+
+| Directory | Single Responsibility | Why Separate |
+|-----------|---------------------|--------------|
+| `cli/` | User interaction only | Can swap to any UI (TUI, GUI, IDE plugin) without touching logic |
+| `core/` | Agent identity, execution, memory | The "brain" — everything else is a consumer |
+| `orchestration/` | Agent composition patterns | Each mode is independently testable, composable |
+| `economy/` | Token cost intelligence | Cross-cutting concern isolated from agent logic |
+| `mcp/` | External tool integration | New tools don't require agent changes |
+| `providers/` | LLM model adapters | New model = new file, zero changes elsewhere |
+| `interface/` | Web visualization | Optional — Apex works 100% via CLI without it |
+
+---
+
 ## 🚀 Quick Start
 
 ```bash
@@ -344,6 +423,39 @@ apex company start my-startup "Build MVP"
 
 ---
 
+## 🎯 TOP10 Multi-Agent Use Cases — Covered by Apex
+
+Apex ships **8 orchestration modes** that cover the 10 most common multi-agent scenarios. Each mode is a ready-to-use pattern — no coding required.
+
+| # | Use Case | Apex Mode | Command | How It Works |
+|---|----------|-----------|---------|-------------|
+| 1️⃣ | **Software Development** 💻 | Crew + Chain | `apex crew create "Build a web app"` | PM writes PRD → Frontend builds UI → Backend designs API → DevOps deploys. All roles collaborate, review, and iterate. |
+| 2️⃣ | **Research & Analysis** 🔬 | Debate | `apex debate "Should we use microservices?"` | Pro/Con/Neutral agents research, cross-examine, and converge on a synthesized recommendation. |
+| 3️⃣ | **Content Production** ✍️ | Chain | `apex chain run "Write a blog post" -p content` | Draft → Review → Edit → Publish. Each stage verifies quality before handoff. |
+| 4️⃣ | **Customer Support** 🎧 | Router | `apex router route "My account is locked"` | Task classified (billing/tech/sales) → routed to specialized agent → resolved. Fallback to generalist. |
+| 5️⃣ | **Enterprise Approval** 🏢 | Supervisor | `apex supervisor "Design a compliance workflow"` | Manager decomposes → workers execute → supervisor reviews → approves/rejects/revisions. 2-iteration max. |
+| 6️⃣ | **DevOps / SRE** 🔧 | Monitor | `apex monitor check -f /var/log/nginx.log` | Watches logs/endpoints → detects anomalies → spawns fixer agent → verifies resolution. Escalates after 3 failures. |
+| 7️⃣ | **Data Pipeline** 📊 | Chain | `apex chain run "Process Q3 sales data" -p data` | Extract → Transform → Load. Each stage passes verified output to the next. |
+| 8️⃣ | **Product Strategy** 🎯 | Swarm | `apex run "Analyze market competition" --swarm` | 3 parallel analysts research → verifier checks quality → synthesizer produces unified strategy. |
+| 9️⃣ | **Code Review & QA** 🐛 | Crew | `apex crew create "Review PR #42" --members frontend,backend,devops` | Multiple experts review from different angles, discuss issues, produce unified review. |
+| 🔟 | **Startup MVP** 🚀 | Company | `apex company create my-startup -i saas && apex company start my-startup "Build MVP"` | One command creates 5 agents + Kanban + SOP. Company executes autonomously. |
+
+### Mode Selection Guide
+
+```
+New to multi-agent? → Start with `apex run "task"` (Single Agent)
+Need parallel work?  → `apex run "task" --swarm` (Swarm)
+Need collaboration?  → `apex crew create "goal"` (Crew)
+Need pipeline?       → `apex chain run "goal" -p dev` (Chain)
+Need debate?         → `apex debate "topic"` (Debate)
+Need routing?        → `apex router route "task"` (Router)
+Need hierarchy?      → `apex supervisor "goal"` (Supervisor)
+Need monitoring?     → `apex monitor check -f /path/to/log` (Monitor)
+Want a whole company?→ `apex company create name` (Company)
+```
+
+---
+
 ## 🏆 Feature Comparison vs Top 7 Frameworks
 
 | Feature | 🔥 **Apex** | CrewAI | LangGraph | AutoGen | CAMEL | MetaGPT | OpenAI Swarm | MS Agent Framework |
@@ -469,6 +581,11 @@ apex run "Build a login page" --profile my-frontend-dev
 | | `apex company start <name> <goal>` | Start company execution |
 | | `apex company list` | List all created companies |
 | **Dashboard** | `apex dashboard` | Launch Web UI (port 8080) |
+| **Chain** | `apex chain run "<goal>" -p dev` | Sequential pipeline (dev/content/data) |
+| **Debate** | `apex debate "<topic>"` | Multi-perspective debate & synthesis |
+| **Router** | `apex router route "<task>"` | Classify & dispatch to specialized agent |
+| **Supervisor** | `apex supervisor "<goal>"` | Hierarchical delegation with review |
+| **Monitor** | `apex monitor check -f <file>` | Watch logs/endpoints, detect anomalies |
 
 ---
 

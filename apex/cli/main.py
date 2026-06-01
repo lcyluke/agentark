@@ -20,6 +20,12 @@ from .commands import evolution as evolution_cmds
 from .commands.company import CompanyBuilder, list_companies
 from apex.orchestration.crew import crew as crew_group
 
+# New mode CLIs
+from apex.orchestration import (
+    Router, Debate, Supervisor, Monitor, Chain
+)
+from apex.core.profile import ProfileManager
+
 console = Console()
 
 
@@ -221,3 +227,144 @@ def evolution_status():
 def evolution_agent(name: str):
     """Agent evolution report"""
     evolution_cmds.agent_cmd(name)
+
+
+# ─── chain commands ───
+@cli.group()
+def chain():
+    """Sequential Chain — Pipeline agents with handoff verification"""
+    pass
+
+@chain.command(name="run")
+@click.argument("goal")
+@click.option("--pipeline", "-p", default="dev",
+              type=click.Choice(["dev", "content", "data"]),
+              help="Pipeline type: dev, content, or data")
+def chain_run(goal: str, pipeline: str):
+    """Run a sequential chain pipeline"""
+    pm = ProfileManager()
+    try:
+        if pipeline == "content":
+            c = Chain.content_pipeline(pm)
+        elif pipeline == "data":
+            c = Chain.data_pipeline(pm)
+        else:
+            c = Chain.dev_pipeline(pm)
+        result = c.run(goal)
+        console.print(Panel(result.assembled_output[:3000] if result.assembled_output else str(result),
+                           title=f"📦 Chain Result: {pipeline} pipeline",
+                           border_style="green"))
+    except Exception as e:
+        console.print(f"[red]✗ Chain failed: {e}[/]")
+
+
+# ─── debate command ───
+@cli.command()
+@click.argument("topic")
+@click.option("--agents", "-a", default=3, help="Number of debating agents")
+def debate(topic: str, agents: int):
+    """Multi-agent debate — explore a topic from multiple perspectives"""
+    try:
+        from apex.orchestration.debate import Debate, DebatePosition
+        from apex.core.templates import get_template
+        pm = ProfileManager()
+
+        positions = []
+        stances = ["Pro", "Con", "Neutral"]
+        templates = ["pm", "backend", "content"]
+        for i in range(min(agents, 3)):
+            t = get_template(templates[i])
+            profile = t.to_profile(f"debater_{i}")
+            pm.save(profile)
+            positions.append(DebatePosition(
+                agent_name=templates[i],
+                profile=profile,
+                stance=stances[i],
+                expertise=t.expertise[:3],
+            ))
+
+        d = Debate(positions=positions)
+        result = d.run(topic)
+        console.print(Panel(result.synthesis[:3000], title="🎯 Debate Synthesis", border_style="green"))
+    except Exception as e:
+        console.print(f"[red]✗ Debate failed: {e}[/]")
+
+
+# ─── router commands ───
+@cli.group()
+def router():
+    """Smart Router — Classify and dispatch tasks to specialized agents"""
+    pass
+
+@router.command(name="route")
+@click.argument("task")
+@click.option("--agents", "-a", default="", help="Comma-separated: category:agent_name pairs")
+def router_route(task: str, agents: str):
+    """Route a task to the best matching agent"""
+    pm = ProfileManager()
+    r = Router()
+    if agents:
+        for pair in agents.split(","):
+            if ":" in pair:
+                cat, agent_name = pair.split(":", 1)
+                r.register_route(cat.strip(), agent_name.strip())
+    result = r.route(task)
+    if result.success:
+        console.print(Panel(result.output[:2000],
+                           title=f"📬 Routed to: {result.agent_used} (category: {result.category})",
+                           border_style="green"))
+    else:
+        console.print(f"[red]✗ Routing failed: {result.error}[/]")
+
+
+# ─── supervisor command ───
+@cli.command()
+@click.argument("goal")
+@click.option("--workers", "-w", default=3, help="Number of worker agents")
+def supervisor(goal: str, workers: int):
+    """Hierarchical supervision — manager delegates, reviews, approves"""
+    try:
+        pm = ProfileManager()
+        s = Supervisor(pm=pm, max_parallel=workers)
+        result = s.run(goal)
+        console.print(Panel(result.merged_output[:3000] if result.merged_output else str(result),
+                           title=f"✅ Supervisor Complete ({len(result.approved_items)} approved, {len(result.rejected_items)} rejected)",
+                           border_style="green"))
+    except Exception as e:
+        console.print(f"[red]✗ Supervisor failed: {e}[/]")
+
+
+# ─── monitor commands ───
+@cli.group()
+def monitor():
+    """Reactive Monitor — Watch, detect anomalies, trigger agents"""
+    pass
+
+@monitor.command(name="check")
+@click.option("--file", "-f", help="Log file path to watch for errors")
+@click.option("--url", "-u", help="HTTP URL to health-check")
+@click.option("--pattern", "-p", default="error|fail|exception", help="Regex pattern for log monitoring")
+def monitor_check(file: str, url: str, pattern: str):
+    """Run a single monitoring check"""
+    try:
+        from apex.orchestration.monitor import Monitor, WatcherRule
+        m = Monitor()
+        if file:
+            m.add_rule(WatcherRule(
+                name=f"check-{file}",
+                type="file-watcher",
+                target=file,
+                config={"pattern": pattern},
+            ))
+        if url:
+            m.add_rule(WatcherRule(
+                name=f"health-{url[:30]}",
+                type="http-health-check",
+                target=url,
+            ))
+        result = m.run_cycle()
+        console.print(f"[green]✅ Check complete: {len(result.anomalies)} anomalies[/]")
+        for a in result.anomalies[:5]:
+            console.print(f"  {'🔴' if a.severity == 'high' else '🟡'} {a.source}: {a.message[:80]}")
+    except Exception as e:
+        console.print(f"[red]✗ Monitor failed: {e}[/]")
