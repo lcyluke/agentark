@@ -263,13 +263,13 @@ class MCPHub:
     def get(self, name: str) -> Optional[MCPTool]:
         return self._tools.get(name)
 
-    def call(self, name: str, **kwargs) -> MCPResult:
+    def call(self, tool_name, **kwargs):
         """Call an MCP tool"""
-        tool = self.get(name)
+        tool = self.get(tool_name)
         if not tool:
-            return MCPResult(success=False, error=f"Unknown MCP tool: {name}")
+            return MCPResult(success=False, error=f"Unknown MCP tool: {tool_name}")
         if not tool.handler:
-            return MCPResult(success=False, error=f"MCP tool '{name}' has no handler")
+            return MCPResult(success=False, error=f"MCP tool '{tool_name}' has no handler")
         return tool.handler(**kwargs)
 
     def list_tools(self) -> list[dict]:
