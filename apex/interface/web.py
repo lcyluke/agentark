@@ -79,6 +79,10 @@ def create_app():
     def dashboard_v4():
         return render_template("dashboard_v4.html") if (Path(__file__).parent / "templates" / "dashboard_v4.html").exists() else render_template("dashboard.html")
 
+    @app.route("/v5")
+    def dashboard_v5():
+        return render_template("dashboard_v5.html") if (Path(__file__).parent / "templates" / "dashboard_v5.html").exists() else render_template("dashboard.html")
+
     @app.route("/traces")
     def traces_page():
         return render_template("dashboard.html", page="traces")
@@ -586,7 +590,100 @@ def create_app():
             return jsonify({"error": str(e)}), 500
 
     # ══════════════════════════════════════════════════════════
-    # SECTION 13: OpenClaw Integration
+    # SECTION 13: 🌉 Apex-Hermes Bridge
+    # ══════════════════════════════════════════════════════════
+
+    @app.route("/api/bridge/status")
+    def api_bridge_status():
+        """Bridge fleet health status"""
+        try:
+            from apex.cli.commands.bridge import get_bridge_status
+            return jsonify(get_bridge_status())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/bridge/sync", methods=["POST"])
+    def api_bridge_sync():
+        """Trigger a bridge sync cycle"""
+        try:
+            from apex.cli.commands.bridge import run_bridge_sync
+            status = run_bridge_sync()
+            push_event("bridge", {"action": "sync", "healthy": status.get("healthy", 0)})
+            log_event("info", f"Bridge sync: {status.get('healthy')}/{status.get('total')} healthy")
+            return jsonify(status)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/bridge/init", methods=["POST"])
+    def api_bridge_init():
+        """Create/update bridge agents"""
+        try:
+            from apex.cli.commands.bridge import init_bridge_agents
+            result = init_bridge_agents()
+            push_event("bridge", {"action": "init", "created": len(result["created"])})
+            log_event("info", f"Bridge init: {len(result['created'])} created, {len(result['updated'])} updated")
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    # ══════════════════════════════════════════════════════════
+    # SECTION 14: ⚓ Origin Agent
+    # ══════════════════════════════════════════════════════════
+
+    @app.route("/api/origin/overview")
+    def api_origin_overview():
+        """Fleet overview — all portfolios"""
+        try:
+            from apex.orchestration.origin import OriginAgent
+            return jsonify(OriginAgent().portfolio_overview())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/origin/portfolios", methods=["GET", "POST"])
+    def api_origin_portfolios():
+        if request.method == "POST":
+            data = request.get_json(silent=True) or {}
+            from apex.orchestration.origin import OriginAgent
+            result = OriginAgent().create_portfolio(
+                name=data.get("name", ""),
+                description=data.get("description", ""),
+                strategic_goal=data.get("strategic_goal", ""),
+                expected_outcome=data.get("expected_outcome", ""),
+                pm_agent=data.get("pm_agent", ""),
+            )
+            push_event("origin", {"action": "portfolio_created", "name": data.get("name", "")})
+            return jsonify(result), 201 if result.get("ok") else 400
+
+        from apex.orchestration.origin import OriginAgent
+        return jsonify(OriginAgent().list_portfolios())
+
+    @app.route("/api/origin/portfolios/<portfolio_id>")
+    def api_origin_portfolio_detail(portfolio_id: str):
+        from apex.orchestration.origin import OriginAgent
+        pf = OriginAgent().get_portfolio_status(portfolio_id)
+        if "error" in pf:
+            return jsonify(pf), 404
+        return jsonify(pf)
+
+    @app.route("/api/origin/replicate", methods=["POST"])
+    def api_origin_replicate():
+        data = request.get_json(silent=True) or {}
+        target = data.get("target", "")
+        all_agents = data.get("all", False)
+        strategy = data.get("strategy", "merge")
+        from apex.orchestration.origin import OriginAgent
+        origin = OriginAgent()
+        if all_agents:
+            result = origin.replicate_to_all()
+        elif target:
+            result = origin.replicate_to(target, strategy=strategy)
+        else:
+            return jsonify({"error": "请指定target或all=true"}), 400
+        push_event("origin", {"action": "replicate", "target": target or "all"})
+        return jsonify(result)
+
+    # ══════════════════════════════════════════════════════════
+    # SECTION 15: OpenClaw Integration
     # ══════════════════════════════════════════════════════════
 
     @app.route("/api/openclaw/status")

@@ -18,6 +18,8 @@ from .commands import template as template_cmds
 from .commands import economy as economy_cmds
 from .commands import evolution as evolution_cmds
 from .commands.company import CompanyBuilder, list_companies
+from .commands import bridge as bridge_cmds
+from .commands import origin as origin_cmds
 from apex.orchestration.crew import crew as crew_group
 from .commands import autonomous as autonomous_cmds
 from .commands import ops as ops_cmds
@@ -430,6 +432,137 @@ def autonomous_schedule(name: str, cron: str, task: str, agent: str):
 def autonomous_unschedule(task_id: str):
     """Remove a scheduled task by its ID"""
     autonomous_cmds.unschedule_cmd(task_id)
+
+
+# ════════════════════════════════════════════════════════════
+# 🌉 BRIDGE — Hermes ↔ Apex 无缝集成
+# ════════════════════════════════════════════════════════════
+
+@cli.group()
+def bridge():
+    """🌉 Hermes Bridge — 6-agent monitor fleet + live sync"""
+    pass
+
+
+@bridge.command(name="init")
+def bridge_init():
+    """Create/update the 6 default bridge monitoring agents"""
+    bridge_cmds.init_bridge_agents(console)
+
+
+@bridge.command(name="sync")
+def bridge_sync():
+    """Run one sync cycle — update Kanban from Hermes state.db"""
+    bridge_cmds.run_bridge_sync(console)
+
+
+@bridge.command(name="status")
+def bridge_status():
+    """Show bridge agent fleet health"""
+    data = bridge_cmds.get_bridge_status()
+    table = Table(title="🌉 Apex-Hermes Bridge — Fleet Status", box=None)
+    table.add_column("Agent", style="cyan")
+    table.add_column("Status", style="green")
+    table.add_column("Info", style="dim")
+
+    for a in data.get("agents", []):
+        icon = {"done": "✅", "in_progress": "🟡", "blocked": "🔴"}.get(a["status"], "⬜")
+        info = (a.get("output", "") or "")[:60].replace("\n", " ")
+        table.add_row(f"{icon} {a['assignee']}", a["status"], info)
+
+    console.print(table)
+    console.print(f"\n[dim]Healthy: {data['healthy']} | Degraded: {data['degraded']} | Offline: {data['offline']}[/]")
+
+
+@bridge.command(name="agents")
+def bridge_agents():
+    """List all 6 bridge monitoring agents"""
+    from apex.core.profile import ProfileManager
+    pm = ProfileManager()
+    table = Table(title="🤖 Bridge Monitoring Agents", box=None)
+    table.add_column("Name", style="cyan")
+    table.add_column("Role", style="green")
+    table.add_column("Expertise", style="yellow")
+
+    for name, cfg in bridge_cmds.BRIDGE_AGENTS.items():
+        try:
+            pm.load(name)
+            icon = "✅"
+        except FileNotFoundError:
+            icon = "⬜"
+        table.add_row(f"{icon} {name}", cfg["role"], ", ".join(cfg["expertise"][:3]))
+
+    console.print(table)
+    console.print("\n[dim]Run [bold]apex bridge init[/] to create/update all 6 agents.[/]")
+
+
+# ════════════════════════════════════════════════════════════
+# ⚓ ORIGIN — 始祖Agent · 项目群总指挥官
+# ════════════════════════════════════════════════════════════
+
+@cli.group()
+def origin():
+    """⚓ Origin Agent — 始祖Agent · 项目群总指挥"""
+    pass
+
+
+@origin.command(name="init")
+def origin_init():
+    """Initialize/deploy the Origin Agent"""
+    origin_cmds.init_cmd(console)
+
+
+@origin.command(name="replicate")
+@click.argument("target", required=False)
+@click.option("--all", "all_agents", is_flag=True, help="Replicate to all project agents")
+@click.option("--strategy", "-s", default="merge",
+              type=click.Choice(["merge", "replace", "pm"]),
+              help="merge(合并) / replace(替换) / pm(PM模板)")
+def origin_replicate(target: str, all_agents: bool, strategy: str):
+    """Replicate skills to target agent(s)"""
+    origin_cmds.replicate_cmd(console, target=target or "",
+                              all_agents=all_agents, strategy=strategy)
+
+
+@origin.group()
+def portfolio():
+    """📊 Portfolio — 项目群管理"""
+    pass
+
+
+@portfolio.command(name="list")
+def portfolio_list():
+    """List all portfolios"""
+    origin_cmds.portfolio_cmd(console, action="list")
+
+
+@portfolio.command(name="create")
+@click.argument("name")
+@click.option("--pm", "-p", default="", help="PM agent name")
+@click.option("--goal", "-g", default="", help="Strategic goal")
+@click.option("--outcome", "-o", default="", help="Expected outcome")
+@click.option("--desc", "-d", default="", help="Description")
+def portfolio_create(name: str, pm: str, goal: str, outcome: str, desc: str):
+    """Create a new portfolio"""
+    origin_cmds.portfolio_cmd(console, action="create",
+                              name=name, pm_agent=pm or "",
+                              strategic_goal=goal, expected_outcome=outcome,
+                              description=desc)
+
+
+@portfolio.command(name="status")
+@click.argument("portfolio_id")
+def portfolio_status(portfolio_id: str):
+    """Show portfolio status + milestones + tasks"""
+    origin_cmds.portfolio_cmd(console, action="status", portfolio_id=portfolio_id)
+
+
+@origin.command(name="overview")
+def origin_overview():
+    """⚓ Fleet overview — all portfolios status"""
+    origin_cmds.overview_cmd(console)
+
+
 
 
 @autonomous.command(name="list-scheduled")

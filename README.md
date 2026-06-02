@@ -245,6 +245,7 @@ Want a whole company?  →  apex company create name       (Company)
 |---------|:----------:|:------:|:---------:|:-------:|:-----:|:-------:|:-----:|
 | Web Dashboard | ✅ Free | ❌ Paid | ❌ Paid | ✅ | ❌ | ❌ | ❌ |
 | REST API (14 endpoints) | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Hermes Live Bridge | ✅ **6-agent fleet** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Lines to create a team | **1** | 5+ | 20+ | 10+ | 15+ | 1 | 10+ |
 | Pre-built Agent Templates | ✅ **5** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | One-Click Company | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -500,6 +501,57 @@ apex/                         # 🚀 Multi-Agent Operating System
 | | `apex autonomous list-scheduled` | List all scheduled tasks |
 | | `apex autonomous alerts` | View unresolved alerts |
 | **Dashboard** | `apex dashboard` | Launch Web UI (port 8080) |
+| **Bridge** | `apex bridge init` | Create 6 Hermes monitor agents |
+| | `apex bridge sync` | Sync Hermes state → Apex Kanban |
+| | `apex bridge status` | Bridge fleet health |
+| | `apex bridge agents` | List monitor agent roster |
+
+---
+
+## 🌉 Apex-Hermes Bridge — Live Sync Monitoring
+
+**The first multi-agent framework with native Hermes Agent live monitoring.** When Apex is installed alongside Hermes Agent, the Bridge creates a 6-agent monitor fleet that keeps the Dashboard updated in real-time:
+
+```bash
+# One command to deploy the entire monitor fleet
+apex bridge init
+
+# Run a sync cycle (also registered as Hermes cron job every 5min)
+apex bridge sync
+
+# Check fleet health
+apex bridge status
+```
+
+### 🧭 The 6-Agent Fleet
+
+| Agent | Role | Monitors |
+|-------|------|----------|
+| 🧭 **Fleet Commander** | Orchestrator | Aggregate all agent status into fleet overview |
+| 🔍 **Session Scout** | Reconnaissance | Hermes sessions, titles, sources, 24h activity |
+| 💰 **Token Guardian** | Budget Officer | Token usage/cost per model/provider, daily/weekly budgets |
+| ⚡ **GPU Sentinel** | Engine Room | GPU utilization, memory, temperature, cost alerts |
+| 📡 **Profile Syncer** | Communications | Hermes profile states, gateway ports, platform channels |
+| 🛡️ **Cron Medic** | Health Inspector | Cron job health, failure rates, dependency chains |
+
+### 🔗 Data Flow
+
+```
+Hermes state.db ──→ Bridge Sync Engine ──→ Apex Kanban tasks
+Hermes config  ──→  (every 5 min)    ──→ Dashboard /api/bridge/status
+Monitor DB     ──→                    ──→ SSE push events → Dashboard UI
+```
+
+### Dashboard REST API
+
+```bash
+GET  /api/bridge/status    # Fleet health + agent states
+POST /api/bridge/sync      # Trigger manual sync
+POST /api/bridge/init      # Deploy/update monitor agents
+GET  /api/hermes/status    # Hermes sessions + cron + profiles
+GET  /api/hermes/tokens    # Token usage breakdown
+GET  /api/command-center   # Unified Hermes + GPU + economy view
+```
 
 ---
 
