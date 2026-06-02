@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://via.placeholder.com/600x120/0a0e17/3b82f6?text=⚡+Apex">
-    <img alt="Apex — Multi-Agent Operating System" src="https://img.shields.io/badge/⚡_Apex-Multi--Agent_OS-3b82f6?style=for-the-badge" width="500">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/lcyluke/apex/main/docs/images/apex-banner.png">
+    <img alt="Apex — Multi-Agent Operating System" src="https://raw.githubusercontent.com/lcyluke/apex/main/docs/images/apex-banner.png" width="800">
   </picture>
 </p>
 
