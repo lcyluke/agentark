@@ -208,58 +208,65 @@ Want a whole company?  →  apex company create name       (Company)
 
 ## ⚡ Comparison vs Top Frameworks
 
-| Feature | 🔥 **Apex** | CrewAI | LangGraph | AutoGen | CAMEL | MetaGPT | OpenAI Swarm |
-|---------|:----------:|:------:|:---------:|:-------:|:-----:|:-------:|:------------:|
-| **Core Runtime** | | | | | | | |
-| Multi-LLM Hot-swap | ✅ **Built-in** | ✅ | ✅ Chain | ❌ OpenAI | ❌ | ❌ OpenAI | ❌ OpenAI |
-| Local LLM (free) | ✅ **Built-in** | ❌ Add-on | ✅ Chain | ❌ | ❌ | ❌ | ❌ |
-| Cross-language Agents | ✅ **MCP** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+### Core Runtime
+
+| Feature | 🔥 **Apex** | CrewAI | LangGraph | AutoGen | CAMEL | MetaGPT | Swarm |
+|---------|:----------:|:------:|:---------:|:-------:|:-----:|:-------:|:-----:|
+| Multi-LLM Hot-swap | ✅ Built-in | ✅ | ✅ Chain | ❌ | ❌ | ❌ | ❌ |
+| Local LLM (free) | ✅ Built-in | ❌ | ✅ Chain | ❌ | ❌ | ❌ | ❌ |
+| Cross-language Agents | ✅ MCP | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+### Orchestration
+
+| Feature | 🔥 **Apex** | CrewAI | LangGraph | AutoGen | CAMEL | MetaGPT | Swarm |
+|---------|:----------:|:------:|:---------:|:-------:|:-----:|:-------:|:-----:|
+| Swarm (Parallel→Verify) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Crew (Role Collaboration) | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| Chain (Pipeline) | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ |
+| Debate (Multi-perspective) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Router (Smart Dispatch) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Supervisor (Hierarchy) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Monitor (Reactive) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+### Intelligence & Economy
+
+| Feature | 🔥 **Apex** | CrewAI | LangGraph | AutoGen | CAMEL | MetaGPT | Swarm |
+|---------|:----------:|:------:|:---------:|:-------:|:-----:|:-------:|:-----:|
+| Self-Learning Evolution | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Knowledge Graph Memory | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Self-Healing (3-Strike) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Token Budget Management | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Smart Model Routing | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Cost Dashboard | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+### Developer Experience
+
+| Feature | 🔥 **Apex** | CrewAI | LangGraph | AutoGen | CAMEL | MetaGPT | Swarm |
+|---------|:----------:|:------:|:---------:|:-------:|:-----:|:-------:|:-----:|
+| Web Dashboard | ✅ Free | ❌ Paid | ❌ Paid | ✅ | ❌ | ❌ | ❌ |
+| REST API (14 endpoints) | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Lines to create a team | **1** | 5+ | 20+ | 10+ | 15+ | 1 | 10+ |
+| Pre-built Agent Templates | ✅ **5** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| One-Click Company | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Cost for 1000 tasks | **$5-8** | $50+ | $80+ | $50+ | $50+ | $50+ | $50+ |
+| License | ✅ **MIT** | ✅ MIT | ✅ MIT | ✅ MIT | ✅ Apache | ✅ MIT | ✅ MIT |
 | | | | | | | | |
-| **Orchestration** | | | | | | | |
-| Swarm (Parallel→Verify→Synthesize) | ✅ **Native** | ❌ | ❌ Manual | ❌ | ❌ | ❌ | ❌ |
-| Crew (Role Collaboration) | ✅ **4-phase** | ✅ | ❌ | ✅ Chat | ✅ RolePlay | ❌ Fixed | ❌ |
-| Chain (Pipeline) | ✅ | ❌ | ✅ Graph | ❌ | ❌ | ✅ | ❌ |
 | Debate (Multi-perspective) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Router (Smart Dispatch) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Supervisor (Hierarchy) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Monitor (Reactive) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | | | | | | | | |
-| **Intelligence** | | | | | | | |
-| Self-Learning Evolution | ✅ **Built-in** | ❌ | ❌ | ❌ | ✅ Research | ❌ | ❌ |
-| Knowledge Graph (Shared Memory) | ✅ **Graph-based** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Self-Healing (3-Strike) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Workflow Optimization | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | | | | | | | | |
-| **Economy** | | | | | | | |
-| Token Budget Management | ✅ **Built-in** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Smart Model Routing | ✅ **Per-task** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Cost Dashboard | ✅ **Real-time** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | | | | | | | | |
-| **Observability** | | | | | | | |
-| Web Dashboard | ✅ **Free** | ❌ Paid | ❌ Paid | ✅ Free(stale) | ❌ | ❌ | ❌ |
 | REST API | ✅ **14 endpoints** | ❌ | ✅ Smith | ✅ | ❌ | ❌ | ❌ |
-| Real-time Execution Log | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | | | | | | | | |
-| **Developer Experience** | | | | | | | |
-| Lines to create a team | **1** | 5+ | 20+ | 10+ | 15+ | 1 (fix) | 10+ |
-| Time to first task | **3 min** | 15 min | 1 hour | 10 min | 20 min | 10 min | 5 min |
 | Pre-built Agent Templates | ✅ **5** | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | One-Click Company | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | | | | | | | | |
-| **Pricing** | | | | | | | |
 | License | ✅ **MIT** | ✅ MIT | ✅ MIT | ✅ MIT | ✅ Apache | ✅ MIT | ✅ MIT |
 | Cost for 1000 tasks | **$5-8** | $50+ | $80+ | $50+ | $50+ | $50+ | $50+ |
 
-### Only Apex Has
-
-| Exclusive Feature | Why It Matters |
-|------------------|---------------|
-| **Evolution Engine** | Agents get smarter every time you use them. No other framework has this. |
-| **Knowledge Graph Memory** | Teach one agent = teach all agents. Shared intelligence across your entire fleet. |
-| **Token Economy** | Smart routing saves 95% cost. Pay $5 instead of $200/month. |
-| **Self-Healing Workflow** | Agents fix their own errors. 3-strike rule before notifying humans. |
-| **One-Click Company** | `apex company create`. One command = entire AI company. |
-| **10 Orchestration Modes** | Swarm, Crew, Chain, Debate, Router, Supervisor, Monitor, Kanban, Healing, Company. All built in. |
 
 ---
 
