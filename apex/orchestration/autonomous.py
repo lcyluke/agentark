@@ -1,15 +1,5 @@
 #!/usr/bin/env python3
-"""Apex Autonomous Engine — 7x24 Self-Aware Agent Operation System
-
-The autonomous engine gives Apex self-awareness and continuous operation:
-- Cron-based 24/7 scheduling
-- Self-health heartbeat monitoring
-- Priority-based task queuing
-- Self-awareness reporting (agents report status, load, health)
-- Automatic retry with exponential backoff
-- Kanban auto-dispatch
-- Escalation on persistent failures
-"""
+"""7x24 autonomous operation engine with self-awareness and continuous operation."""
 from __future__ import annotations
 
 import asyncio

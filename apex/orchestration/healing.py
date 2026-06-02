@@ -1,12 +1,4 @@
-"""Apex — Self-Healing Workflow Enhanced (Self-Healing Workflow v2)
-Three-strike rule + Knowledge accumulation + Auto-degradation + Evolutionary feedback.
-
-When an Agent encounters an error:
-  1. First error -> Auto-fix
-  2. Second error -> Switch strategy
-  3. Third error -> Degrade model -> Notify human
-  4. Regardless of outcome -> Write knowledge to KG -> Evolution engine records
-"""
+"""Three-strike self-healing workflow with knowledge accumulation and auto-degradation."""
 from __future__ import annotations
 
 import time

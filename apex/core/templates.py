@@ -1,7 +1,4 @@
-"""Apex — Agent Template Library
-5 pre-configured professional Agent templates, ready to use out of the box.
-Each template includes optimized SOUL, skill package, and communication style.
-"""
+"""Pre-built agent templates."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

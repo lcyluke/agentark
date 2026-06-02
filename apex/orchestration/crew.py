@@ -1,10 +1,4 @@
-"""Apex — Crew Mode (Team Mode)
-Role-based real-time collaboration + Dynamic team design engine + Zero-click team assembly.
-
-Crew vs Swarm:
-  Swarm = Parallel independent Workers + Verifier + Synthesizer (suitable for decomposable independent tasks)
-  Crew  = Real-time chat collaboration between roles (suitable for tasks needing discussion and feedback)
-"""
+"""Role-based real-time collaboration with dynamic team assembly."""
 from __future__ import annotations
 
 import json

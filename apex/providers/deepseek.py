@@ -1,4 +1,4 @@
-"""Apex — DeepSeek Provider"""
+"""Apex — DeepSeek and Ollama providers"""
 from __future__ import annotations
 
 import json

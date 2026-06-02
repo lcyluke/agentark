@@ -1,6 +1,4 @@
-"""Apex — Router/Dispatch Mode
-Task classification and agent routing with fallback to default generalist.
-"""
+"""Task classification and agent routing with fallback to default generalist."""
 from __future__ import annotations
 
 import re

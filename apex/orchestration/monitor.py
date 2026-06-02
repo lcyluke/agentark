@@ -1,13 +1,4 @@
-"""Apex — Monitor / Reactive Mode
-DevOps monitoring with anomaly detection, auto-remediation, and escalation.
-
-Pattern:
-  1. Watcher — Polls data sources (file, API, log) or receives push events
-  2. Anomaly Detection — Analyzes state against thresholds/rules
-  3. Trigger — If anomaly found, creates a Kanban task and spawns a fixer agent
-  4. Verification — After fixer runs, verify the anomaly is resolved
-  5. Escalation — If unresolved after N attempts, notify human
-"""
+"""DevOps monitoring with anomaly detection, auto-remediation, and escalation."""
 
 from __future__ import annotations
 

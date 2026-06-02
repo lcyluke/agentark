@@ -1,6 +1,4 @@
-"""Apex — Core Agent Runtime
-Each Agent is a persistent intelligent agent with its own Profile, Memory, and Skills.
-"""
+"""Agent execution engine."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

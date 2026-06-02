@@ -1,7 +1,4 @@
-"""Apex — Token Economy (Token Economics)
-Intelligent budget allocation + Task-value-based model routing + Cost dashboard.
-Core goal: Save 95% of costs while maintaining 95%+ capability.
-"""
+"""Apex — Token economy: budget management and model routing"""
 from __future__ import annotations
 
 import json

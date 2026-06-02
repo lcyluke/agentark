@@ -1,16 +1,4 @@
-"""Apex — One-Click Company (OCC)
-Create an AI company with one command.
-
-apex company create "AI SaaS startup"
-  → Auto-create 5+ Profiles
-  → Auto-configure Kanban
-  → Auto-design SOP
-  → Auto-generate team config
-  → Launch
-
-apex company start "Help me write an MVP"
-  → 2 hours later, MVP goes live
-"""
+"""Apex — One-Click Company CLI commands"""
 from __future__ import annotations
 
 import json

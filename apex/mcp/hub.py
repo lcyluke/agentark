@@ -1,15 +1,4 @@
-"""Apex — MCP Hub
-Connector between Agent and the external world. Cross-language, cross-machine, cross-framework.
-Any tool/service supporting MCP can be seamlessly integrated.
-
-Built-in MCP tools:
-  - filesystem: file read/write/search
-  - github: code repository management
-  - browser: web browsing
-  - shell: command execution
-  - http: API calls
-  - search: knowledge graph queries
-"""
+"""Apex — MCP tool hub and registry"""
 from __future__ import annotations
 
 import json

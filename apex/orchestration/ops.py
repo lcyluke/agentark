@@ -1,12 +1,4 @@
-"""Apex Ops — Multi-Agent Operation Management System
-
-The beating heart of Apex's autonomous agent operations:
-- Task lifecycle: create → assign → execute → validate → close
-- Bug tracking: report → triage → fix → verify → close
-- Release pipeline: plan → develop → test → uat → release
-- Expert consultation: agent → KG → expert → resolution
-- Validation gates: self-check → peer-review → auto-test → security
-"""
+"""Multi-agent operation management system for task lifecycle, bug tracking, and release pipelines."""
 from __future__ import annotations
 
 import json

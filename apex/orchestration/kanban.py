@@ -1,6 +1,4 @@
-"""Apex — Intelligent Kanban
-Task queue + Status management + AI suggestions.
-"""
+"""Task queue with status management and AI-powered suggestions."""
 from __future__ import annotations
 
 import json

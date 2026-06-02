@@ -1,7 +1,4 @@
-"""Apex — Web UI Dashboard v2
-Flask + Dark Theme full monitoring dashboard.
-Route: /(Dashboard) /traces /agents /logs /api/*
-"""
+"""Apex — Web dashboard UI"""
 from __future__ import annotations
 
 import json

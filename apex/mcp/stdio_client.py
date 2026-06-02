@@ -1,11 +1,4 @@
-"""Apex — MCP Stdio Client
-Connects to external MCP servers (Node.js, Go, Rust, etc.) via stdio transport.
-Enables cross-language tool calling from Python Apex agents.
-
-MCP Protocol: JSON-RPC 2.0 over stdin/stdout
-  Client -> Server:  {"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}
-  Server -> Client:  {"jsonrpc":"2.0","id":1,"result":{"tools":[...]}}
-"""
+"""Apex — MCP stdio client for cross-language tool calling"""
 from __future__ import annotations
 
 import json

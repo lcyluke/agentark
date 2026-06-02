@@ -1,6 +1,4 @@
-"""Apex — Skill System
-Evolvable skill packages that auto-optimize from execution feedback.
-"""
+"""Evolvable skill packages."""
 from __future__ import annotations
 
 import json

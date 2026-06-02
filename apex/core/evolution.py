@@ -1,14 +1,4 @@
-"""Apex — Dynamic Skill Evolution Engine (DSE)
-Not a hardcoded system prompt — the Agent learns from each execution and evolves automatically.
-
-Core loop:
-  Execute task → Analyze feedback → Extract patterns → Update Skills → Share to knowledge base → Stronger next time
-
-Evolution metrics:
-  - Same error rate reduced by 90%+
-  - Code quality improved from 70 to 95 (after 100 iterations)
-  - Resolution speed increased 3x+
-"""
+"""Evolution Engine (execution patterns and learning)."""
 from __future__ import annotations
 
 import json

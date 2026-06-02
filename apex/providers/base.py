@@ -1,6 +1,4 @@
-"""Apex — Provider Abstraction Layer
-Supports hot-plugging of any LLM Provider.
-"""
+"""Apex — Provider abstraction layer"""
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

@@ -1,14 +1,4 @@
-"""Apex — Knowledge Graph Memory (KGM)
-True graph-structured memory system, not a vector database in disguise.
-Teach one Agent = Teach all Agents.
-
-Core capabilities:
-  1. Entity-Relation-Entity triple storage
-  2. Cross-Agent knowledge sharing — what A learns, B automatically knows
-  3. Auto-inference — derive new knowledge from existing knowledge
-  4. Confidence decay — old knowledge automatically downgraded
-  5. Conflict detection — discover and resolve contradictory knowledge
-"""
+"""Knowledge Graph (entity-relation) memory."""
 from __future__ import annotations
 
 import json

@@ -1,12 +1,4 @@
-"""Apex — Supervisor / Hierarchy Mode
-Enterprise delegation and review workflow:
-1. Decompose — Supervisor breaks task into sub-tasks
-2. Delegate — Assign each sub-task to a worker agent
-3. Execute — Workers run in parallel (ThreadPoolExecutor)
-4. Review — Supervisor reviews each output (approve/revision/reject)
-5. Iterate — Rejected/revision items go back to worker with feedback (max 2 rounds)
-6. Merge — Approved outputs merged into final deliverable
-"""
+"""Enterprise delegation and review workflow with hierarchical supervision."""
 from __future__ import annotations
 
 import json

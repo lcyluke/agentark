@@ -1,16 +1,4 @@
-"""Apex Ops — CLI Commands for Multi-Agent Operations
-
-Commands:
-  apex ops release create <version>  — Start a new release pipeline
-  apex ops release status             — Current release status
-  apex ops bug list                   — List bugs
-  apex ops bug create <title>         — Report a bug
-  apex ops bug show <id>              — Bug details
-  apex ops task list                  — List ops tasks
-  apex ops task create <title>        — Create an ops task
-  apex ops status                     — Ops dashboard summary
-  apex ops expert list                — Open expert tickets
-"""
+"""Apex — Operations management CLI commands"""
 from __future__ import annotations
 
 import time

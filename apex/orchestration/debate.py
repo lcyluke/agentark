@@ -1,13 +1,4 @@
-"""Apex — Debate / Critique Mode
-Multi-perspective analysis and refinement through structured debate.
-
-Phases:
-  1. Position Assignment   — Assign agents different stances
-  2. Opening Statements    — Each agent states their position with evidence (parallel)
-  3. Cross-Examination     — Round-robin: each agent critiques another's position (2 rounds)
-  4. Rebuttal              — Agents adjust based on critiques
-  5. Synthesis             — A moderator agent synthesises the converged answer
-"""
+"""Multi-perspective analysis and refinement through structured debate."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

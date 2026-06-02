@@ -1,14 +1,4 @@
-"""Apex — Sequential-Chain Mode
-Pipelined stages with handoff verification, stage retry, and final assembly.
-
-Chain vs Swarm:
-  Swarm  = Parallel Workers -> Verifier -> Synthesizer (independent tasks)
-  Chain  = Sequential stages, each feeding the next with quality gates (dependent pipelines)
-
-Chain vs Crew:
-  Crew   = Multi-role collaboration + discussion (team tasks)
-  Chain  = Pipeline processing with strict stage ordering (factory tasks)
-"""
+"""Sequential pipeline with handoff verification, stage retry, and final assembly."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

@@ -1,7 +1,4 @@
-"""Apex — Autonomous Engine CLI Commands
-
-7x24 self-aware agent operation system commands.
-"""
+"""Apex — Autonomous Engine CLI commands"""
 from __future__ import annotations
 
 import time

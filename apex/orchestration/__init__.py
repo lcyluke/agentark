@@ -1,20 +1,4 @@
-"""Apex — Orchestration: Multi-Agent Collaboration Patterns
-
-Available modes covering TOP10 multi-agent use cases:
-
-| Mode | File | Use Case |
-|------|------|----------|
-| Single Agent | runtime.py | Individual task execution |
-| Swarm | swarm.py | Parallel workers → verifier → synthesizer |
-| Crew | crew.py | Role-based real-time collaboration |
-| Chain | chain.py | Sequential pipeline with handoff verification |
-| Debate | debate.py | Multi-perspective analysis and refinement |
-| Router | router.py | Task classification and dispatch routing |
-| Supervisor | supervisor.py | Hierarchical delegation with review gates |
-| Monitor | monitor.py | Passive anomaly detection → reactive agents |
-| Kanban | kanban.py | Smart task board with dependency management |
-| Healing | healing.py | Self-healing with 3-strike auto-recovery |
-"""
+"""Multi-Agent Collaboration Patterns — orchestration mode registry and exports."""
 from .swarm import Swarm, SwarmResult
 from .crew import Crew, CrewResult, DynamicTeamDesigner
 from .kanban import Kanban, Task

@@ -1,6 +1,4 @@
-"""Apex — Swarm Mode (Hive Mode)
-Parallel Workers -> Verifier -> Synthesizer three-stage delivery.
-"""
+"""Parallel workers, verifier, and synthesizer three-stage delivery."""
 from __future__ import annotations
 
 import sys

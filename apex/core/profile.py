@@ -1,6 +1,4 @@
-"""Apex — Universal Profile Format (UPF)
-Complete identity definition for each Agent.
-"""
+"""Profile management for agents."""
 from __future__ import annotations
 
 import os

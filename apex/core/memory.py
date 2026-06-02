@@ -1,6 +1,4 @@
-"""Apex — Hybrid Memory System
-Short-term (SQLite) + Long-term (Vector) + Shared (Knowledge Graph)
-"""
+"""Short/long-term KV memory store."""
 from __future__ import annotations
 
 import json
