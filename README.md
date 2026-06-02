@@ -511,8 +511,8 @@ apex autonomous alerts                                # Unresolved alerts
 | Language | Server | Tools | Status |
 |----------|--------|-------|--------|
 | 🟢 **Node.js** (v25) | `scripts/mcp-servers/mcp-node-server.js` | `greet`, `weather`, `analyze_sentiment` | 🟢 100% |
-| 🔵 **Go** (1.23) | `scripts/mcp-servers/mcp-go-server` | `calculate`, `file_analysis`, `current_time` | 🟢 100% |
-| 🟠 **Rust** (1.84) | `scripts/mcp-servers/mcp-rust-server` | `analyze_text`, `fibonacci`, `prime_factors` | 🟢 94.9% |
+| 🔵 **Go** (1.23) | `scripts/mcp-servers/mcp-go-server.go` | `calculate`, `file_analysis`, `current_time` | 🟢 100% |
+| 🟠 **Rust** (1.84) | `scripts/mcp-servers/mcp-rust-server.rs` | `analyze_text`, `fibonacci`, `prime_factors` | 🟢 94.9% |
 | 🐍 **Python** (3.11) | Built into MCP Hub | `filesystem`, `shell`, `knowledge`, `http` | 🟢 100% |
 
 **Architecture:**
@@ -552,6 +552,14 @@ hub.call("rust.fibonacci", n=20)                      # → Rust
 ```
 
 **Test results:** `python3 tests/test_mcp_cross_language.py` → **37/39 passed (94.9%)**
+
+**Build cross-language servers (one-time):**
+```bash
+cd scripts/mcp-servers
+go build -o mcp-go-server mcp-go-server.go
+rustc mcp-rust-server.rs -o mcp-rust-server
+# Node.js requires no build step
+```
 
 ### With Hermes Agent
 ```bash
