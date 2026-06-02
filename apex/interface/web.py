@@ -282,6 +282,61 @@ def create_app():
         """Health check"""
         return jsonify({"status": "ok", "timestamp": time.time()})
 
+    # ══════════════════════════════════════════
+    # Command Center — Real Data APIs
+    # ══════════════════════════════════════════
+
+    @app.route("/api/hermes/status")
+    def api_hermes_status():
+        """Hermes runtime status: sessions, cron, profiles"""
+        try:
+            from apex.interface.hermes_bridge import get_hermes_session_stats, get_hermes_cron_status, get_hermes_profile_status
+            return jsonify({
+                "sessions": get_hermes_session_stats(),
+                "cron": get_hermes_cron_status(),
+                "profiles": get_hermes_profile_status(),
+            })
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/hermes/tokens")
+    def api_hermes_tokens():
+        """Token usage statistics from Hermes sessions"""
+        try:
+            from apex.interface.hermes_bridge import get_hermes_session_stats
+            stats = get_hermes_session_stats()
+            # Return the full stats dict directly
+            return jsonify(stats)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/gpu/status")
+    def api_gpu_status():
+        """GPU monitoring status from monitor.db"""
+        try:
+            from apex.interface.hermes_bridge import get_gpu_status
+            return jsonify(get_gpu_status())
+        except Exception as e:
+            return jsonify({"error": str(e), "status": "error"}), 500
+
+    @app.route("/api/models/pricing")
+    def api_models_pricing():
+        """Model pricing and configured providers"""
+        try:
+            from apex.interface.hermes_bridge import get_model_pricing
+            return jsonify(get_model_pricing())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/command-center")
+    def api_command_center():
+        """Aggregated Command Center data — single call for Dashboard"""
+        try:
+            from apex.interface.hermes_bridge import get_command_center_data
+            return jsonify(get_command_center_data())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
     return app
 
 

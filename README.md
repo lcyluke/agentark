@@ -361,34 +361,86 @@ User Output ← L5 Interface ← L3 Result ← L2 Return ← ← ← ← ← ←
 ### Source Code Map
 
 ```
-apex/
-├── core/                    # 🧠 Agent DNA: Profile, Runtime, Memory, Skills
-│   ├── profile.py           #   Universal Profile Format (UPF) — role, goal, tools, model
-│   ├── runtime.py           #   Agent execution engine — build prompt, call LLM, evolve
-│   ├── memory.py            #   Hybrid memory (short-term + long-term KV stores)
-│   ├── skills.py            #   Evolvable skill packages with confidence scoring
-│   ├── templates.py         #   5 pre-built agent templates
-│   ├── knowledge.py         #   Knowledge Graph — shared cross-agent entity-relation memory
-│   └── evolution.py         #   Evolution Engine — learn patterns from every execution
+apex/                         # 🚀 Multi-Agent Operating System
+├── __init__.py               #   Package marker
+├── __main__.py               #   CLI entry point
 │
-├── orchestration/           # 🔄 10 Multi-Agent Orchestration Modes
-│   ├── swarm.py             #   Parallel workers → Verifier → Synthesizer
-│   ├── crew.py              #   Role-based collaboration + round-table discussion
-│   ├── chain.py             #   Sequential pipeline with handoff verification
-│   ├── debate.py            #   Multi-perspective: Opening → Cross-examine → Rebuttal
-│   ├── router.py            #   Task classification & dispatch to specialized agents
-│   ├── supervisor.py        #   Hierarchical: Decompose → Workers → Review → Merge
-│   ├── monitor.py           #   Anomaly detection: Watcher → Fixer → Verify → Escalate
-│   ├── kanban.py            #   Task board with dependency resolution (used internally)
-│   ├── healing.py           #   3-strike auto-recovery (retry → switch → simplify → notify)
-│   ├── autonomous.py        #   7x24 self-aware engine: scheduler → dispatcher → heartbeat
-│   └── ops.py               #   Operations: Release pipelines, bug tracking, SLA monitoring
+├── core/                     # 🧠 Agent Core: Profile, Runtime, Memory, Skills
+│   ├── __init__.py
+│   ├── profile.py            #   Agent profile (role, goals, tools, model config)
+│   ├── runtime.py            #   Agent execution engine (build prompt, call LLM)
+│   ├── memory.py             #   Short/long-term KV memory store
+│   ├── skills.py             #   Evolvable skill packages with confidence scoring
+│   ├── templates.py          #   5 pre-built agent templates
+│   ├── knowledge.py          #   Knowledge Graph (entity-relation shared memory)
+│   └── evolution.py          #   Evolution Engine (patterns from every execution)
 │
-├── economy/                 # 💰 Token Economy: Budget Control, Smart Routing, Cost Audit
-├── mcp/                     # 🔌 MCP Hub: Filesystem, Shell, HTTP, Knowledge Graph bridge
-├── providers/               # 🤖 LLM Providers: DeepSeek V4 Pro, Ollama (free), extensible
-├── cli/                     # 🖥️ CLI: 20 commands, 9 subcommand groups (Click + Rich)
-└── interface/               # 🌐 Web Dashboard: Flask + Dark Theme SPA + REST API
+├── orchestration/            # 🔄 10 Multi-Agent Orchestration Modes
+│   ├── __init__.py           #   Mode registry and exports
+│   ├── swarm.py              #   Parallel workers → Verifier → Synthesizer
+│   ├── crew.py               #   Role-based collaboration + team assembly
+│   ├── chain.py              #   Sequential pipeline with handoff verification
+│   ├── debate.py             #   Multi-perspective structured debate
+│   ├── router.py             #   Task classification and agent dispatch
+│   ├── supervisor.py         #   Hierarchical delegation with review gates
+│   ├── monitor.py            #   Anomaly detection and auto-remediation
+│   ├── kanban.py             #   Task board with dependency resolution
+│   ├── healing.py            #   3-strike self-healing (retry → switch → simplify)
+│   ├── autonomous.py         #   7x24 autonomous operation engine
+│   └── ops.py                #   Release pipelines, bug tracking, SLA monitoring
+│
+├── cli/                      # 🖥️ CLI (Click + Rich)
+│   ├── __init__.py
+│   ├── main.py               #   CLI dispatcher (17 command groups)
+│   └── commands/             #   Command implementations
+│       ├── __init__.py
+│       ├── run.py            #   apex run (single agent + swarm)
+│       ├── team.py           #   apex team (profile management)
+│       ├── template.py       #   apex template (pre-built templates)
+│       ├── init.py           #   apex init (project scaffolding)
+│       ├── status.py         #   apex status (system overview)
+│       ├── economy.py        #   apex economy (budget, routing)
+│       ├── evolution.py      #   apex evolution (learning patterns)
+│       ├── company.py        #   apex company (one-click AI company)
+│       ├── autonomous.py     #   apex autonomous (7x24 engine)
+│       └── ops.py            #   apex ops (release, bug, task management)
+│
+├── providers/                # 🤖 LLM Providers
+│   ├── __init__.py
+│   ├── base.py               #   Provider abstraction and registry
+│   └── deepseek.py           #   DeepSeek V4 Pro + Ollama (local) providers
+│
+├── economy/                  # 💰 Token Economy
+│   └── __init__.py           #   Budget control, smart routing, cost audit
+│
+├── mcp/                      # 🔌 MCP Integration
+│   ├── __init__.py
+│   ├── hub.py                #   MCP tool hub and registry (filesystem, shell, etc.)
+│   └── stdio_client.py       #   Cross-language MCP stdio client (Node/Go/Rust)
+│
+├── interface/                # 🌐 Web Dashboard
+│   ├── web.py                #   Flask + REST API (10 endpoints)
+│   ├── hermes_bridge.py      #   Hermes Agent integration bridge
+│   └── templates/
+│       └── dashboard.html    #   Dark theme SPA dashboard
+│
+├── docs/                     # 📚 Documentation
+│   └── images/               #   Screenshots, banner, architecture diagrams
+│
+├── scripts/                  # 🛠️ Utility scripts
+│   └── mcp-servers/          #   Cross-language MCP server implementations
+│       ├── mcp-node-server.js    #   Node.js: greet, weather, sentiment
+│       ├── mcp-go-server.go      #   Go: calculate, file_analysis, time
+│       └── mcp-rust-server.rs    #   Rust: text_analysis, fibonacci, factors
+│
+└── tests/                    # 🧪 Test Suite
+    ├── test_profile.py       #   Profile tests
+    ├── test_economy.py       #   Economy tests
+    ├── test_knowledge.py     #   Knowledge graph tests
+    ├── test_mcp.py           #   MCP hub tests
+    ├── test_orchestration_*.py  #   Orchestration mode tests
+    ├── test_integration.py   #   45 integration tests (self-healing, ops, KG)
+    └── test_mcp_cross_language.py  #   Cross-language MCP tests (37/39)
 ```
 
 ---
