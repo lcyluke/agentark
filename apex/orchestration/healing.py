@@ -23,7 +23,7 @@ from apex.orchestration.kanban import Kanban, TASK_STATUS_FAILED
 
 @dataclass
 class HealingResult:
-    success: bool
+    success: bool = False
     attempts: int = 0
     errors: list[str] = field(default_factory=list)
     fixes: list[str] = field(default_factory=list)
