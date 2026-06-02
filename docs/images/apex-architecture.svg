@@ -1,0 +1,414 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1800" font-family="'SF Mono', 'Courier New', monospace">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0e27"/>
+      <stop offset="100%" stop-color="#0f1520"/>
+    </linearGradient>
+    <linearGradient id="glow1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="layer1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e3a5f"/>
+      <stop offset="100%" stop-color="#162d4a"/>
+    </linearGradient>
+    <linearGradient id="layer2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e3a5f"/>
+      <stop offset="100%" stop-color="#162d4a"/>
+    </linearGradient>
+    <linearGradient id="layer3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a3a3a"/>
+      <stop offset="100%" stop-color="#132d2d"/>
+    </linearGradient>
+    <linearGradient id="layer4" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2a1a4a"/>
+      <stop offset="100%" stop-color="#1f1236"/>
+    </linearGradient>
+    <linearGradient id="layer5" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3a1a2a"/>
+      <stop offset="100%" stop-color="#2a1220"/>
+    </linearGradient>
+    <linearGradient id="econ" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0.9"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="arrowDown" markerWidth="10" markerHeight="8" refX="5" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#6b7280"/>
+    </marker>
+    <marker id="arrowUp" markerWidth="10" markerHeight="8" refX="5" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#6b7280"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="1800" fill="url(#bg)"/>
+
+  <!-- Title -->
+  <text x="600" y="55" text-anchor="middle" fill="#e2e8f0" font-size="28" font-weight="bold" letter-spacing="2">APEX Work Logic Architecture</text>
+  <text x="600" y="80" text-anchor="middle" fill="#94a3b8" font-size="14">Multi-Agent Operating System — System Architecture &amp; Data Flow</text>
+
+  <!-- ==================== LAYER 5: INTERFACE ==================== -->
+  <rect x="40" y="110" width="1120" height="170" rx="12" fill="url(#layer1)" stroke="#3b82f6" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="600" y="138" text-anchor="middle" fill="#60a5fa" font-size="16" font-weight="bold">L5 — INTERFACE LAYER</text>
+  <text x="600" y="155" text-anchor="middle" fill="#64748b" font-size="11">User &amp; Developer Touchpoints</text>
+
+  <!-- CLI Box -->
+  <rect x="65" y="168" width="240" height="95" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="185" y="190" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="bold">🐚 CLI Terminal</text>
+  <text x="185" y="208" text-anchor="middle" fill="#94a3b8" font-size="10">Click / Rich-Powered</text>
+  <text x="185" y="224" text-anchor="middle" fill="#64748b" font-size="9">20 commands · 9 subcommand groups</text>
+  <text x="185" y="240" text-anchor="middle" fill="#64748b" font-size="9">run · crew · chain · debate · router</text>
+  <text x="185" y="256" text-anchor="middle" fill="#64748b" font-size="9">supervisor · monitor · ops · company</text>
+
+  <!-- Web Dashboard Box -->
+  <rect x="330" y="168" width="240" height="95" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="450" y="190" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="bold">🖥️ Web Dashboard</text>
+  <text x="450" y="208" text-anchor="middle" fill="#94a3b8" font-size="10">Flask + Dark Theme SPA</text>
+  <text x="450" y="224" text-anchor="middle" fill="#64748b" font-size="9">Agent Fleet · Task Board · KG Viz</text>
+  <text x="450" y="240" text-anchor="middle" fill="#64748b" font-size="9">Token Economy · Quality Trends</text>
+  <text x="450" y="256" text-anchor="middle" fill="#64748b" font-size="9">Click detail modals · Real-time updates</text>
+
+  <!-- REST API Box -->
+  <rect x="595" y="168" width="240" height="95" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="715" y="190" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="bold">🔌 REST API</text>
+  <text x="715" y="208" text-anchor="middle" fill="#94a3b8" font-size="10">14 JSON Endpoints</text>
+  <text x="715" y="224" text-anchor="middle" fill="#64748b" font-size="9">/api/status · /api/profiles</text>
+  <text x="715" y="240" text-anchor="middle" fill="#64748b" font-size="9">/api/tasks · /api/knowledge</text>
+  <text x="715" y="256" text-anchor="middle" fill="#64748b" font-size="9">/api/evolution · /api/ops</text>
+
+  <!-- MCP Protocol Box -->
+  <rect x="860" y="168" width="275" height="95" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="997" y="190" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="bold">🔗 MCP Protocol</text>
+  <text x="997" y="208" text-anchor="middle" fill="#94a3b8" font-size="10">Cross-Language Agent Communication</text>
+  <text x="997" y="224" text-anchor="middle" fill="#64748b" font-size="9">Python ↔ Java ↔ Rust ↔ Go</text>
+  <text x="997" y="240" text-anchor="middle" fill="#64748b" font-size="9">External tool integration</text>
+  <text x="997" y="256" text-anchor="middle" fill="#64748b" font-size="9">IDE Plugins</text>
+
+  <!-- Arrow L5 → L4 -->
+  <line x1="600" y1="280" x2="600" y2="310" stroke="#4b5563" stroke-width="2" marker-end="url(#arrowDown)"/>
+
+  <!-- ==================== LAYER 4: INTELLIGENCE ==================== -->
+  <rect x="40" y="315" width="1120" height="250" rx="12" fill="url(#layer4)" stroke="#8b5cf6" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="600" y="343" text-anchor="middle" fill="#a78bfa" font-size="16" font-weight="bold">L4 — INTELLIGENCE LAYER</text>
+  <text x="600" y="360" text-anchor="middle" fill="#64748b" font-size="11">Cross-Agent Intelligence, Memory &amp; Learning</text>
+
+  <!-- Evolution Engine -->
+  <rect x="65" y="378" width="340" height="172" rx="8" fill="#1e1b3a" stroke="#374151" stroke-width="1"/>
+  <text x="235" y="400" text-anchor="middle" fill="#c4b5fd" font-size="14" font-weight="bold">🧬 Evolution Engine</text>
+  <text x="235" y="420" text-anchor="middle" fill="#94a3b8" font-size="10">Learn from every execution — agents get smarter over time</text>
+  <line x1="90" y1="430" x2="380" y2="430" stroke="#374151" stroke-width="1"/>
+  <text x="235" y="448" text-anchor="middle" fill="#64748b" font-size="9">ExecutionRecord → pattern extraction → confidence scoring</text>
+  <text x="235" y="464" text-anchor="middle" fill="#64748b" font-size="9">Auto-skill creation: error probability drops 90%+ after 100 runs</text>
+  <text x="235" y="480" text-anchor="middle" fill="#64748b" font-size="9">Celery-like execution tracking with quality_history</text>
+  <rect x="100" y="492" width="120" height="24" rx="4" fill="#2d1b69" stroke="#7c3aed" stroke-width="0.5"/>
+  <text x="160" y="509" text-anchor="middle" fill="#a78bfa" font-size="9">ExecutionRecord</text>
+  <rect x="230" y="492" width="120" height="24" rx="4" fill="#2d1b69" stroke="#7c3aed" stroke-width="0.5"/>
+  <text x="290" y="509" text-anchor="middle" fill="#a78bfa" font-size="9">Pattern Miner</text>
+  <rect x="100" y="520" width="120" height="24" rx="4" fill="#2d1b69" stroke="#7c3aed" stroke-width="0.5"/>
+  <text x="160" y="537" text-anchor="middle" fill="#a78bfa" font-size="9">Skill Builder</text>
+
+  <!-- Knowledge Graph -->
+  <rect x="430" y="378" width="340" height="172" rx="8" fill="#1e1b3a" stroke="#374151" stroke-width="1"/>
+  <text x="600" y="400" text-anchor="middle" fill="#c4b5fd" font-size="14" font-weight="bold">🧠 Knowledge Graph</text>
+  <text x="600" y="420" text-anchor="middle" fill="#94a3b8" font-size="10">Teach one agent = teach all agents</text>
+  <line x1="455" y1="430" x2="745" y2="430" stroke="#374151" stroke-width="1"/>
+  <text x="600" y="448" text-anchor="middle" fill="#64748b" font-size="9">Entity-Relation-Entity triples (not vector DB)</text>
+  <text x="600" y="464" text-anchor="middle" fill="#64748b" font-size="9">FTS5 full-text search · Confidence scoring</text>
+  <text x="600" y="480" text-anchor="middle" fill="#64748b" font-size="9">Conflict detection · Auto-reasoning</text>
+  <rect x="510" y="494" width="80" height="22" rx="4" fill="#2d1b69" stroke="#7c3aed" stroke-width="0.5"/>
+  <text x="550" y="509" text-anchor="middle" fill="#a78bfa" font-size="9">Entity</text>
+  <rect x="600" y="494" width="80" height="22" rx="4" fill="#2d1b69" stroke="#7c3aed" stroke-width="0.5"/>
+  <text x="640" y="509" text-anchor="middle" fill="#a78bfa" font-size="9">Relation</text>
+  <rect x="510" y="520" width="80" height="22" rx="4" fill="#2d1b69" stroke="#7c3aed" stroke-width="0.5"/>
+  <text x="550" y="535" text-anchor="middle" fill="#a78bfa" font-size="9">Conflict</text>
+  <rect x="600" y="520" width="80" height="22" rx="4" fill="#2d1b69" stroke="#7c3aed" stroke-width="0.5"/>
+  <text x="640" y="535" text-anchor="middle" fill="#a78bfa" font-size="9">Resolver</text>
+
+  <!-- Memory System -->
+  <rect x="795" y="378" width="340" height="172" rx="8" fill="#1e1b3a" stroke="#374151" stroke-width="1"/>
+  <text x="965" y="400" text-anchor="middle" fill="#c4b5fd" font-size="14" font-weight="bold">💾 Memory System</text>
+  <text x="965" y="420" text-anchor="middle" fill="#94a3b8" font-size="10">Short-term · Long-term · Shared</text>
+  <line x1="820" y1="430" x2="1110" y2="430" stroke="#374151" stroke-width="1"/>
+  <rect x="810" y="440" width="150" height="40" rx="4" fill="#2d1b69" stroke="#7c3aed" stroke-width="0.5"/>
+  <text x="885" y="458" text-anchor="middle" fill="#a78bfa" font-size="9">Short-term KV</text>
+  <text x="885" y="472" text-anchor="middle" fill="#64748b" font-size="8">Current session context</text>
+  <rect x="970" y="440" width="150" height="40" rx="4" fill="#2d1b69" stroke="#7c3aed" stroke-width="0.5"/>
+  <text x="1045" y="458" text-anchor="middle" fill="#a78bfa" font-size="9">Long-term KV</text>
+  <text x="1045" y="472" text-anchor="middle" fill="#64748b" font-size="8">Persistent facts</text>
+  <rect x="810" y="486" width="150" height="40" rx="4" fill="#2d1b69" stroke="#7c3aed" stroke-width="0.5"/>
+  <text x="885" y="504" text-anchor="middle" fill="#a78bfa" font-size="9">Shared Memory</text>
+  <text x="885" y="518" text-anchor="middle" fill="#64748b" font-size="8">Cross-agent (SQLite)</text>
+  <rect x="970" y="486" width="150" height="40" rx="4" fill="#2d1b69" stroke="#7c3aed" stroke-width="0.5"/>
+  <text x="1045" y="504" text-anchor="middle" fill="#a78bfa" font-size="9">Skill Packages</text>
+  <text x="1045" y="518" text-anchor="middle" fill="#64748b" font-size="8">Evolvable &amp; confidence</text>
+
+  <!-- Arrow L4 → L3 -->
+  <line x1="600" y1="565" x2="600" y2="595" stroke="#4b5563" stroke-width="2" marker-end="url(#arrowDown)"/>
+
+  <!-- ==================== LAYER 3: ORCHESTRATION ==================== -->
+  <rect x="40" y="600" width="1120" height="370" rx="12" fill="url(#layer3)" stroke="#10b981" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="600" y="628" text-anchor="middle" fill="#34d399" font-size="16" font-weight="bold">L3 — ORCHESTRATION LAYER</text>
+  <text x="600" y="645" text-anchor="middle" fill="#64748b" font-size="11">10 Multi-Agent Orchestration Modes</text>
+
+  <!-- Row 1: Top 5 modes -->
+  <!-- Single / Swarm / Crew / Chain / Debate -->
+  <rect x="65" y="660" width="200" height="135" rx="8" fill="#1a2e2e" stroke="#374151" stroke-width="1"/>
+  <text x="165" y="685" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="bold">1️⃣ Single Agent</text>
+  <line x1="80" y1="695" x2="250" y2="695" stroke="#374151" stroke-width="1"/>
+  <text x="165" y="713" text-anchor="middle" fill="#94a3b8" font-size="10">Simple Q&amp;A · Single-step</text>
+  <text x="165" y="730" text-anchor="middle" fill="#94a3b8" font-size="10">Agent.run(task) execution</text>
+  <rect x="85" y="744" width="160" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="165" y="758" text-anchor="middle" fill="#34d399" font-size="9">Profile → Runtime → LLM</text>
+  <rect x="85" y="767" width="160" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="165" y="781" text-anchor="middle" fill="#34d399" font-size="9">apex run \"task\"</text>
+
+  <rect x="280" y="660" width="200" height="135" rx="8" fill="#1a2e2e" stroke="#374151" stroke-width="1"/>
+  <text x="380" y="685" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="bold">2️⃣ Swarm</text>
+  <line x1="295" y1="695" x2="465" y2="695" stroke="#374151" stroke-width="1"/>
+  <text x="380" y="713" text-anchor="middle" fill="#94a3b8" font-size="10">Parallel Workers → Verifier</text>
+  <text x="380" y="730" text-anchor="middle" fill="#94a3b8" font-size="10">→ Synthesizer</text>
+  <rect x="300" y="744" width="160" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="380" y="758" text-anchor="middle" fill="#34d399" font-size="9">N parallel agents → verify</text>
+  <rect x="300" y="767" width="160" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="380" y="781" text-anchor="middle" fill="#34d399" font-size="9">apex run --swarm</text>
+
+  <rect x="495" y="660" width="200" height="135" rx="8" fill="#1a2e2e" stroke="#374151" stroke-width="1"/>
+  <text x="595" y="685" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="bold">3️⃣ Crew</text>
+  <line x1="510" y1="695" x2="680" y2="695" stroke="#374151" stroke-width="1"/>
+  <text x="595" y="713" text-anchor="middle" fill="#94a3b8" font-size="10">Role collaboration + discussion</text>
+  <text x="595" y="730" text-anchor="middle" fill="#94a3b8" font-size="10">Auto team design (ZCT)</text>
+  <rect x="515" y="744" width="160" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="595" y="758" text-anchor="middle" fill="#34d399" font-size="9">Parallel → Roundtable → Lead</text>
+  <rect x="515" y="767" width="160" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="595" y="781" text-anchor="middle" fill="#34d399" font-size="9">apex crew create \"goal\"</text>
+
+  <rect x="710" y="660" width="200" height="135" rx="8" fill="#1a2e2e" stroke="#374151" stroke-width="1"/>
+  <text x="810" y="685" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="bold">4️⃣ Chain</text>
+  <line x1="725" y1="695" x2="895" y2="695" stroke="#374151" stroke-width="1"/>
+  <text x="810" y="713" text-anchor="middle" fill="#94a3b8" font-size="10">Sequential pipeline stages</text>
+  <text x="810" y="730" text-anchor="middle" fill="#94a3b8" font-size="10">Draft → Review → Edit → Publish</text>
+  <rect x="730" y="744" width="160" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="810" y="758" text-anchor="middle" fill="#34d399" font-size="9">Stage → Verify → Stage → Assemble</text>
+  <rect x="730" y="767" width="160" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="810" y="781" text-anchor="middle" fill="#34d399" font-size="9">apex chain run \"goal\"</text>
+
+  <rect x="925" y="660" width="210" height="135" rx="8" fill="#1a2e2e" stroke="#374151" stroke-width="1"/>
+  <text x="1030" y="685" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="bold">5️⃣ Debate</text>
+  <line x1="940" y1="695" x2="1120" y2="695" stroke="#374151" stroke-width="1"/>
+  <text x="1030" y="713" text-anchor="middle" fill="#94a3b8" font-size="10">Multi-perspective analysis</text>
+  <text x="1030" y="730" text-anchor="middle" fill="#94a3b8" font-size="10">Opening → X-examine → Rebuttal</text>
+  <rect x="940" y="744" width="180" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="1030" y="758" text-anchor="middle" fill="#34d399" font-size="9">Moderator synthesis</text>
+  <rect x="940" y="767" width="180" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="1030" y="781" text-anchor="middle" fill="#34d399" font-size="9">apex debate \"topic\"</text>
+
+  <!-- Row 2: Bottom 5 modes -->
+  <rect x="65" y="808" width="200" height="140" rx="8" fill="#1a2e2e" stroke="#374151" stroke-width="1"/>
+  <text x="165" y="833" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="bold">6️⃣ Router</text>
+  <line x1="80" y1="843" x2="250" y2="843" stroke="#374151" stroke-width="1"/>
+  <text x="165" y="861" text-anchor="middle" fill="#94a3b8" font-size="10">Task classification + dispatch</text>
+  <text x="165" y="878" text-anchor="middle" fill="#94a3b8" font-size="10">Classify → Route → Specialized</text>
+  <rect x="85" y="894" width="160" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="165" y="908" text-anchor="middle" fill="#34d399" font-size="9">apex router route \"task\"</text>
+  <rect x="85" y="918" width="160" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="165" y="932" text-anchor="middle" fill="#34d399" font-size="9">Customer support pattern</text>
+
+  <rect x="280" y="808" width="200" height="140" rx="8" fill="#1a2e2e" stroke="#374151" stroke-width="1"/>
+  <text x="380" y="833" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="bold">7️⃣ Supervisor</text>
+  <line x1="295" y1="843" x2="465" y2="843" stroke="#374151" stroke-width="1"/>
+  <text x="380" y="861" text-anchor="middle" fill="#94a3b8" font-size="10">Hierarchical decomposition</text>
+  <text x="380" y="878" text-anchor="middle" fill="#94a3b8" font-size="10">Decompose → Workers → Review</text>
+  <rect x="300" y="894" width="160" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="380" y="908" text-anchor="middle" fill="#34d399" font-size="9">apex supervisor \"goal\"</text>
+  <rect x="300" y="918" width="160" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="380" y="932" text-anchor="middle" fill="#34d399" font-size="9">Enterprise approval gates</text>
+
+  <rect x="495" y="808" width="200" height="140" rx="8" fill="#1a2e2e" stroke="#374151" stroke-width="1"/>
+  <text x="595" y="833" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="bold">8️⃣ Monitor</text>
+  <line x1="510" y1="843" x2="680" y2="843" stroke="#374151" stroke-width="1"/>
+  <text x="595" y="861" text-anchor="middle" fill="#94a3b8" font-size="10">Anomaly detection + reactive</text>
+  <text x="595" y="878" text-anchor="middle" fill="#94a3b8" font-size="10">Watcher → Anomaly → Fixer</text>
+  <rect x="515" y="894" width="160" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="595" y="908" text-anchor="middle" fill="#34d399" font-size="9">apex monitor check -f /path</text>
+  <rect x="515" y="918" width="160" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="595" y="932" text-anchor="middle" fill="#34d399" font-size="9">DevOps / SRE monitoring</text>
+
+  <rect x="710" y="808" width="200" height="140" rx="8" fill="#1a2e2e" stroke="#374151" stroke-width="1"/>
+  <text x="810" y="833" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="bold">9️⃣ Kanban</text>
+  <line x1="725" y1="843" x2="895" y2="843" stroke="#374151" stroke-width="1"/>
+  <text x="810" y="861" text-anchor="middle" fill="#94a3b8" font-size="10">Smart task board + dependency</text>
+  <text x="810" y="878" text-anchor="middle" fill="#94a3b8" font-size="10">Ready → InProgress → Done</text>
+  <rect x="730" y="894" width="160" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="810" y="908" text-anchor="middle" fill="#34d399" font-size="9">SQLite-backed task CRUD</text>
+  <rect x="730" y="918" width="160" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="810" y="932" text-anchor="middle" fill="#34d399" font-size="9">Internal swarm dependency</text>
+
+  <rect x="925" y="808" width="210" height="140" rx="8" fill="#1a2e2e" stroke="#374151" stroke-width="1"/>
+  <text x="1030" y="833" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="bold">🔟 Company</text>
+  <line x1="940" y1="843" x2="1120" y2="843" stroke="#374151" stroke-width="1"/>
+  <text x="1030" y="861" text-anchor="middle" fill="#94a3b8" font-size="10">One-Click AI Company (OCC)</text>
+  <text x="1030" y="878" text-anchor="middle" fill="#94a3b8" font-size="10">5 agents · 7 SOP steps</text>
+  <rect x="940" y="894" width="180" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="1030" y="908" text-anchor="middle" fill="#34d399" font-size="9">apex company create name</text>
+  <rect x="940" y="918" width="180" height="20" rx="4" fill="#1a3e3e" stroke="#059669" stroke-width="0.5"/>
+  <text x="1030" y="932" text-anchor="middle" fill="#34d399" font-size="9">PM/Frontend/Backend/DevOps/Content</text>
+
+  <!-- Arrow L3 → L2 -->
+  <line x1="600" y1="970" x2="600" y2="1000" stroke="#4b5563" stroke-width="2" marker-end="url(#arrowDown)"/>
+
+  <!-- ==================== LAYER 2: AGENT RUNTIME ==================== -->
+  <rect x="40" y="1005" width="1120" height="290" rx="12" fill="url(#layer2)" stroke="#f59e0b" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="600" y="1033" text-anchor="middle" fill="#fbbf24" font-size="16" font-weight="bold">L2 — AGENT RUNTIME LAYER</text>
+  <text x="600" y="1050" text-anchor="middle" fill="#64748b" font-size="11">Individual Agent Execution Engine</text>
+
+  <!-- Profile -->
+  <rect x="65" y="1068" width="250" height="210" rx="8" fill="#1e293b" stroke="#374151" stroke-width="1"/>
+  <text x="190" y="1090" text-anchor="middle" fill="#fde68a" font-size="13" font-weight="bold">📋 Universal Profile Format</text>
+  <line x1="80" y1="1100" x2="300" y2="1100" stroke="#374151" stroke-width="1"/>
+  <rect x="80" y="1110" width="220" height="22" rx="4" fill="#334155" stroke="#475569" stroke-width="0.5"/>
+  <text x="190" y="1125" text-anchor="middle" fill="#94a3b8" font-size="9">Soul (role · goal · backstory)</text>
+  <rect x="80" y="1136" width="220" height="22" rx="4" fill="#334155" stroke="#475569" stroke-width="0.5"/>
+  <text x="190" y="1151" text-anchor="middle" fill="#94a3b8" font-size="9">Skills · Tools · Temperature</text>
+  <rect x="80" y="1162" width="220" height="22" rx="4" fill="#334155" stroke="#475569" stroke-width="0.5"/>
+  <text x="190" y="1177" text-anchor="middle" fill="#94a3b8" font-size="9">Model · Fallback provider</text>
+  <rect x="80" y="1188" width="220" height="22" rx="4" fill="#334155" stroke="#475569" stroke-width="0.5"/>
+  <text x="190" y="1203" text-anchor="middle" fill="#94a3b8" font-size="9">Max iterations · Budget cap</text>
+  <rect x="80" y="1214" width="220" height="22" rx="4" fill="#334155" stroke="#475569" stroke-width="0.5"/>
+  <text x="190" y="1229" text-anchor="middle" fill="#94a3b8" font-size="9">YAML config · SQLite stored</text>
+  <rect x="130" y="1246" width="120" height="22" rx="4" fill="#78350f" stroke="#d97706" stroke-width="0.5"/>
+  <text x="190" y="1261" text-anchor="middle" fill="#fbbf24" font-size="9">apex team create</text>
+
+  <!-- Runtime -->
+  <rect x="340" y="1068" width="380" height="210" rx="8" fill="#1e293b" stroke="#374151" stroke-width="1"/>
+  <text x="530" y="1090" text-anchor="middle" fill="#fde68a" font-size="13" font-weight="bold">⚡ Runtime (core/runtime.py)</text>
+  <line x1="355" y1="1100" x2="705" y2="1100" stroke="#374151" stroke-width="1"/>
+  <text x="530" y="1120" text-anchor="middle" fill="#94a3b8" font-size="10">Agent execution: build system prompt → stream response</text>
+  <text x="530" y="1138" text-anchor="middle" fill="#94a3b8" font-size="10">Tool integration · Fallback handling</text>
+  <text x="530" y="1156" text-anchor="middle" fill="#94a3b8" font-size="10">Every run → auto-record to Evolution Engine</text>
+  <rect x="360" y="1172" width="340" height="36" rx="4" fill="#334155" stroke="#475569" stroke-width="0.5"/>
+  <text x="530" y="1189" text-anchor="middle" fill="#94a3b8" font-size="9">Agent.run(task) → build_prompt() → call LLM → process_response</text>
+  <text x="530" y="1203" text-anchor="middle" fill="#94a3b8" font-size="9">→ _record_evolution()</text>
+  <rect x="360" y="1214" width="100" height="22" rx="4" fill="#78350f" stroke="#d97706" stroke-width="0.5"/>
+  <text x="410" y="1229" text-anchor="middle" fill="#fbbf24" font-size="9">MCP Tools</text>
+  <rect x="470" y="1214" width="100" height="22" rx="4" fill="#78350f" stroke="#d97706" stroke-width="0.5"/>
+  <text x="520" y="1229" text-anchor="middle" fill="#fbbf24" font-size="9">Fallback</text>
+  <rect x="580" y="1214" width="110" height="22" rx="4" fill="#78350f" stroke="#d97706" stroke-width="0.5"/>
+  <text x="635" y="1229" text-anchor="middle" fill="#fbbf24" font-size="9">Auto-evolution</text>
+
+  <!-- Self-Healing -->
+  <rect x="745" y="1068" width="390" height="210" rx="8" fill="#1e293b" stroke="#374151" stroke-width="1"/>
+  <text x="940" y="1090" text-anchor="middle" fill="#fde68a" font-size="13" font-weight="bold">🩹 Self-Healing (3-Strike)</text>
+  <line x1="760" y1="1100" x2="1120" y2="1100" stroke="#374151" stroke-width="1"/>
+  <!-- Strike 1 -->
+  <rect x="760" y="1108" width="360" height="26" rx="4" fill="#1a3a3a" stroke="#059669" stroke-width="0.5"/>
+  <text x="940" y="1125" text-anchor="middle" fill="#34d399" font-size="9">⚪ Attempt 1 → Error → Auto-diagnose → Retry</text>
+  <!-- Strike 2 -->
+  <rect x="760" y="1138" width="360" height="26" rx="4" fill="#3a2a1a" stroke="#d97706" stroke-width="0.5"/>
+  <text x="940" y="1155" text-anchor="middle" fill="#fbbf24" font-size="9">🟡 Attempt 2 → Same Error → Switch model → Retry</text>
+  <!-- Strike 3 -->
+  <rect x="760" y="1168" width="360" height="26" rx="4" fill="#3a1a1a" stroke="#ef4444" stroke-width="0.5"/>
+  <text x="940" y="1185" text-anchor="middle" fill="#f87171" font-size="9">🔴 Attempt 3 → Still Failing → Simplify → Retry</text>
+  <!-- Escalate -->
+  <rect x="760" y="1198" width="360" height="26" rx="4" fill="#2a1a4a" stroke="#8b5cf6" stroke-width="0.5"/>
+  <text x="940" y="1215" text-anchor="middle" fill="#a78bfa" font-size="9">⚪ All failed → Notify human + Expert ticket</text>
+  <rect x="830" y="1240" width="220" height="22" rx="4" fill="#78350f" stroke="#d97706" stroke-width="0.5"/>
+  <text x="940" y="1255" text-anchor="middle" fill="#fbbf24" font-size="9">Every failure → Knowledge Graph learns</text>
+
+  <!-- Arrow L2 → L1 -->
+  <line x1="600" y1="1295" x2="600" y2="1325" stroke="#4b5563" stroke-width="2" marker-end="url(#arrowDown)"/>
+
+  <!-- ==================== LAYER 1: PROVIDER ==================== -->
+  <rect x="40" y="1330" width="1120" height="145" rx="12" fill="url(#layer5)" stroke="#ef4444" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="600" y="1358" text-anchor="middle" fill="#f87171" font-size="16" font-weight="bold">L1 — PROVIDER LAYER</text>
+  <text x="600" y="1375" text-anchor="middle" fill="#64748b" font-size="11">LLM Model Providers &amp; Tool Infrastructure</text>
+
+  <!-- DeepSeek -->
+  <rect x="65" y="1390" width="220" height="70" rx="8" fill="#2a1a1a" stroke="#ef4444" stroke-width="0.5"/>
+  <text x="175" y="1413" text-anchor="middle" fill="#fca5a5" font-size="13" font-weight="bold">DeepSeek V4 Pro</text>
+  <text x="175" y="1432" text-anchor="middle" fill="#94a3b8" font-size="10">Primary provider</text>
+  <text x="175" y="1448" text-anchor="middle" fill="#94a3b8" font-size="10">$0.001/1K input</text>
+
+  <!-- Ollama -->
+  <rect x="310" y="1390" width="220" height="70" rx="8" fill="#2a1a1a" stroke="#ef4444" stroke-width="0.5"/>
+  <text x="420" y="1413" text-anchor="middle" fill="#fca5a5" font-size="13" font-weight="bold">Ollama (Local)</text>
+  <text x="420" y="1432" text-anchor="middle" fill="#94a3b8" font-size="10">Fallback / free tier</text>
+  <text x="420" y="1448" text-anchor="middle" fill="#94a3b8" font-size="10">$0.00/1K input</text>
+
+  <!-- Claude -->
+  <rect x="555" y="1390" width="220" height="70" rx="8" fill="#2a1a1a" stroke="#ef4444" stroke-width="0.5"/>
+  <text x="665" y="1413" text-anchor="middle" fill="#fca5a5" font-size="13" font-weight="bold">Claude Sonnet</text>
+  <text x="665" y="1432" text-anchor="middle" fill="#94a3b8" font-size="10">Architecture tasks</text>
+  <text x="665" y="1448" text-anchor="middle" fill="#94a3b8" font-size="10">$0.003/1K input</text>
+
+  <!-- MCP Tools -->
+  <rect x="800" y="1390" width="335" height="70" rx="8" fill="#2a1a1a" stroke="#ef4444" stroke-width="0.5"/>
+  <text x="967" y="1413" text-anchor="middle" fill="#fca5a5" font-size="13" font-weight="bold">MCP Tools / Integrations</text>
+  <text x="967" y="1432" text-anchor="middle" fill="#94a3b8" font-size="10">filesystem · shell · http · knowledge</text>
+  <text x="967" y="1448" text-anchor="middle" fill="#94a3b8" font-size="10">Cross-language agent bridge</text>
+
+  <!-- ==================== CROSS-CUTTING: TOKEN ECONOMY ==================== -->
+  <rect x="40" y="1505" width="1120" height="80" rx="12" fill="url(#econ)" filter="url(#shadow)"/>
+  <text x="600" y="1530" text-anchor="middle" fill="#1c1917" font-size="15" font-weight="bold">💰 CROSS-CUTTING: TOKEN ECONOMY</text>
+  <text x="600" y="1550" text-anchor="middle" fill="#292524" font-size="11">Budget Management · Smart Model Routing · Cost Optimization — spans all layers</text>
+  <rect x="600" y="1560" text-anchor="middle">
+    <text x="600" y="1575" text-anchor="middle" fill="#292524" font-size="10">Monthly budget tracking · Task→Model classification · Auto-downgrade when budget low · Transaction audit log</text>
+  </rect>
+
+  <!-- ==================== BOTTOM: DATA FLOW LEGEND ==================== -->
+  <rect x="40" y="1610" width="1120" height="170" rx="12" fill="#131826" stroke="#374151" stroke-width="1"/>
+  <text x="600" y="1636" text-anchor="middle" fill="#e2e8f0" font-size="15" font-weight="bold">Data Flow</text>
+
+  <!-- Flow arrows -->
+  <rect x="65" y="1652" width="1080" height="115" rx="6" fill="#1a2030" stroke="#374151" stroke-width="0.5"/>
+
+  <!-- User Input -->
+  <rect x="85" y="1662" width="100" height="28" rx="4" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1"/>
+  <text x="135" y="1680" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="bold">User Input</text>
+  <text x="185" y="1678" text-anchor="middle" fill="#6b7280" font-size="12">→</text>
+
+  <!-- L5 Interface -->
+  <rect x="205" y="1662" width="100" height="28" rx="4" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1"/>
+  <text x="255" y="1680" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="bold">L5 Interface</text>
+  <text x="305" y="1678" text-anchor="middle" fill="#6b7280" font-size="12">→</text>
+
+  <!-- Mode Select -->
+  <rect x="325" y="1662" width="100" height="28" rx="4" fill="#1a3a3a" stroke="#10b981" stroke-width="1"/>
+  <text x="375" y="1680" text-anchor="middle" fill="#34d399" font-size="10" font-weight="bold">L3 Mode Select</text>
+  <text x="425" y="1678" text-anchor="middle" fill="#6b7280" font-size="12">→</text>
+
+  <!-- L3 Orchestrate -->
+  <rect x="445" y="1662" width="100" height="28" rx="4" fill="#1a3a3a" stroke="#10b981" stroke-width="1"/>
+  <text x="495" y="1680" text-anchor="middle" fill="#34d399" font-size="10" font-weight="bold">L3 Orchestrate</text>
+  <text x="545" y="1678" text-anchor="middle" fill="#6b7280" font-size="12">→</text>
+
+  <!-- L2 Agent Runtime -->
+  <rect x="565" y="1662" width="110" height="28" rx="4" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+  <text x="620" y="1680" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="bold">L2 Agent Runtime</text>
+  <text x="675" y="1678" text-anchor="middle" fill="#6b7280" font-size="12">→</text>
+
+  <!-- L1 Provider -->
+  <rect x="695" y="1662" width="90" height="28" rx="4" fill="#3a1a2a" stroke="#ef4444" stroke-width="1"/>
+  <text x="740" y="1680" text-anchor="middle" fill="#f87171" font-size="10" font-weight="bold">L1 Provider</text>
+
+  <text x="695" y="1708" text-anchor="middle" fill="#6b7280" font-size="12">←</text>
+  <rect x="565" y="1698" width="110" height="28" rx="4" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+  <text x="620" y="1716" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="bold">← L2 Return</text>
+
+  <text x="565" y="1718" text-anchor="middle" fill="#6b7280" font-size="12">←</text>
+  <rect x="445" y="1698" width="100" height="28" rx="4" fill="#1a3a3a" stroke="#10b981" stroke-width="1"/>
+  <text x="495" y="1716" text-anchor="middle" fill="#34d399" font-size="10" font-weight="bold">← L3 Result</text>
+
+  <text x="445" y="1738" text-anchor="middle" fill="#6b7280" font-size="12">←</text>
+  <rect x="325" y="1718" width="100" height="28" rx="4" fill="#1e1b3a" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="375" y="1736" text-anchor="middle" fill="#a78bfa" font-size="10" font-weight="bold">← L4 Feedback</text>
+
+  <!-- Bottom note -->
+  <text x="85" y="1750" text-anchor="start" fill="#4b5563" font-size="9">Each layer also feeds into Knowledge Graph (L4) for learning, Evolution Engine for skill refinement, and Token Economy for cost tracking</text>
+</svg>

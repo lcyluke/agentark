@@ -288,61 +288,107 @@ apex run "Build a login page" --profile my-dev  # Run with your agent
 | ✍️ `content` | Content Strategist | Copywriting, SEO, Social Media, Brand, Localization, AIGC | filesystem, browser, x, notion | Content, SEO, social media |
 | 🔧 `devops` | DevOps Engineer | Docker, K8s, Terraform, CI/CD, Monitoring, Security, Cloud | filesystem, github, terminal, docker, k8s | Deployment, CI/CD, monitoring |
 
----
+|---
 
 ## 🏗️ Architecture
 
+> **How CrewAI does it:** CrewAI uses a two-paradigm architecture — **Crews** (autonomous agent teams with role-based collaboration) and **Flows** (event-driven workflows with state management). Agents have role/goal/backstory, tasks have description/expected output/dependencies, and processes are sequential or hierarchical.
+>
+> **Apex takes it further:** 5-layer architecture × 10 orchestration modes × 7 cross-cutting innovations × 1 unified economy system. Every agent learns, every execution is recorded, every model is cost-optimized.
+
+### Work Logic Architecture Diagram
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/lcyluke/apex/main/docs/images/apex-architecture.svg">
+    <img alt="Apex Work Logic Architecture" src="https://raw.githubusercontent.com/lcyluke/apex/main/docs/images/apex-architecture.svg" width="100%">
+  </picture>
+</p>
+
+### Five-Layer Architecture
+
+| Layer | Name | Purpose | Key Components |
+|-------|------|---------|---------------|
+| **L5** | **Interface** | User & developer touchpoints | CLI (20 commands), Web Dashboard (12 panels), REST API (14 endpoints), MCP Protocol |
+| **L4** | **Intelligence** | Cross-agent memory & learning | Evolution Engine, Knowledge Graph, Memory System (short/long/shared), Skill Packages |
+| **L3** | **Orchestration** | Multi-agent collaboration | 10 modes: Single, Swarm, Crew, Chain, Debate, Router, Supervisor, Monitor, Kanban, Company |
+| **L2** | **Agent Runtime** | Individual agent execution | Profile (UPF), Runtime engine, Self-Healing (3-strike), Tool integration, Fallback handling |
+| **L1** | **Provider** | LLM & tool infrastructure | DeepSeek V4 Pro, Ollama (free), Claude Sonnet, MCP Tools Hub |
+
+**Cross-cutting:** 💰 **Token Economy** — Budget management, smart model routing, cost optimization — spans all layers.
+
+### Work Logic: How It All Connects
+
+The data flow through Apex follows a **synchronous request-response pattern** with two critical feedback loops:
+
 ```
-┌───────────────────────────────────────────────────────────────────────────┐
-│                          L5: INTERFACE                                     │
-│            CLI · Web UI · REST API (14 endpoints) · IDE Plugins           │
-├───────────────────────────────────────────────────────────────────────────┤
-│                          L4: OBSERVABILITY                                 │
-│            Trace Engine · Dashboard · Alerts · Cost Tracker               │
-├───────────────────────────────────────────────────────────────────────────┤
-│                          L3: INTELLIGENCE                                  │
-│            Evolution Engine · Knowledge Graph · SOP Generator             │
-├───────────────────────────────────────────────────────────────────────────┤
-│                          L2: ORCHESTRATION (10 Modes)                      │
-│   Swarm · Crew · Chain · Debate · Router · Supervisor · Monitor · Kanban │
-├───────────────────────────────────────────────────────────────────────────┤
-│                          L1: AGENT RUNTIME                                 │
-│           Profile · Memory · Skills · Tools · MCP Hub · LLM Provider     │
-└───────────────────────────────────────────────────────────────────────────┘
-                           🏗️  TOKEN ECONOMY
-                 Budget Control · Smart Routing · Cost Optimization
+User Input → L5 Interface → L3 Mode Select → L3 Orchestrate → L2 Agent Runtime → L1 Provider
+                                                                                         ↓
+User Output ← L5 Interface ← L3 Result ← L2 Return ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← ←
+                      ↑
+                L4 Feedback (Evolution Engine + Knowledge Graph learn from every execution)
 ```
+
+**Forward path (top-down):**
+1. User issues command via **CLI / Web / REST** (L5)
+2. Interface selects the appropriate **orchestration mode** (L3) — single agent for simple tasks, swarm for parallel, crew for collaboration, etc.
+3. The mode orchestrates N **Agent Runtime** instances (L2) — each agent reads its **Profile**, loads **Skills**, checks **Memory**
+4. Each agent calls the optimal **LLM Provider** (L1) via the Token Economy's smart router
+5. Agents use **MCP Tools** (filesystem, shell, HTTP, knowledge graph) for external actions
+
+**Return path (bottom-up):**
+1. LLM responses flow back to the Agent Runtime
+2. Runtime: applies **Self-Healing** (retry on error, switch model on repeat, simplify on persistent failure)
+3. Orchestration mode: aggregates, verifies, synthesizes results (e.g., Swarm's Verifier + Synthesizer)
+4. **Feedback loops** — every execution is recorded:
+   - **Evolution Engine** tracks execution records, extracts patterns, updates skill packages
+   - **Knowledge Graph** learns new entity-relation triples, resolves conflicts, shares across agents
+   - **Token Economy** logs cost, updates budget, routes future tasks more efficiently
+
+### CrewAI vs Apex: Architecture Comparison
+
+| Dimension | CrewAI | Apex |
+|-----------|--------|------|
+| **Paradigms** | 2 (Crews + Flows) | 10 orchestration modes |
+| **Agent Learning** | None — static prompts | Evolution Engine — learns from every execution |
+| **Shared Memory** | Per-crew context | Knowledge Graph — teach one, teach all |
+| **Cost Control** | None | Token Economy — smart routing saves 95% |
+| **Self-Healing** | Manual retry only | 3-strike automatic (retry → switch → simplify → notify) |
+| **Observability** | Paid AMP tier only | Free built-in Web Dashboard + REST API |
+| **Cross-Language** | Python only | MCP Protocol — Python/Java/Rust/Go |
+| **Fault Tolerance** | Minimal | Health monitors + self-healing + autonomous schedules |
 
 ### Source Code Map
 
 ```
 apex/
 ├── core/                    # 🧠 Agent DNA: Profile, Runtime, Memory, Skills
-│   ├── profile.py           #   Universal Profile Format (UPF)
-│   ├── runtime.py           #   Agent execution engine
-│   ├── memory.py            #   Hybrid memory (short-term + long-term)
-│   ├── skills.py            #   Executable skill packages
+│   ├── profile.py           #   Universal Profile Format (UPF) — role, goal, tools, model
+│   ├── runtime.py           #   Agent execution engine — build prompt, call LLM, evolve
+│   ├── memory.py            #   Hybrid memory (short-term + long-term KV stores)
+│   ├── skills.py            #   Evolvable skill packages with confidence scoring
 │   ├── templates.py         #   5 pre-built agent templates
-│   ├── knowledge.py         #   Knowledge Graph (shared cross-agent memory)
-│   └── evolution.py         #   Evolution Engine (learn from every execution)
+│   ├── knowledge.py         #   Knowledge Graph — shared cross-agent entity-relation memory
+│   └── evolution.py         #   Evolution Engine — learn patterns from every execution
 │
 ├── orchestration/           # 🔄 10 Multi-Agent Orchestration Modes
-│   ├── swarm.py             #   Parallel → verify → synthesize
-│   ├── crew.py              #   Role-based collaboration
+│   ├── swarm.py             #   Parallel workers → Verifier → Synthesizer
+│   ├── crew.py              #   Role-based collaboration + round-table discussion
 │   ├── chain.py             #   Sequential pipeline with handoff verification
-│   ├── debate.py            #   Multi-perspective analysis & refinement
-│   ├── router.py            #   Task classification & dispatch routing
-│   ├── supervisor.py        #   Hierarchical delegation with review gates
-│   ├── monitor.py           #   Anomaly detection & reactive agents
-│   ├── kanban.py            #   Smart task board
-│   ├── healing.py           #   Self-healing with 3-strike auto-recovery
-│   └── autonomous.py        #   7x24 self-aware autonomous engine
+│   ├── debate.py            #   Multi-perspective: Opening → Cross-examine → Rebuttal
+│   ├── router.py            #   Task classification & dispatch to specialized agents
+│   ├── supervisor.py        #   Hierarchical: Decompose → Workers → Review → Merge
+│   ├── monitor.py           #   Anomaly detection: Watcher → Fixer → Verify → Escalate
+│   ├── kanban.py            #   Task board with dependency resolution (used internally)
+│   ├── healing.py           #   3-strike auto-recovery (retry → switch → simplify → notify)
+│   ├── autonomous.py        #   7x24 self-aware engine: scheduler → dispatcher → heartbeat
+│   └── ops.py               #   Operations: Release pipelines, bug tracking, SLA monitoring
 │
-├── economy/                 # 💰 Token Economy: Budget, Routing, Cost
-├── mcp/                     # 🔌 MCP Hub: Filesystem, Shell, HTTP, Knowledge
-├── providers/               # 🤖 LLM Providers: DeepSeek V4 Pro, Ollama
-├── cli/                     # 🖥️ CLI: 20 commands, 9 subcommand groups
-└── interface/               # 🌐 Web Dashboard: Flask + Dark Theme SPA
+├── economy/                 # 💰 Token Economy: Budget Control, Smart Routing, Cost Audit
+├── mcp/                     # 🔌 MCP Hub: Filesystem, Shell, HTTP, Knowledge Graph bridge
+├── providers/               # 🤖 LLM Providers: DeepSeek V4 Pro, Ollama (free), extensible
+├── cli/                     # 🖥️ CLI: 20 commands, 9 subcommand groups (Click + Rich)
+└── interface/               # 🌐 Web Dashboard: Flask + Dark Theme SPA + REST API
 ```
 
 ---
