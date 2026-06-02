@@ -418,11 +418,15 @@ apex/                         # 🚀 Multi-Agent Operating System
 │   ├── hub.py                #   MCP tool hub and registry (filesystem, shell, etc.)
 │   └── stdio_client.py       #   Cross-language MCP stdio client (Node/Go/Rust)
 │
-├── interface/                # 🌐 Web Dashboard
-│   ├── web.py                #   Flask + REST API (10 endpoints)
-│   ├── hermes_bridge.py      #   Hermes Agent integration bridge
+├── interface/                # 🌐 Web Dashboard + Integration Bridges
+│   ├── web.py                #   Flask + 40 REST endpoints + SSE streaming
+│   ├── middleware.py         #   CORS, auth, error handling, request logging
+│   ├── event_stream.py       #   In-memory pub/sub for real-time streaming
+│   ├── hermes_bridge.py      #   Hermes Agent integration (sessions, tokens, GPU)
+│   ├── openclaw_bridge.py    #   OpenClaw integration (6 tools, 4 workflows)
 │   └── templates/
-│       └── dashboard.html    #   Dark theme SPA dashboard
+│       ├── dashboard.html    #   Dark theme SPA dashboard
+│       └── dashboard_v4.html #   Enhanced dashboard v4
 │
 ├── docs/                     # 📚 Documentation
 │   └── images/               #   Screenshots, banner, architecture diagrams
@@ -501,7 +505,7 @@ apex/                         # 🚀 Multi-Agent Operating System
 
 ## 🖥️ Web Dashboard
 
-**Apex ships with a free, built-in Web Dashboard — no extra services, no paid tiers.**
+**Apex ships with a free, built-in Web Dashboard — no extra services, no paid tiers.** 39 REST API endpoints + SSE real-time streaming.
 
 ```bash
 apex dashboard --port 8080
@@ -519,14 +523,49 @@ apex dashboard --port 8080
 | **Execution Log** | Terminal-style streaming log, color-coded, auto-scroll |
 | **Quality Trends** | Canvas chart: accuracy + F1 score over 20 epochs |
 | **Ops Dashboard** | Release Pipeline (stage icons + progress bars), Bug Tracker (SLA timeout bars, severity colors) |
+| **OpenClaw Integration** | Consume Apex as a tool provider — 6 tools, 4 workflows |
+| **Hermes Integration** | Hermes session stats, token usage, cron status, GPU monitor |
+| **SSE Real-time** | `/api/stream/logs` and `/api/stream/events` — push-based event streaming |
 
-### REST API (10 endpoints)
+### REST API (40 endpoints)
 
 ```
-GET /api/status           GET /api/profiles        GET /api/profiles/<name>
-GET /api/tasks            GET /api/knowledge       GET /api/evolution
-GET /api/companies        GET /api/autonomous      GET /api/health
-GET /api/ops
+# System
+GET  /api/health          GET  /api/version         GET  /api/config
+GET  /api/status          GET  /api/environment
+
+# Agent Profiles
+GET  /api/profiles        POST /api/profiles        GET  /api/profiles/<name>
+DEL  /api/profiles/<name>
+
+# Tasks (Kanban)
+GET  /api/tasks           POST /api/tasks           GET  /api/tasks/<id>
+PUT  /api/tasks/<id>      DEL  /api/tasks/<id>
+
+# Execution
+POST /api/run             POST /api/run/swarm
+
+# Intelligence
+GET  /api/knowledge       POST /api/knowledge       GET  /api/evolution
+GET  /api/economy
+
+# Analytics
+GET  /api/analytics/costs       GET  /api/analytics/executions
+
+# Operations
+GET  /api/ops             GET  /api/companies       GET  /api/autonomous
+GET  /api/gpu/status      GET  /api/models/pricing
+
+# Hermes Integration
+GET  /api/hermes/status   GET  /api/hermes/tokens   GET  /api/command-center
+
+# OpenClaw Integration
+GET  /api/openclaw/status GET  /api/openclaw/tools  POST /api/openclaw/run
+GET  /api/openclaw/workflows
+
+# Real-time Streaming (SSE)
+GET  /api/stream/logs     GET  /api/stream/events   GET  /api/logs
+GET  /api/events          GET  /api/ping
 ```
 
 ---
