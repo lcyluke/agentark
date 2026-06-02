@@ -119,6 +119,34 @@ def release_status_cmd():
         console.print(stage_table)
 
 
+def release_list_cmd():
+    """List all releases in a Rich table"""
+    ops = get_ops()
+    releases = ops.list_releases(limit=50)
+
+    if not releases:
+        console.print("[yellow]No releases found. Create one with 'apex ops release create <version>'[/]")
+        return
+
+    table = Table(title="🚀 Releases", box=box.ROUNDED)
+    table.add_column("ID", style="dim", width=14)
+    table.add_column("Version", style="cyan", width=12)
+    table.add_column("Name", style="white")
+    table.add_column("Status", style="green")
+    table.add_column("Progress", style="yellow", width=14)
+    table.add_column("Created", style="blue", width=16)
+
+    for rel in releases:
+        pct = rel.progress_pct * 100
+        bar = "█" * int(pct // 10) + "░" * (10 - int(pct // 10))
+        created = time.strftime('%Y-%m-%d %H:%M', time.localtime(rel.created_at))
+        table.add_row(
+            rel.id, rel.version, rel.name[:40],
+            rel.status, f"{bar} {pct:.0f}%", created,
+        )
+    console.print(table)
+
+
 def bug_list_cmd(status: str = "open", severity: str = None):
     """List bugs"""
     ops = get_ops()

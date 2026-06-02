@@ -421,12 +421,27 @@ apex/
 | | `apex knowledge stats` | Knowledge graph statistics |
 | **Evolution** | `apex evolution status` | Evolution engine status |
 | | `apex evolution agent <name>` | Agent evolution report |
+| **Ops** | `apex ops status` | Operations dashboard summary |
+| | `apex ops release create <version>` | Create release pipeline (10 stages) |
+| | `apex ops release list` | List all releases |
+| | `apex ops release status` | Current release pipeline status |
+| | `apex ops bug list` | List open bugs |
+| | `apex ops bug create <title> <desc>` | Report a bug |
+| | `apex ops bug show <id>` | View bug details |
+| | `apex ops task list` | List ops tasks |
+| | `apex ops task create <title>` | Create an ops task |
+| | `apex ops expert-list` | Open expert consultation tickets |
 | **Company** | `apex company create <name>` | One-click AI company creation |
 | | `apex company start <name> <goal>` | Start company execution |
 | | `apex company list` | List all created companies |
 | **Autonomous** | `apex autonomous start` | Start 7x24 autonomous engine |
+| | `apex autonomous stop` | Gracefully stop autonomous engine |
+| | `apex autonomous pause` | Pause task dispatch (heartbeat continues) |
+| | `apex autonomous resume` | Resume task dispatch |
 | | `apex autonomous status` | Self-awareness report |
 | | `apex autonomous schedule <name> <cron> <task>` | Schedule recurring task |
+| | `apex autonomous unschedule <id>` | Remove a scheduled task |
+| | `apex autonomous list-scheduled` | List all scheduled tasks |
 | | `apex autonomous alerts` | View unresolved alerts |
 | **Dashboard** | `apex dashboard` | Launch Web UI (port 8080) |
 
@@ -451,13 +466,15 @@ apex dashboard --port 8080
 | **Autonomous Engine** | Status indicator, heartbeat list, scheduled tasks with countdown |
 | **Execution Log** | Terminal-style streaming log, color-coded, auto-scroll |
 | **Quality Trends** | Canvas chart: accuracy + F1 score over 20 epochs |
+| **Ops Dashboard** | Release Pipeline (stage icons + progress bars), Bug Tracker (SLA timeout bars, severity colors) |
 
-### REST API (14 endpoints)
+### REST API (10 endpoints)
 
 ```
 GET /api/status           GET /api/profiles        GET /api/profiles/<name>
 GET /api/tasks            GET /api/knowledge       GET /api/evolution
 GET /api/companies        GET /api/autonomous      GET /api/health
+GET /api/ops
 ```
 
 ---

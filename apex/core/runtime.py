@@ -30,10 +30,12 @@ class Agent:
         profile: Profile,
         provider_name: str = None,
         api_key: str = None,
+        self_healing: bool = False,
     ):
         self.profile = profile
         self.provider_name = provider_name or profile.model.default.split("-")[0]
         self.api_key = api_key
+        self.self_healing = self_healing
         self._provider = None
         self.context = AgentContext()
 
@@ -54,8 +56,18 @@ class Agent:
             self._provider = provider_registry.get(prov_name, config)
         return self._provider
 
-    def run(self, task: str, **kwargs) -> str:
+    def run(self, task: str, heal: bool = False, **kwargs) -> str:
         """Execute a task"""
+        # Self-healing: delegate to SelfHealingExecutor when enabled
+        if heal or self.self_healing:
+            from apex.orchestration.healing import SelfHealingExecutor
+            executor = SelfHealingExecutor(self)
+            healer_result = executor.run(task, **kwargs)
+            if healer_result.success:
+                return healer_result.final_output
+            else:
+                raise RuntimeError(healer_result.final_output)
+
         self.context.task = task
         self.context.messages = [
             {"role": "system", "content": self._build_system_prompt()},

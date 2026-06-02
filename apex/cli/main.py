@@ -466,6 +466,11 @@ def release_status():
     """Show current release status"""
     ops_cmds.release_status_cmd()
 
+@release.command(name="list")
+def release_list():
+    """List all releases"""
+    ops_cmds.release_list_cmd()
+
 @ops.group()
 def bug():
     """Bug tracking and management"""

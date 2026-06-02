@@ -64,7 +64,7 @@ class KnowledgeGraph:
     def __init__(self, db_path: Path = APEX_HOME / "knowledge.db"):
         self.db_path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(str(self.db_path))
+        self._conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._init_db()
 

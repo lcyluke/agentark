@@ -259,6 +259,11 @@ body{
 
 /* ===== QUALITY CHART ===== */
 .quality-chart-wrap{position:relative;padding-top:8px}
+.ops-release{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px}
+.ops-release:hover{border-color:var(--border-light)}
+.ops-bug{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:6px}
+.ops-bug:hover{border-color:var(--border-light)}
+.bug-sev-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;color:#fff}
 #qualityChart{width:100%;height:160px;border-radius:var(--radius-sm);display:block}
 .chart-legend{display:flex;gap:16px;margin-top:8px;justify-content:center}
 .chart-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted)}
@@ -435,6 +440,29 @@ body{
     </div>
   </div>
 
+  <!-- OPS DASHBOARD: RELEASE PIPELINE + BUG TRACKER -->
+  <div class="panels-2col">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🚀 Release Pipeline</div>
+        <button class="panel-action" id="refreshOps">⟳ Refresh</button>
+      </div>
+      <div id="releaseList">
+        <div style="font-size:12px;color:var(--text-muted);text-align:center;padding:20px">No active releases</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">🐛 Bug Tracker <span class="badge" id="bugCount">0</span></div>
+        <button class="panel-action" onclick="alert('Use: apex ops bug create ...')">+ Report</button>
+      </div>
+      <div class="section-title" style="font-size:12px;font-weight:500;margin:0 0 6px">Open Bugs by SLA</div>
+      <div id="bugList">
+        <div style="font-size:12px;color:var(--text-muted);text-align:center;padding:20px">No open bugs</div>
+      </div>
+    </div>
+  </div>
+
   <!-- AUTONOMOUS ENGINE + EXECUTION LOG -->
   <div class="panels-2col">
     <div class="panel">
@@ -593,6 +621,7 @@ async function loadAll(){
     fetchJSON('/api/evolution',null),
     fetchJSON('/api/autonomous',null),
     fetchJSON('/api/companies',null),
+    fetchJSON('/api/ops',null),
   ]);
 
   if(status){state.status=status}
@@ -601,6 +630,7 @@ async function loadAll(){
   if(evolution) state.evolution=Array.isArray(evolution)?evolution:state.evolution;
   if(autonomous) state.autonomous=typeof autonomous==='object'?autonomous:state.autonomous;
   if(companies) state.companies=Array.isArray(companies)?companies:state.companies;
+  if(ops) state.ops=typeof ops==='object'?ops:state.ops;
 
   // Derive agents from status or use synthetic
   if(status && status.agents){
@@ -692,6 +722,7 @@ function renderAll(){
   renderKnowledgeGraph();
   renderTokenEconomy();
   renderAutonomous();
+  renderOps();
   renderQualityChart();
 }
 
@@ -1121,6 +1152,78 @@ function renderAutonomous(){
         el('span',{class:'al-icon'},icons[a.type]||'ℹ️'),
         el('span',{class:'al-msg'},a.message),
         el('span',{class:'al-time'},time),
+      ]));
+    });
+  }
+}
+
+// ============================================================
+// OPS DASHBOARD
+// ============================================================
+function renderOps(){
+  const ops=state.ops;
+  if(!ops || !ops.stats) return;
+
+  // Bug count badge
+  const bugCount=ops.stats.bugs?ops.stats.bugs.open:0;
+  const bugBadge=$('bugCount');
+  if(bugBadge) bugBadge.textContent=bugCount;
+
+  // Releases
+  const releases=ops.releases||[];
+  const relList=$('releaseList');
+  relList.innerHTML='';
+  if(!releases.length){
+    relList.innerHTML='<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:20px">No active releases</div>';
+  }else{
+    releases.slice(0,3).forEach(r=>{
+      const stages=r.stages||[];
+      const pct=r.progress_pct||0;
+      const bar='<div style="height:6px;border-radius:3px;background:var(--bg-input);overflow:hidden;margin:4px 0">'+
+        '<div style="height:6px;border-radius:3px;width:'+pct+'%;background:var(--green);transition:width 0.5s"></div></div>';
+      const statusIcons={done:'✅',in_progress:'🟡',pending:'⬜',failed:'❌',blocked:'🚫'};
+      const stageHtml=stages.slice(0,5).map(s=>
+        '<span style="margin:0 2px;font-size:11px" title="'+s.label+'">'+(statusIcons[s.status]||'⬜')+'</span>'
+      ).join('');
+      relList.appendChild(el('div',{class:'ops-release'},[
+        el('div',{style:'display:flex;justify-content:space-between;align-items:center'},[
+          el('div',{style:'font-weight:600;font-size:13px'},r.version||r.name||'Release'),
+          el('span',{style:'font-size:11px;color:var(--text-muted)'},pct+'%'),
+        ]),
+        el('div',{style:'font-size:11px;color:var(--text-secondary);margin:2px 0'},r.name||''),
+        el('div',{style:'font-size:11px'},bar),
+        el('div',{style:'margin-top:4px'},stageHtml),
+      ]));
+    });
+  }
+
+  // Bugs
+  const bugs=ops.bugs||[];
+  const bugList=$('bugList');
+  bugList.innerHTML='';
+  if(!bugs.length){
+    bugList.innerHTML='<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:20px">No open bugs 🎉</div>';
+  }else{
+    bugs.slice(0,8).forEach(b=>{
+      const sev=b.severity||'medium';
+      const sevColors={critical:'var(--red)',high:'#f97316',medium:'var(--yellow)',low:'var(--green)'};
+      const sevIcons={critical:'🔴',high:'🟠',medium:'🟡',low:'🟢'};
+      const slaH=b.sla_remaining_hours||0;
+      const breached=b.sla_breached;
+      const slaColor=breached?'var(--red)':slaH<2?'#f97316':'var(--text-muted)';
+      const slaLabel=breached?'BREACHED':slaH.toFixed(1)+'h';
+      bugList.appendChild(el('div',{class:'ops-bug'},[
+        el('div',{style:'display:flex;justify-content:space-between;align-items:center'},[
+          el('div',{style:'font-weight:500;font-size:13px'},[
+            el('span',{},sevIcons[sev]||'⚪'),
+            ' '+escapeHtml((b.title||'').substring(0,45)),
+          ]),
+          el('span',{style:'font-size:11px;font-weight:600;color:'+slaColor},slaLabel),
+        ]),
+        el('div',{style:'display:flex;gap:8px;margin-top:4px'},[
+          el('span',{style:'font-size:10px;padding:1px 6px;border-radius:3px;background:'+(sevColors[sev]||'var(--bg-input)')+';color:#fff'},sev),
+          el('span',{style:'font-size:10px;color:var(--text-muted)'},'ID: '+(b.id||'').substring(0,12)+'...'),
+        ]),
       ]));
     });
   }
