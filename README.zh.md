@@ -1,150 +1,121 @@
-<div align="center">
-  <img src="https://img.shields.io/badge/版本-0.1.0-blue" alt="Version">
-  <img src="https://img.shields.io/badge/许可-MIT-green" alt="License">
-  <img src="https://img.shields.io/badge/Python-3.10%2B-orange" alt="Python">
-</div>
+<p align="center">
+  <strong>⚡ Apex — 多Agent操作系统</strong><br>
+  <em>让一个人拥有一个公司的能力。</em>
+</p>
 
-# ⚡ Apex — 多Agent操作系统
+<p align="center">
+  <a href="https://github.com/lcyluke/apex/stargazers"><img src="https://img.shields.io/github/stars/lcyluke/apex?style=social" alt="Stars"></a>
+  <a href="https://github.com/lcyluke/apex/network/members"><img src="https://img.shields.io/github/forks/lcyluke/apex?style=social" alt="Forks"></a>
+  <a href="https://github.com/lcyluke/apex/watchers"><img src="https://img.shields.io/github/watchers/lcyluke/apex?style=social" alt="Watchers"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License"></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.10%2B-orange?style=flat-square" alt="Python"></a>
+</p>
 
-> **让一个人拥有一个公司的能力，让一个公司拥有一个宇宙的潜力。**
->
-> *One person, infinite capacity.*
-
-Apex 是全世界最先进的多Agent操作系统。它吸收了 CrewAI、LangGraph、CAMEL、MetaGPT、AutoGen、Hermes 的全部优点，同时拥有7大核心创新。
-
----
-
-## ✨ 为什么用 Apex？
-
-| 问题 | Apex 方案 |
-|------|----------|
-| 😤 **碎片化** — 需要3-5个框架拼凑 | 一体化平台。`pip install apex` |
-| 💸 **太贵** — 10个Agent并行=10倍费用 | **Token Economy** — 智能路由省95%费用 |
-| 📚 **学习曲线陡** | 3分钟上手。`apex run "部署我的应用"` |
-| 🤖 **Agent永远不会变聪明** | **进化引擎** — 每次执行都在变强 |
-| 🏗️ **组队复杂** | **零点击组队** — AI自动设计团队 |
-| 🔌 **绑定厂商** | **MCP原生** — 任意Provider随时切换 |
+<p align="center">
+  <a href="#-快速开始">快速开始</a>
+  · <a href="#-核心创新">核心创新</a>
+  · <a href="#-编排模式">编排模式</a>
+  · <a href="#-命令大全">命令</a>
+  · <a href="#-安装">安装</a>
+</p>
 
 ---
 
 ## 🚀 快速开始
 
 ```bash
-# 安装
-pip install apex
-
-# 创建项目
-apex init 我的项目
-cd 我的项目
-
-# 单Agent执行
+pip install apex-multiagent
+apex init my-project && cd my-project
 apex run "写一个登录页面"
-
-# Swarm模式（并行→验证→合成）
 apex run "开发一个完整网站" --swarm
-
-# Crew模式（角色协作）
 apex crew create "设计一个社交应用" --members pm,frontend,backend
-
-# 一行命令创建AI公司
 apex company create 羽球宝AI -i saas
-apex company start 羽球宝AI "开发MVP"
+apex dashboard
 ```
 
 ---
 
-## 🏆 7大核心创新
+## 🏆 核心创新
 
-### 1️⃣ 动态技能进化
-Agent从每次执行中学习。100次迭代后相同错误概率降低90%+。
-
-```bash
-apex evolution agent frontend  # 查看进化报告
-```
-
-### 2️⃣ 零点击组队
-只需描述目标，Apex自动设计最优团队。
-
-```bash
-apex crew create "开发一个React仪表盘"
-# → 自动分配：PM + 前端 + 后端 + 运维
-```
-
-### 3️⃣ 自愈工作流
-三振出局规则：重试 → 换模型 → 简化任务 → 通知人类。
-
-### 4️⃣ 知识图谱记忆
-基于图结构的共享记忆。教会一个Agent = 教会所有Agent。
-
-### 5️⃣ Token预算银行
-智能路由按任务价值分配模型。省95%费用。
-
-```bash
-apex economy status            # 预算看板
-apex economy classify "设计系统架构"  # 查看路由结果
-```
-
-### 6️⃣ MCP全家桶
-跨语言、跨机器、跨框架。Python ↔ Java ↔ Rust Agent无缝协作。
-
-### 7️⃣ One-Click Company
-一行命令创建一家AI公司。
-
-```bash
-apex company create 羽球宝AI -i saas
-# → 自动创建5个Profile + SOP + Kanban
-```
+| # | 创新 | 一句话 |
+|---|------|--------|
+| 1 | **动态技能进化** | Agent从每次执行中学习，100次后错误率降90%+ |
+| 2 | **零点击组队** | 一句话，Apex自动设计最优团队 |
+| 3 | **自愈工作流** | 三振出局：重试→换模型→简化→通知人 |
+| 4 | **知识图谱记忆** | 教会一个Agent=教会所有Agent |
+| 5 | **Token预算银行** | 智能路由按任务价值选模型，省95%费用 |
+| 6 | **MCP全家桶** | 跨语言跨框架，Python↔Java↔Rust无缝协作 |
+| 7 | **One-Click Company** | 一行命令创建AI公司 |
 
 ---
 
-## 📋 全部命令
+## 🔄 编排模式
+
+| 场景 | 模式 | 命令 |
+|------|------|------|
+| 软件开发 | Crew + Chain | `apex crew create "开发Web应用"` |
+| 研究分析 | Debate | `apex debate "该用微服务吗？"` |
+| 内容生产 | Chain | `apex chain run "写一篇博客" -p content` |
+| 客户支持 | Router | `apex router route "我的账号被锁了"` |
+| 企业审批 | Supervisor | `apex supervisor "设计合规流程"` |
+| DevOps监控 | Monitor | `apex monitor check -f /var/log/nginx.log` |
+| 产品策略 | Swarm | `apex run "分析市场竞争" --swarm` |
+| 初创公司 | Company | `apex company create my-startup -i saas` |
+
+---
+
+## 📋 命令大全
 
 | 命令 | 说明 |
 |------|------|
-| `apex init <名称>` | 初始化项目 |
-| `apex run "<任务>"` | 执行任务（单Agent） |
-| `apex run "<任务>" --swarm` | Swarm模式 |
-| `apex crew create "<目标>"` | Crew模式 |
-| `apex crew create "<目标>" --members a,b,c` | 指定成员Crew |
-| `apex team create <名称>` | 创建Agent |
-| `apex team list` | 列出所有Agent |
-| `apex template list` | 浏览5个模板 |
-| `apex template use <名称>` | 从模板创建Agent |
-| `apex status` | 系统状态 |
-| `apex economy status` | Token经济看板 |
-| `apex knowledge query "<问题>"` | 查询知识图谱 |
-| `apex evolution agent <名称>` | Agent进化报告 |
-| `apex company create <名称>` | 创建AI公司 |
-| `apex company start <名称> <目标>` | 启动公司 |
-| `apex dashboard` | Web UI (8080端口) |
+| `apex init <name>` | 初始化项目 |
+| `apex run "<task>"` | 单Agent执行 |
+| `apex run "<task>" --swarm` | Swarm模式 |
+| `apex crew create "<goal>"` | Crew模式 |
+| `apex chain run "<goal>" -p dev` | 流水线模式 |
+| `apex debate "<topic>"` | 辩论模式 |
+| `apex router route "<task>"` | 路由模式 |
+| `apex supervisor "<goal>"` | 审批模式 |
+| `apex monitor check -f <file>` | 监控模式 |
+| `apex team create <name>` | 创建Agent |
+| `apex template list` | 模板列表 |
+| `apex template use <name>` | 从模板创建 |
+| `apex economy status` | 经济看板 |
+| `apex knowledge query "<q>"` | 知识图谱查询 |
+| `apex evolution agent <name>` | Agent进化报告 |
+| `apex company create <name>` | 创建AI公司 |
+| `apex autonomous start` | 启动7x24引擎 |
+| `apex dashboard` | Web UI |
 
 ---
 
-## 🖥️ 内置模板
-
-| 模板 | 角色 | 专长 |
-|------|------|------|
-| 💻 `frontend` | 前端开发工程师 | React/Vue/小程序/Tailwind |
-| ⚙️ `backend` | 后端架构师 | FastAPI/Go/PostgreSQL/K8s |
-| 📋 `pm` | 产品经理 | PRD/用户研究/数据决策 |
-| ✍️ `content` | 内容运营专家 | 文案/SEO/社媒/多语言 |
-| 🔧 `devops` | 运维工程师 | Docker/CI/CD/监控/安全 |
-
----
-
-## 🗺️ 路线图
-
-- **v0.1** (当前) — 核心功能全齐
-- **v0.2** — Web UI v2 / 插件系统 / LangSmith集成
-- **v0.3** — 企业版：多租户 / RBAC / 审计日志
-- **v1.0** — 生产就绪 / GUI工作流设计器
-
----
-
-## 从今天开始，一个人就是一个公司。
+## 📥 安装
 
 ```bash
-pip install apex
-apex init my-startup
-apex run "hello world"
+# macOS / Linux / Windows
+pip install apex-multiagent
+
+# 配置API Key
+export DEEPSEEK_API_KEY="sk-xxx"
 ```
+
+详见 [English README](README.md) 的安装章节。
+
+---
+
+## 🤝 参与贡献
+
+```bash
+git clone https://github.com/lcyluke/apex.git && cd apex
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev,web]"
+pytest tests/ -v
+```
+
+---
+
+<p align="center">
+  <strong>⚡ 从今天开始，一个人就是一个公司。</strong>
+  <br>
+  <a href="https://github.com/lcyluke/apex">GitHub</a> · <a href="https://github.com/lcyluke/apex/issues">Issues</a>
+</p>
