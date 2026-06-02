@@ -20,6 +20,7 @@ from .commands import evolution as evolution_cmds
 from .commands.company import CompanyBuilder, list_companies
 from apex.orchestration.crew import crew as crew_group
 from .commands import autonomous as autonomous_cmds
+from .commands import ops as ops_cmds
 
 # New mode CLIs
 from apex.orchestration import (
@@ -435,6 +436,94 @@ def autonomous_unschedule(task_id: str):
 def autonomous_list_scheduled():
     """List all scheduled tasks"""
     autonomous_cmds.list_scheduled_cmd()
+
+
+# ─── ops commands ───
+@cli.group()
+def ops():
+    """📊 Operations — Multi-Agent release & bug management"""
+    pass
+
+@ops.command(name="status")
+def ops_status():
+    """Ops dashboard summary"""
+    ops_cmds.status_cmd()
+
+@ops.group()
+def release():
+    """Release pipeline management"""
+    pass
+
+@release.command(name="create")
+@click.argument("version")
+@click.option("--name", "-n", help="Release name")
+def release_create(version: str, name: str):
+    """Create a new release pipeline"""
+    ops_cmds.release_create_cmd(version, name)
+
+@release.command(name="status")
+def release_status():
+    """Show current release status"""
+    ops_cmds.release_status_cmd()
+
+@ops.group()
+def bug():
+    """Bug tracking and management"""
+    pass
+
+@bug.command(name="list")
+@click.option("--status", "-s", default="open", help="Filter by status")
+@click.option("--severity", help="Filter by severity (critical/high/medium/low)")
+def bug_list(status: str, severity: str):
+    """List bugs"""
+    ops_cmds.bug_list_cmd(status, severity)
+
+@bug.command(name="create")
+@click.argument("title")
+@click.argument("description")
+@click.option("--severity", "-s", default="medium",
+              type=click.Choice(["critical", "high", "medium", "low"]))
+@click.option("--steps", help="Steps to reproduce")
+@click.option("--expected", help="Expected result")
+@click.option("--actual", help="Actual result")
+def bug_create(title: str, description: str, severity: str,
+               steps: str, expected: str, actual: str):
+    """Report a new bug"""
+    ops_cmds.bug_create_cmd(title, description, severity, steps or "", expected or "", actual or "")
+
+@bug.command(name="show")
+@click.argument("bug_id")
+def bug_show(bug_id: str):
+    """Show bug details"""
+    ops_cmds.bug_show_cmd(bug_id)
+
+@ops.group()
+def task():
+    """Ops task management"""
+    pass
+
+@task.command(name="list")
+@click.option("--status", help="Filter by status")
+@click.option("--agent", "-a", help="Filter by agent")
+def task_list(status: str, agent: str):
+    """List ops tasks"""
+    ops_cmds.task_list_cmd(status, agent)
+
+@task.command(name="create")
+@click.argument("title")
+@click.option("--description", "-d", default="", help="Task description")
+@click.option("--phase", "-p", default="development",
+              type=click.Choice(["requirement", "development", "test", "uat", "release"]))
+@click.option("--priority", default=2, type=int, help="Priority (0-3, lower=higher)")
+@click.option("--agent", "-a", default="", help="Assigned agent")
+def task_create(title: str, description: str, phase: str, priority: int, agent: str):
+    """Create an ops task"""
+    ops_cmds.task_create_cmd(title, description, phase, priority, agent)
+
+@ops.command(name="expert-list")
+def ops_expert_list():
+    """List open expert consultation tickets"""
+    ops_cmds.expert_list_cmd()
 
 
 @autonomous.command(name="alerts")

@@ -250,6 +250,36 @@ def create_app():
         except Exception as e:
             return jsonify({"status": "unavailable", "error": str(e)})
 
+    @app.route("/api/ops")
+    def api_ops():
+        """Operations dashboard API"""
+        try:
+            from apex.orchestration.ops import get_ops
+            ops = get_ops()
+            stats = ops.get_dashboard_stats()
+
+            bugs = ops.list_bugs(status="open", limit=10)
+            releases = ops.list_releases(limit=3)
+            tasks = ops.list_tasks(limit=10)
+
+            return jsonify({
+                "stats": stats,
+                "bugs": [{"id": b.id, "title": b.title[:60], "severity": b.severity.value,
+                          "status": b.status.value, "assigned_agent": b.assigned_agent,
+                          "sla_remaining_hours": b.sla_remaining_hours,
+                          "sla_breached": b.sla_breached} for b in bugs],
+                "releases": [{"id": r.id, "version": r.version, "name": r.name,
+                              "status": r.status, "progress_pct": round(r.progress_pct * 100),
+                              "stages": [{"label": s["label"], "status": s["status"]}
+                                         for s in r.stages]} for r in releases],
+                "tasks_summary": [{"id": t.id, "title": t.title[:50], "phase": t.phase,
+                                   "status": t.status.value, "agent_id": t.agent_id,
+                                   "test_pass_rate": round(t.test_pass_rate * 100),
+                                   "quality_score": t.quality_score} for t in tasks],
+            })
+        except Exception as e:
+            return jsonify({"error": str(e)})
+
     @app.route("/api/health")
     def api_health():
         """Health check"""
