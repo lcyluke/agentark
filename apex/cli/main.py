@@ -25,6 +25,7 @@ from .commands import autonomous as autonomous_cmds
 from .commands import ops as ops_cmds
 from .commands import task_mgmt as task_cmds
 from .commands import skill_mgmt as skill_cmds
+from .commands import fleet_cmds
 
 # New mode CLIs
 from apex.orchestration import (
@@ -323,6 +324,36 @@ def skill_sync_all():
 def skill_evaluate():
     """Run skill evaluation pipeline — assess completed tasks for skill evidence"""
     skill_cmds.evaluate_cmd()
+
+
+# ─── fleet commands ───
+@cli.group()
+def fleet():
+    """Fleet Monitor — Agent status dashboard"""
+    pass
+
+@fleet.command(name="status")
+@click.option("--live", "-l", is_flag=True, help="Live-updating dashboard (Ctrl+C to stop)")
+def fleet_status(live: bool):
+    """Show fleet overview dashboard with agent states"""
+    fleet_cmds.status_cmd(live=live)
+
+@fleet.command(name="show")
+@click.argument("agent_name")
+def fleet_show(agent_name: str):
+    """Show detailed agent information"""
+    fleet_cmds.show_cmd(agent_name)
+
+@fleet.command(name="refresh")
+def fleet_refresh():
+    """Force refresh all agent states"""
+    fleet_cmds.refresh_cmd()
+
+@fleet.command(name="history")
+@click.option("--limit", "-n", default=10, help="Number of snapshots to show")
+def fleet_history(limit: int):
+    """Show fleet snapshot history"""
+    fleet_cmds.history_cmd(limit=limit)
 
 
 # ─── chain commands ───
