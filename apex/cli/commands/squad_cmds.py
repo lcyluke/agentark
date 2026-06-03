@@ -78,6 +78,18 @@ DEV_SQUAD = {
         "skill": "Planning/Risk/Tracking",
         "color": "bright_blue",
     },
+    "qa-engineer": {
+        "emoji": "🧪",
+        "title": "QA Engineer",
+        "skill": "Test Strategy/Automation",
+        "color": "green",
+    },
+    "requirements-analyst": {
+        "emoji": "🎯",
+        "title": "Requirements Analyst",
+        "skill": "Multi-Perspective/GStack",
+        "color": "bright_yellow",
+    },
 }
 
 METHODOLOGY_CHAIN_EMOJI = ["🧠", "📝", "🔄", "🔬", "🔍", "👀", "✅"]
@@ -90,7 +102,7 @@ def status_cmd():
     snapshot = monitor.snapshot(force_refresh=True)
 
     console.print(Panel(
-        f"[bold]👥 DEV SQUAD — 9 Agents, Superpowers Methodology[/]",
+        f"[bold]👥 DEV SQUAD — 11 Agents, Superpowers Methodology[/]",
         border_style="cyan",
     ))
     console.print()

@@ -1042,8 +1042,10 @@ function renderProject() {
     }).join('');
 
     // Workloads
-    if (workloads && workloads.length) {
-      $('#workloads').innerHTML = workloads.slice(0, 8).map(w => {
+    const wlData = d.workloads || {};
+    const wlAgents = Array.isArray(wlData) ? wlData : (wlData.agents || []);
+    if (wlAgents.length) {
+      $('#workloads').innerHTML = wlAgents.slice(0, 8).map(w => {
         const pct = Math.min(100, Math.round((w.load || w.saturation || 0) * 100));
         const color = pct > 80 ? 'var(--red)' : pct > 50 ? 'var(--amber)' : 'var(--green)';
         return `<div style="margin-bottom:12px">
@@ -1131,7 +1133,7 @@ async function renderFleet() {
   const d = state.data;
   const fleetP = d.fleetProfiles || [];
   const apexP = d.profiles || [];
-  const workloads = d.workloads || [];
+  const workloads = (d.workloads?.agents) || (Array.isArray(d.workloads) ? d.workloads : []);
   const tasks = d.tasks || [];
   const rt = state.liveRuntime;
   const sessions = rt && rt.sessions ? rt.sessions : [];
@@ -1745,7 +1747,7 @@ function renderReclamation() {
   const sessions = rt && rt.sessions ? rt.sessions : [];
   const processes = rt && rt.processes ? rt.processes : [];
   const d = state.data;
-  const workloads = d.workloads || [];
+  const workloads = (d.workloads?.agents) || (Array.isArray(d.workloads) ? d.workloads : []);
   const teams = d.teams || [];
 
   // Idle detection
