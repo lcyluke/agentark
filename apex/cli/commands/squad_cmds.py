@@ -66,6 +66,18 @@ DEV_SQUAD = {
         "skill": "Web/API/Logic Pentest",
         "color": "red",
     },
+    "security-by-design": {
+        "emoji": "🔐",
+        "title": "Security by Design",
+        "skill": "Threat Model/Secure Arch",
+        "color": "bright_red",
+    },
+    "project-manager": {
+        "emoji": "📊",
+        "title": "Project Manager",
+        "skill": "Planning/Risk/Tracking",
+        "color": "bright_blue",
+    },
 }
 
 METHODOLOGY_CHAIN_EMOJI = ["🧠", "📝", "🔄", "🔬", "🔍", "👀", "✅"]
@@ -78,7 +90,7 @@ def status_cmd():
     snapshot = monitor.snapshot(force_refresh=True)
 
     console.print(Panel(
-        f"[bold]👥 DEV SQUAD — 7 Agents, Superpowers Methodology[/]",
+        f"[bold]👥 DEV SQUAD — 9 Agents, Superpowers Methodology[/]",
         border_style="cyan",
     ))
     console.print()
