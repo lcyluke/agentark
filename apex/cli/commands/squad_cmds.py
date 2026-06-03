@@ -54,6 +54,18 @@ DEV_SQUAD = {
         "skill": "CI-CD/Infra/Cloud",
         "color": "magenta",
     },
+    "vulnerability-scanner": {
+        "emoji": "🛡️",
+        "title": "Vulnerability Scanner",
+        "skill": "SAST/SCA/SecretScan",
+        "color": "red",
+    },
+    "penetration-tester": {
+        "emoji": "🕵️",
+        "title": "Penetration Tester",
+        "skill": "Web/API/Logic Pentest",
+        "color": "red",
+    },
 }
 
 METHODOLOGY_CHAIN_EMOJI = ["🧠", "📝", "🔄", "🔬", "🔍", "👀", "✅"]
@@ -66,7 +78,7 @@ def status_cmd():
     snapshot = monitor.snapshot(force_refresh=True)
 
     console.print(Panel(
-        f"[bold]👥 DEV SQUAD — 5 Developers, Superpowers Methodology[/]",
+        f"[bold]👥 DEV SQUAD — 7 Agents, Superpowers Methodology[/]",
         border_style="cyan",
     ))
     console.print()

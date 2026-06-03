@@ -258,7 +258,41 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
 .fab{position:fixed;right:26px;bottom:26px;z-index:30;width:56px;height:56px;border-radius:50%;background:var(--teal);color:#04201d;border:none;cursor:pointer;font-size:24px;display:grid;place-items:center;box-shadow:0 8px 28px rgba(45,212,191,.35);transition:.2s}
 .fab:hover{transform:scale(1.06) rotate(8deg)}
 
-@media(max-width:920px){.app{grid-template-columns:1fr}.side{display:none}.kpis,.kanban,.ladder{grid-template-columns:repeat(2,1fr)}}
+/* fleet agent status cards */
+.fleet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.fleet-card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:15px;transition:.15s;cursor:pointer;position:relative}
+.fleet-card:hover{border-color:var(--line2)}
+.fleet-card .fh{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.fleet-card .fstatus{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.fleet-card .fname{font-family:var(--disp);font-size:13.5px;font-weight:600}
+.fleet-card .frole{font-size:11px;color:var(--tx2);margin-top:1px;display:flex;align-items:center;gap:6px}
+.fleet-card .fmeta{display:flex;gap:16px;margin:8px 0;font-size:11px;color:var(--tx2);flex-wrap:wrap}
+.fleet-card .fmeta span{display:flex;align-items:center;gap:4px}
+.fleet-card .fmeta i{font-size:13px}
+.fleet-card .ftasks{margin-top:6px;font-size:11px}
+.fleet-card .ftasks .dt{display:flex;align-items:center;gap:4px;padding:2px 0}
+.fleet-card .ftasks .dtag{font-size:10px;padding:1px 6px;border-radius:10px;font-family:var(--mono)}
+.fleet-card .fbar{height:4px;border-radius:2px;background:var(--bg4);margin-top:6px;overflow:hidden}
+.fleet-card .fbar i{display:block;height:100%;border-radius:2px}
+.fleet-card .fbtns{display:flex;gap:6px;margin-top:10px}
+.fleet-card .fcan{position:absolute;top:12px;right:12px;font-size:10px;padding:2px 8px;border-radius:10px;font-family:var(--mono);font-weight:600}
+
+/* board management */
+.board-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.board-section{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.board-section h4{font-family:var(--disp);font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.board-member{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-s);transition:.15s;cursor:pointer}
+.board-member:hover{background:var(--bg3)}
+.board-member .bmav{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;font-family:var(--mono);flex-shrink:0}
+.board-member .bminfo{flex:1;font-size:12px}
+.board-member .bminfo .bmname{font-weight:500}
+.board-member .bminfo .bmrole{font-size:10.5px;color:var(--tx3)}
+.board-member .bmremove{color:var(--tx3);cursor:pointer;font-size:14px;padding:4px;border-radius:4px}
+.board-member .bmremove:hover{color:var(--red);background:var(--red-d)}
+.board-add{display:flex;gap:8px;margin-top:8px}
+.board-add input{flex:1}
+
+@media(max-width:920px){.app{grid-template-columns:1fr}.side{display:none}.kpis,.kanban,.ladder,.board-grid{grid-template-columns:repeat(1,1fr)}.fleet-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}}
 </style>
 </head>
 <body>
@@ -354,15 +388,21 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
 
       <!-- VIEW 4: AI舰队 -->
       <section class="view" id="v-fleet">
-        <div class="sec-h"><i class="ti ti-robot"></i>Hermes 舰队配置</div>
-        <div class="profile-grid" id="hermesProfiles"></div>
+        <div class="grid kpis" id="fleetKpis"></div>
         <div style="height:22px"></div>
-        <div class="sec-h"><i class="ti ti-users"></i>Apex Agent 编制</div>
-        <div class="profile-grid" id="apexAgents"></div>
-        <div style="height:22px"></div>
-        <div class="grid" style="grid-template-columns:1fr 1fr">
-          <div class="card"><div class="sec-h"><i class="ti ti-chart-bar"></i>Agent 负载分布</div><div id="loadDist"></div></div>
-          <div class="card"><div class="sec-h"><i class="ti ti-sitemap"></i>组织架构</div><div id="orgChart"></div></div>
+        <div class="grid" style="grid-template-columns:7fr 3fr">
+          <div>
+            <div class="sec-h"><i class="ti ti-robot"></i>Hermes 舰队 · Agent 实时状态</div>
+            <div class="fleet-grid" id="fleetGrid"></div>
+          </div>
+          <div>
+            <div class="sec-h"><i class="ti ti-sitemap"></i>负载分布</div>
+            <div id="loadSummary"></div>
+            <div style="height:16px"></div>
+            <div class="sec-h"><i class="ti ti-users"></i>董事会</div>
+            <div id="boardMini"></div>
+            <button class="btn sm" style="margin-top:8px;width:100%" onclick="openBoardManager()"><i class="ti ti-user-plus"></i>管理董事会</button>
+          </div>
         </div>
       </section>
 
@@ -521,6 +561,19 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
   </div>
 </div>
 
+<!-- BOARD MANAGER MODAL -->
+<div class="modal" id="boardModal">
+  <div class="mcard">
+    <div class="dh">
+      <div class="ic" style="width:38px;height:38px;border-radius:10px;background:var(--violet-d);color:var(--violet);display:grid;place-items:center;font-size:20px"><i class="ti ti-users"></i></div>
+      <div><div style="font-family:var(--disp);font-size:16px;font-weight:600">董事会管理</div><div style="font-size:11px;color:var(--tx3)">管理真人董事与核心 Agent 角色</div></div>
+      <div class="x" onclick="closeAll()"><i class="ti ti-x"></i></div>
+    </div>
+    <div class="dbody" id="boardBody"></div>
+    <div class="df"><button class="btn ghost" onclick="closeAll()">关闭</button><button class="btn primary" style="margin-left:auto" onclick="saveBoard()"><i class="ti ti-check"></i>保存董事会</button></div>
+  </div>
+</div>
+
 <script>
 /* ============ Apex Command Center — Application Logic ============ */
 const API = '/api';
@@ -535,7 +588,8 @@ let state = {
   liveProjects: [],
   liveProject: null,
   selectedProject: null,
-  connected: false
+  connected: false,
+  board: { humans: [{id:'luke',name:'老卢',role:'创始人·全权',init:'L'}], ceoAgent:'ceo', authAgent:'auth', auditAgent:'audit' }
 };
 
 const VIEW_TITLES = {
@@ -648,40 +702,52 @@ function updatePulse() {
 
 /* ========== Crew ========== */
 function renderCrew() {
-  const rt = state.liveRuntime;
-  const sessions = rt && rt.sessions ? rt.sessions : [];
-  const colors = ['var(--teal-d)', 'var(--violet-d)', 'var(--blue-d)', 'var(--green-d)', 'var(--amber-d)'];
-  const fc = ['var(--teal)', 'var(--violet)', 'var(--blue)', 'var(--green)', 'var(--amber)'];
+  const board = state.board;
+  const humans = board.humans || [];
+  const colors = ['var(--violet-d)', 'var(--teal-d)', 'var(--blue-d)', 'var(--green-d)', 'var(--amber-d)'];
+  const fc = ['var(--violet)', 'var(--teal)', 'var(--blue)', 'var(--green)', 'var(--amber)'];
   
-  if (sessions.length) {
-    // Use live sessions from /api/live/runtime
-    $('#crewList').innerHTML = sessions.slice(0, 6).map((s, i) => {
-      const init = (s.source || s.model || 'A').charAt(0).toUpperCase();
-      const model = s.model || 'Unknown';
-      const runtime = s.runtime_min != null ? Math.round(s.runtime_min) + 'm' : '';
-      return `<div class="crew-row">
-        <span class="av pulse" style="background:${colors[i%5]};color:${fc[i%5]}">${init}</span>
-        <div style="font-size:12.5px">${s.source||model}<div style="font-size:10px;color:var(--tx3)">${model}${runtime?' · '+runtime:''}</div></div>
+  let crewHtml = '';
+  // Board humans
+  humans.forEach((h, i) => {
+    crewHtml += `<div class="crew-row">
+      <span class="av" style="background:${colors[i%5]};color:${fc[i%5]}">${h.init||h.name[0]}</span>
+      <div style="font-size:12.5px">${h.name}<div style="font-size:10px;color:var(--tx3)">${h.role||'董事'}</div></div>
+    </div>`;
+  });
+
+  // Core agents
+  const coreAgents = [
+    { id: board.ceoAgent, label: 'CEO 编排官', color: colors[2], fcolor: fc[2] },
+    { id: board.authAgent, label: '授权审批', color: 'var(--amber-d)', fcolor: 'var(--amber)' },
+    { id: board.auditAgent, label: '审计追踪', color: 'var(--green-d)', fcolor: 'var(--green)' }
+  ];
+  coreAgents.forEach(a => {
+    if (a.id) {
+      crewHtml += `<div class="crew-row">
+        <span class="av" style="background:${a.color};color:${a.fcolor}">${a.id[0].toUpperCase()}</span>
+        <div style="font-size:12.5px">${a.id}<div style="font-size:10px;color:var(--tx3)">${a.label}</div></div>
       </div>`;
-    }).join('');
-  } else {
-    // Fallback to old data
-    const cc = state.data.cc || {};
-    const hprof = cc.hermes_profiles || {};
-    const entries = Object.entries(hprof).slice(0, 5);
-    if (!entries.length) {
-      $('#crewList').innerHTML = '<div style="font-size:11px;color:var(--tx3);padding:8px">暂无活跃配置</div>';
-      return;
     }
-    $('#crewList').innerHTML = entries.map(([k, v], i) => {
-      const init = (v && v.name ? v.name[0] : k[0]).toUpperCase();
-      const status = v && v.status === 'online' ? 'active' : 'idle';
-      return `<div class="crew-row">
-        <span class="av" style="background:${colors[i%5]};color:${fc[i%5]}">${init}</span>
-        <div style="font-size:12.5px">${v && v.name || k}<div style="font-size:10px;color:var(--tx3)">${v && v.role || 'Agent'} · ${status}</div></div>
+  });
+
+  // Active sessions
+  const rt = state.liveRuntime;
+  const sessions = rt && rt.sessions ? rt.sessions.slice(0, 3) : [];
+  if (sessions.length && (humans.length === 0 || sessions.length > 0)) {
+    if (crewHtml) crewHtml += '<div style="border-top:1px solid var(--line);margin-top:4px;padding-top:4px"></div>';
+    sessions.forEach((s, i) => {
+      const init = (s.source || 'S')[0].toUpperCase();
+      const model = s.model || 'Agent';
+      const runtime = s.runtime_min != null ? Math.round(s.runtime_min) + 'm' : '';
+      crewHtml += `<div class="crew-row">
+        <span class="av" style="background:${colors[(humans.length+i+3)%5]};color:${fc[(humans.length+i+3)%5]}">${init}</span>
+        <div style="font-size:12.5px">${s.source||'Session'}<div style="font-size:10px;color:var(--tx3)">${model}${runtime?' · '+runtime:''}</div></div>
       </div>`;
-    }).join('');
+    });
   }
+
+  $('#crewList').innerHTML = crewHtml || '<div style="font-size:11px;color:var(--tx3);padding:8px">等待连接...</div>';
 }
 
 /* ========== Toast ========== */
@@ -865,26 +931,30 @@ function renderProject() {
     let agentsHTML = '';
     if (agents.length) {
       agentsHTML = `<div class="card" style="grid-column:1/-1">
-        <div class="sec-h"><i class="ti ti-robot"></i>Agent 工作负载</div>
-        <div class="profile-grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">`;
+        <div class="sec-h"><i class="ti ti-robot"></i>Agent 工作状态 · ${pj.project||state.selectedProject}</div>
+        <div class="fleet-grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">`;
       agents.forEach(a => {
         const loadPct = Math.min(100, Math.round((a.load_pct || 0) * 100));
         const loadColor = loadPct > 80 ? 'var(--red)' : loadPct > 50 ? 'var(--amber)' : 'var(--green)';
-        const saturationLabel = loadPct > 80 ? '过载' : loadPct > 50 ? '忙碌' : '空闲';
-        const saturationColor = loadPct > 80 ? 'var(--red)' : loadPct > 50 ? 'var(--amber)' : 'var(--green)';
-        agentsHTML += `<div class="profile-card">
-          <div class="pname"><i class="ti ti-robot" style="color:var(--violet)"></i>${a.agent_id||a.name||'Agent'}</div>
-          <div class="prole" style="display:flex;align-items:center;gap:6px">
-            <span class="tag" style="background:${saturationColor}15;color:${saturationColor};border:1px solid ${saturationColor}40">${saturationLabel}</span>
-            <span class="mono" style="font-size:11px">${loadPct}%</span>
+        const saturationLabel = loadPct > 80 ? '过载' : loadPct > 50 ? '忙碌' : loadPct <= 0 ? '闲置' : '空闲';
+        const saturationColor = loadPct > 80 ? 'var(--red)' : loadPct > 50 ? 'var(--amber)' : loadPct <= 0 ? 'var(--tx3)' : 'var(--green)';
+        const canAccept = loadPct < 70 && (a.blocked||0) === 0;
+        const statusDot = loadPct <= 0 ? 'var(--tx3)' : loadPct > 80 ? 'var(--red)' : 'var(--green)';
+        agentsHTML += `<div class="fleet-card" onclick="openAgent('${a.agent_id||a.name||''}','${a.agent_id||a.name||'Agent'}','agent','','${loadPct>0?'running':'idle'}')">
+          <div class="fcan">${canAccept?'<span style="background:var(--green-d);color:var(--green)">可接单</span>':'<span style="background:var(--amber-d);color:var(--amber)">忙碌</span>'}</div>
+          <div class="fh">
+            <span class="fstatus" style="background:${statusDot}"></span>
+            <div><div class="fname">${a.agent_id||a.name||'Agent'}</div>
+            <div class="frole"><span class="tag" style="background:${saturationColor}20;color:${saturationColor};font-size:10px">${saturationLabel}</span> · ${loadPct}%</div></div>
           </div>
-          <div class="bar" style="margin:8px 0 6px;height:6px"><i style="width:${loadPct}%;background:${loadColor}"></i></div>
-          <div style="display:flex;gap:10px;font-size:11px;color:var(--tx2);flex-wrap:wrap">
-            <span><span style="color:var(--green)">✓</span> ${a.done||0}</span>
-            <span><span style="color:var(--blue)">⟳</span> ${a.in_progress||0}</span>
-            <span><span style="color:var(--tx3)">○</span> ${a.ready||0}</span>
-            <span><span style="color:var(--red)">⊘</span> ${a.blocked||0}</span>
+          <div class="fbar"><i style="width:${loadPct}%;background:${loadColor}"></i></div>
+          <div class="fmeta">
+            <span><i class="ti ti-check" style="color:var(--green)"></i>${a.done||0} 完成</span>
+            <span><i class="ti ti-loader" style="color:var(--blue)"></i>${a.in_progress||0} 进行</span>
+            <span><i class="ti ti-inbox"></i>${a.ready||a.todo||0} 待办</span>
           </div>
+          <div class="ftasks">${a.blocked>0?`<div class="dt"><span class="dtag" style="background:var(--red-d);color:var(--red)">⊘${a.blocked}</span>阻塞</div>`:''}
+          ${a.total_tasks>0?`<div class="dt" style="color:var(--tx3);font-size:10px">排期: ${a.total_tasks||0} 个任务</div>`:'<div class="dt" style="color:var(--tx3);font-size:10px">无排期任务</div>'}</div>
         </div>`;
       });
       agentsHTML += `</div></div>`;
@@ -1055,95 +1125,250 @@ async function renderApprovals() {
 }
 
 /* =================================================================
-   VIEW 4: FLEET
+   VIEW 4: FLEET — AI舰队 + 董事会管理
    ================================================================= */
 async function renderFleet() {
   const d = state.data;
   const fleetP = d.fleetProfiles || [];
   const apexP = d.profiles || [];
   const workloads = d.workloads || [];
-  const teams = d.teams || [];
+  const tasks = d.tasks || [];
   const rt = state.liveRuntime;
+  const sessions = rt && rt.sessions ? rt.sessions : [];
+  const procList = rt && rt.processes ? rt.processes : [];
+  const board = state.board;
 
-  // ===== Runtime stats card (NEW - placed at top) =====
-  if (rt) {
-    const sessions = rt.active_sessions || (rt.sessions ? rt.sessions.length : 0);
-    const processes = rt.running_processes || (rt.processes ? rt.processes.length : 0);
-    const procList = rt.processes || [];
-    const cpuTotal = procList.reduce((s, p) => s + (p.cpu || 0), 0).toFixed(1);
-    const memTotal = procList.reduce((s, p) => s + (p.mem || 0), 0).toFixed(1);
-    // Inject runtime card before hermesProfiles
-    const fleetHeader = document.querySelector('#v-fleet .sec-h');
-    if (fleetHeader) {
-      // Insert KPI row at top of fleet view
-      const fleetSection = document.getElementById('v-fleet');
-      let kpiRow = fleetSection.querySelector('.runtime-kpis');
-      if (!kpiRow) {
-        kpiRow = document.createElement('div');
-        kpiRow.className = 'grid kpis runtime-kpis';
-        fleetSection.insertBefore(kpiRow, fleetSection.firstChild);
+  // Fleet KPIs
+  const onlineCount = sessions.length;
+  const procCount = procList.length;
+  const working = workloads.filter(w => (w.load || w.saturation || 0) >= 0.3).length;
+  const idleCount = workloads.filter(w => (w.load || w.saturation || 0) < 0.3).length;
+  const cpuTotal = procList.reduce((s, p) => s + parseFloat(p.cpu||0), 0).toFixed(1);
+  const memTotal = procList.reduce((s, p) => s + parseFloat(p.mem||0), 0).toFixed(1);
+  $('#fleetKpis').innerHTML =
+    kpiHTML('ti-activity-heartbeat', '活跃会话', onlineCount, sessions.length + ' 运行中', '') +
+    kpiHTML('ti-cpu', '进程/资源', procCount, cpuTotal + '% CPU · ' + memTotal + '% MEM', '') +
+    kpiHTML('ti-robot', '工作中', working, idleCount + ' 空闲 · 共 ' + (workloads.length||apexP.length||0) + ' agent', '') +
+    kpiHTML('ti-users', '董事会', (board.humans||[]).length, 'CEO: ' + (board.ceoAgent||'--') + ' · 授权: ' + (board.authAgent||'--'), '');
+
+  // Build agent status cards combining all data sources
+  const agentCards = [];
+
+  // Hermes sessions as live agents
+  sessions.forEach(s => {
+    const sid = s.id || s.source || '';
+    const model = s.model || 'unknown';
+    const name = s.source || 'Session';
+    const runtime = s.runtime_min != null ? Math.round(s.runtime_min) : 0;
+    const tokens = s.tokens || 0;
+    const cost = s.cost || 0;
+    const status = runtime < 60 ? 'running' : 'running';
+    const loadPct = Math.min(100, Math.round((tokens / 10000) * 100));
+    const canAccept = loadPct < 50;
+    const loadColor = loadPct > 80 ? 'var(--red)' : loadPct > 50 ? 'var(--amber)' : 'var(--green)';
+
+    agentCards.push({
+      id: sid, name: name, model: model, role: 'Hermes Session', type: 'hermes-session',
+      status: status, loadPct: loadPct, loadColor: loadColor,
+      tokens: tokens, cost: cost, runtime: runtime,
+      tasksDone: Math.round(tokens / 500), tasksQueue: Math.round(loadPct / 20),
+      canAccept: canAccept,
+      skills: [model], color: 'var(--violet)'
+    });
+  });
+
+  // Apex profiles as configured agents
+  apexP.forEach(p => {
+    const pid = p.name || 'agent';
+    const w = workloads.find(w => w.name === pid || w.agent === pid || w.id === pid);
+    const loadPct = w ? Math.round((w.load||w.saturation||0) * 100) : 0;
+    const loadColor = loadPct > 80 ? 'var(--red)' : loadPct > 50 ? 'var(--amber)' : 'var(--green)';
+    const pTasks = tasks.filter(t => t.assignee === pid);
+    const doneTasks = pTasks.filter(t => t.status === 'done').length;
+    const runningTasks = pTasks.filter(t => t.status === 'run' || t.status === 'in_progress').length;
+    const pendingTasks = pTasks.filter(t => t.status === 'todo' || t.status === 'ready').length;
+    const blockedTasks = pTasks.filter(t => t.status === 'blocked' || t.status === 'gate').length;
+    const canAccept = loadPct < 70 && blockedTasks === 0;
+
+    agentCards.push({
+      id: pid, name: p.name || pid, model: p.model || 'default', role: p.role || 'Agent',
+      type: 'apex-agent', status: loadPct > 0 ? 'running' : 'idle',
+      loadPct: loadPct, loadColor: loadColor,
+      tasksTotal: pTasks.length, tasksDone: doneTasks, tasksRunning: runningTasks,
+      tasksPending: pendingTasks, tasksBlocked: blockedTasks,
+      canAccept: canAccept,
+      skills: p.skills || [],
+      color: p.role === 'ceo' ? 'var(--violet)' : p.role === 'lead' ? 'var(--teal)' : 'var(--blue)',
+      roleLabel: p.role
+    });
+  });
+
+  // Add Hermes profiles as fleet agents
+  fleetP.forEach((p, i) => {
+    const isDefault = p.name === 'default';
+    const sid = p.name || ('hermes-' + i);
+    agentCards.push({
+      id: sid, name: p.name || sid, model: p.model || 'unknown',
+      role: isDefault ? 'Default Profile' : 'Hermes Profile', type: 'hermes-profile',
+      status: 'configured', loadPct: 0, loadColor: 'var(--tx3)',
+      tasksTotal: 0, canAccept: true,
+      skills: [], color: 'var(--tx3)',
+      hasSoul: p.has_soul, hasConfig: p.has_config
+    });
+  });
+
+  // Render agent fleet grid
+  if (agentCards.length) {
+    $('#fleetGrid').innerHTML = agentCards.map(a => {
+      const statusDot = a.status === 'running' ? 'var(--green)' : a.status === 'configured' ? 'var(--tx3)' : 'var(--amber)';
+      const canTag = a.canAccept
+        ? '<span style="background:var(--green-d);color:var(--green)">可接单</span>'
+        : '<span style="background:var(--amber-d);color:var(--amber)">忙碌</span>';
+
+      let tasksHTML = '';
+      if (a.type === 'apex-agent') {
+        tasksHTML = `<div class="ftasks">
+          ${a.tasksRunning>0?`<div class="dt"><span class="dtag" style="background:var(--blue-d);color:var(--blue)">⟳${a.tasksRunning}</span>进行中</div>`:''}
+          ${a.tasksPending>0?`<div class="dt"><span class="dtag" style="background:var(--bg4);color:var(--tx2)">○${a.tasksPending}</span>待办</div>`:''}
+          ${a.tasksBlocked>0?`<div class="dt"><span class="dtag" style="background:var(--red-d);color:var(--red)">⊘${a.tasksBlocked}</span>阻塞</div>`:''}
+          ${a.tasksDone>0?`<div class="dt"><span class="dtag" style="background:var(--green-d);color:var(--green)">✓${a.tasksDone}</span>完成</div>`:''}
+          ${a.tasksTotal===0?'<div class="dt" style="color:var(--tx3)">无任务</div>':''}
+        </div>`;
+      } else if (a.type === 'hermes-session') {
+        tasksHTML = `<div class="ftasks">
+          <div class="dt"><span class="dtag" style="background:var(--violet-d);color:var(--violet)">🔥${a.tokens.toLocaleString()}</span>tokens</div>
+          <div class="dt" style="color:var(--tx3);font-size:10px">运行 ${a.runtime}m · $${a.cost.toFixed(3)}</div>
+        </div>`;
       }
-      kpiRow.innerHTML =
-        kpiHTML('ti-activity-heartbeat', '活跃会话', sessions, 'Hermes 运行中', '') +
-        kpiHTML('ti-cpu', '运行进程', processes, cpuTotal + '% CPU · ' + memTotal + '% MEM', '') +
-        kpiHTML('ti-robot', 'Agent 总数', workloads.length || apexP.length || 0, '已配置 agent', '') +
-        kpiHTML('ti-users', '团队数', teams.length, '组织架构', '');
-    }
-  }
 
-  // Hermes profiles
-  if (fleetP.length) {
-    $('#hermesProfiles').innerHTML = fleetP.map(p => {
-      const isOnline = p.status === 'online';
-      const skills = p.skills || [];
-      return `<div class="profile-card" onclick="openAgent('${p.name||p.id}','${p.name||p.id}','${p.role||'agent'}','${p.model||'default'}','${p.status||'idle'}')">
-        <div class="pname"><span class="st" style="background:${isOnline?'var(--green)':'var(--tx3)'};width:8px;height:8px;border-radius:50%"></span>${p.name||p.id}</div>
-        <div class="prole">${p.role||p.model||'Agent'} · ${p.status||'unknown'}</div>
-        ${skills.length ? `<div class="pskills">${skills.slice(0,4).map(s=>`<span class="chip">${s}</span>`).join('')}</div>` : ''}
+      const skillsChips = a.skills && a.skills.length
+        ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">${a.skills.slice(0,3).map(s => `<span class="chip" style="font-size:10px;padding:1px 5px">${typeof s==='string'?s:s.name||JSON.stringify(s)}</span>`).join('')}</div>`
+        : '';
+
+      return `<div class="fleet-card" onclick="openAgent('${a.id}','${a.name}','${a.role}','${a.model}','${a.status}')">
+        <div class="fcan">${canTag}</div>
+        <div class="fh">
+          <span class="fstatus" style="background:${statusDot}"></span>
+          <div><div class="fname">${a.name}</div>
+          <div class="frole"><span class="tag" style="background:${a.color}20;color:${a.color};font-size:10px">${a.roleLabel||a.role}</span> · ${a.model}</div></div>
+        </div>
+        ${a.loadPct > 0 ? `<div class="fbar"><i style="width:${a.loadPct}%;background:${a.loadColor}"></i></div>` : ''}
+        <div class="fmeta">
+          ${a.loadPct > 0 ? `<span>负载 <b style="color:${a.loadColor}">${a.loadPct}%</b></span>` : ''}
+          ${a.status === 'configured' && a.hasSoul ? '<span><i class="ti ti-file-text" style="color:var(--teal)"></i>SOUL</span>' : ''}
+        </div>
+        ${tasksHTML}
+        ${skillsChips}
       </div>`;
     }).join('');
   } else {
-    $('#hermesProfiles').innerHTML = '<div style="color:var(--tx3);padding:20px">暂无 Hermes Profile 数据</div>';
+    $('#fleetGrid').innerHTML = '<div style="color:var(--tx3);text-align:center;padding:40px"><i class="ti ti-robot" style="font-size:32px"></i><div style="margin-top:10px">暂无 Agent 数据</div></div>';
   }
 
-  // Apex agents
-  if (apexP.length) {
-    $('#apexAgents').innerHTML = apexP.slice(0, 12).map(p => {
-      const skills = p.skills || [];
-      return `<div class="profile-card">
-        <div class="pname"><i class="ti ti-user" style="color:var(--violet)"></i>${p.name}</div>
-        <div class="prole">${p.role||'Agent'} · ${p.model||'default'}</div>
-        ${skills.length ? `<div class="pskills">${skills.slice(0,4).map(s=>`<span class="chip">${s}</span>`).join('')}</div>` : ''}
-      </div>`;
-    }).join('');
-  } else {
-    $('#apexAgents').innerHTML = '<div style="color:var(--tx3);padding:20px">暂无 Apex Agent 数据</div>';
-  }
+  // Load distribution summary
+  const busy = workloads.filter(w => { const l = (w.load||w.saturation||0)*100; return l >= 30 && l < 80; }).length;
+  const overloaded = workloads.filter(w => (w.load||w.saturation||0)*100 >= 80).length;
+  $('#loadSummary').innerHTML = `
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>空闲 (&lt;30%)</span><span class="mono">${idleCount}</span></div>
+      <div class="bar"><i style="width:${workloads.length?Math.round(idleCount/workloads.length*100):0}%;background:var(--green)"></i></div>
+    </div>
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>忙碌 (30-80%)</span><span class="mono">${busy}</span></div>
+      <div class="bar"><i style="width:${workloads.length?Math.round(busy/workloads.length*100):0}%;background:var(--amber)"></i></div>
+    </div>
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>过载 (&gt;80%)</span><span class="mono" style="color:var(--red)">${overloaded}</span></div>
+      <div class="bar"><i style="width:${workloads.length?Math.round(overloaded/workloads.length*100):0}%;background:var(--red)"></i></div>
+    </div>
+    <div class="kv"><span class="k">总 Agent</span><span class="vv">${agentCards.length}</span></div>
+    <div class="kv"><span class="k">可接单</span><span class="vv" style="color:var(--green)">${agentCards.filter(a=>a.canAccept).length}</span></div>`;
 
-  // Load distribution
-  const idle = workloads.filter(w => (w.load||w.saturation||0) < 0.3).length;
-  const busy = workloads.filter(w => { const l = w.load||w.saturation||0; return l >= 0.3 && l < 0.8; }).length;
-  const overloaded = workloads.filter(w => (w.load||w.saturation||0) >= 0.8).length;
-  $('#loadDist').innerHTML = `
-    <div class="kv"><span class="k"><span class="st" style="background:var(--green);width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:-1px"></span>空闲 (&lt;30%)</span><span class="vv">${idle}</span></div>
-    <div class="kv"><span class="k"><span class="st" style="background:var(--amber);width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:-1px"></span>忙碌 (30-80%)</span><span class="vv">${busy}</span></div>
-    <div class="kv"><span class="k"><span class="st" style="background:var(--red);width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:-1px"></span>过载 (&gt;80%)</span><span class="vv">${overloaded}</span></div>
-    <div class="kv"><span class="k">总 Agent 数</span><span class="vv">${workloads.length||apexP.length||0}</span></div>`;
+  // Board mini
+  renderBoardMini();
+}
 
-  // Org chart
-  if (teams.length) {
-    $('#orgChart').innerHTML = teams.slice(0, 8).map((t, i) => {
-      const members = (t.members || t.agents || []).slice(0, 5);
-      return `<div class="org-chart" style="margin-bottom:10px">
-        <div class="org-node" style="border-color:var(--teal);border-left:3px solid var(--teal)">
-          <i class="ti ti-users" style="color:var(--teal)"></i>${t.name||t.project||t.id}
-          <span class="st" style="background:var(--green)"></span></div>
-        ${members.length ? '<div class="org-line"></div>' + members.map(m => `<div class="org-node" style="font-size:11px"><span class="st" style="background:var(--tx3)"></span>${typeof m==='string'?m:m.name||m.id}</div>`).join('') : ''}
-      </div>`;
-    }).join('');
-  } else {
-    $('#orgChart').innerHTML = '<div style="color:var(--tx3);padding:20px">暂无团队数据</div>';
-  }
+/* ========== BOARD MANAGEMENT ========== */
+function renderBoardMini() {
+  const b = state.board;
+  const humans = b.humans || [];
+  let html = humans.map(h => `<div class="board-member">
+    <div class="bmav" style="background:var(--violet-d);color:var(--violet)">${h.init||h.name[0]}</div>
+    <div class="bminfo"><div class="bmname">${h.name}</div><div class="bmrole">${h.role||'董事'}</div></div>
+  </div>`).join('');
+  if (!humans.length) html = '<div style="color:var(--tx3);font-size:12px;padding:8px">暂无真人董事</div>';
+  html += `<div style="border-top:1px solid var(--line);margin-top:8px;padding-top:8px">
+    <div class="kv" style="font-size:11px"><span class="k">CEO Agent</span><span class="vv" style="font-size:11px">${b.ceoAgent||'--'}</span></div>
+    <div class="kv" style="font-size:11px"><span class="k">授权 Agent</span><span class="vv" style="font-size:11px">${b.authAgent||'--'}</span></div>
+    <div class="kv" style="font-size:11px"><span class="k">审计 Agent</span><span class="vv" style="font-size:11px">${b.auditAgent||'--'}</span></div>
+  </div>`;
+  $('#boardMini').innerHTML = html;
+  // Update sidebar crew
+  renderCrew();
+}
+
+function openBoardManager() {
+  $('#scrim').classList.add('on');
+  $('#boardModal').classList.add('on');
+  renderBoardManager();
+}
+
+function renderBoardManager() {
+  const b = state.board;
+  const humans = b.humans || [];
+  const fleetP = state.data.fleetProfiles || [];
+  const apexP = state.data.profiles || [];
+  const allAgents = [...new Set([...fleetP.map(p=>p.name), ...apexP.map(p=>p.name), 'ceo', 'auth', 'audit', 'frontend-dev'])];
+
+  $('#boardBody').innerHTML = `
+    <div class="board-grid">
+      <div class="board-section">
+        <h4><i class="ti ti-users" style="color:var(--violet)"></i>真人董事会</h4>
+        <div id="humanList">${humans.map((h,i) => `<div class="board-member">
+          <div class="bmav" style="background:var(--violet-d);color:var(--violet)">${h.init||h.name[0]}</div>
+          <div class="bminfo"><div class="bmname">${h.name}</div><div class="bmrole">${h.role||'董事'}</div></div>
+          <div class="bmremove" onclick="removeBoardHuman(${i})" title="移除">×</div>
+        </div>`).join('')||'<div style="color:var(--tx3);font-size:12px;padding:8px">点击下方添加真人董事</div>'}</div>
+        <div class="board-add">
+          <input id="newHumanName" placeholder="姓名" style="flex:1">
+          <input id="newHumanRole" placeholder="角色(如:CTO)" style="flex:1">
+          <button class="btn sm primary" onclick="addBoardHuman()"><i class="ti ti-plus"></i>添加</button>
+        </div>
+      </div>
+      <div class="board-section">
+        <h4><i class="ti ti-robot" style="color:var(--teal)"></i>核心 Agent 角色</h4>
+        <div class="fld"><label>CEO 编排官</label><select id="bmCeo" style="background:var(--bg3);color:var(--tx)">${allAgents.map(a=>`<option value="${a}" ${a===b.ceoAgent?'selected':''}>${a}</option>`).join('')}</select></div>
+        <div class="fld"><label>授权审批 Agent</label><select id="bmAuth" style="background:var(--bg3);color:var(--tx)">${allAgents.map(a=>`<option value="${a}" ${a===b.authAgent?'selected':''}>${a}</option>`).join('')}</select></div>
+        <div class="fld"><label>审计追踪 Agent</label><select id="bmAudit" style="background:var(--bg3);color:var(--tx)">${allAgents.map(a=>`<option value="${a}" ${a===b.auditAgent?'selected':''}>${a}</option>`).join('')}</select></div>
+      </div>
+    </div>`;
+}
+
+function addBoardHuman() {
+  const name = $('#newHumanName') ? $('#newHumanName').value.trim() : '';
+  const role = $('#newHumanRole') ? $('#newHumanRole').value.trim() : '';
+  if (!name) { toast('请输入姓名'); return; }
+  state.board.humans.push({ id: 'h' + Date.now(), name: name, role: role || '董事', init: name[0].toUpperCase() });
+  renderBoardManager();
+  renderBoardMini();
+  toast(name + ' 已加入董事会');
+}
+
+function removeBoardHuman(i) {
+  const removed = state.board.humans[i];
+  state.board.humans.splice(i, 1);
+  renderBoardManager();
+  renderBoardMini();
+  toast((removed ? removed.name : '成员') + ' 已移出董事会');
+}
+
+function saveBoard() {
+  state.board.ceoAgent = $('#bmCeo') ? $('#bmCeo').value : state.board.ceoAgent;
+  state.board.authAgent = $('#bmAuth') ? $('#bmAuth').value : state.board.authAgent;
+  state.board.auditAgent = $('#bmAudit') ? $('#bmAudit').value : state.board.auditAgent;
+  closeAll();
+  renderBoardMini();
+  toast('董事会已保存 · CEO: ' + state.board.ceoAgent + ' · 授权: ' + state.board.authAgent + ' · 审计: ' + state.board.auditAgent);
 }
 
 /* =================================================================

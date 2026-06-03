@@ -375,7 +375,8 @@ def squad_start():
 
 @squad.command(name="attach")
 @click.argument("agent_name",
-    type=click.Choice(["frontend-dev", "backend-dev", "fullstack-dev", "architect", "devops"]))
+    type=click.Choice(["frontend-dev", "backend-dev", "fullstack-dev", "architect", "devops",
+                       "vulnerability-scanner", "penetration-tester"]))
 def squad_attach(agent_name: str):
     """Show detailed info for a specific squad member"""
     squad_cmds.attach_cmd(agent_name)
