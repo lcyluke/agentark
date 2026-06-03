@@ -31,3 +31,4 @@ test-project/
 # MCP server binaries (recompile from source)
 scripts/mcp-servers/mcp-go-server
 scripts/mcp-servers/mcp-rust-server
+superpowers/
