@@ -26,6 +26,7 @@ from .commands import ops as ops_cmds
 from .commands import task_mgmt as task_cmds
 from .commands import skill_mgmt as skill_cmds
 from .commands import fleet_cmds
+from .commands import squad_cmds
 
 # New mode CLIs
 from apex.orchestration import (
@@ -354,6 +355,30 @@ def fleet_refresh():
 def fleet_history(limit: int):
     """Show fleet snapshot history"""
     fleet_cmds.history_cmd(limit=limit)
+
+
+# ─── squad commands ───
+@cli.group()
+def squad():
+    """Dev Squad — Launch and manage dev agent teams"""
+    pass
+
+@squad.command(name="status")
+def squad_status():
+    """Show dev squad readiness and methodology status"""
+    squad_cmds.status_cmd()
+
+@squad.command(name="start")
+def squad_start():
+    """Launch all 5 dev agents in new Terminal windows"""
+    squad_cmds.start_cmd()
+
+@squad.command(name="attach")
+@click.argument("agent_name",
+    type=click.Choice(["frontend-dev", "backend-dev", "fullstack-dev", "architect", "devops"]))
+def squad_attach(agent_name: str):
+    """Show detailed info for a specific squad member"""
+    squad_cmds.attach_cmd(agent_name)
 
 
 # ─── chain commands ───

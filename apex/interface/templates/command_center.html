@@ -426,6 +426,10 @@ let state = {
   view: 'dashboard',
   data: { profiles: [], tasks: [], cc: null, autonomous: null, knowledge: null, env: null,
     fleetProfiles: [], teams: [], workloads: [], ops: null },
+  liveRuntime: null,
+  liveProjects: [],
+  liveProject: null,
+  selectedProject: null,
   connected: false
 };
 
@@ -487,7 +491,7 @@ function go(v) {
 function renderActiveView() {
   switch (state.view) {
     case 'dashboard': renderDashboard(); break;
-    case 'project': renderProject(); break;
+    case 'project': loadProjectView(); break;
     case 'approvals': renderApprovals(); break;
     case 'fleet': renderFleet(); break;
     case 'autonomy': renderAutonomy(); break;
@@ -497,39 +501,80 @@ function renderActiveView() {
   }
 }
 
+/* ========== Live Runtime ========== */
+async function fetchLiveRuntime() {
+  const rt = await fetchJSON(API + '/live/runtime');
+  if (rt) {
+    state.liveRuntime = rt;
+    state.connected = true;
+    updatePulse();
+    renderCrew();
+  } else {
+    // Fallback to existing data
+    updatePulse();
+    renderCrew();
+  }
+}
+
 /* ========== Pulse ========== */
 function updatePulse() {
-  const d = state.data;
-  const profiles = d.profiles || [];
-  const cc = d.cc || {};
-  const hprof = cc.hermes_profiles || {};
-  const online = Object.values(hprof).filter(p => p && p.status !== 'offline').length;
-  const total = Object.keys(hprof).length || profiles.length || 0;
-  const auto = d.autonomous;
-  const autoLvl = auto && auto.status === 'running' ? 'L2' : '--';
-  $('#pulseTxt').textContent = (online || '?') + ' / ' + (total || '?') + ' agent 在线 · 自治 ' + autoLvl;
-  $('#pulseDot').style.background = state.connected ? 'var(--green)' : 'var(--red)';
+  const rt = state.liveRuntime;
+  if (rt) {
+    const sessions = rt.active_sessions || (rt.sessions ? rt.sessions.length : 0);
+    const processes = rt.running_processes || (rt.processes ? rt.processes.length : 0);
+    $('#pulseTxt').textContent = sessions + ' 会话 · ' + processes + ' 进程';
+    $('#pulseDot').style.background = 'var(--green)';
+  } else {
+    // Fallback to old data
+    const d = state.data;
+    const profiles = d.profiles || [];
+    const cc = d.cc || {};
+    const hprof = cc.hermes_profiles || {};
+    const online = Object.values(hprof).filter(p => p && p.status !== 'offline').length;
+    const total = Object.keys(hprof).length || profiles.length || 0;
+    const auto = d.autonomous;
+    const autoLvl = auto && auto.status === 'running' ? 'L2' : '--';
+    $('#pulseTxt').textContent = (online || '?') + ' / ' + (total || '?') + ' agent 在线 · 自治 ' + autoLvl;
+    $('#pulseDot').style.background = state.connected ? 'var(--green)' : 'var(--red)';
+  }
 }
 
 /* ========== Crew ========== */
 function renderCrew() {
-  const cc = state.data.cc || {};
-  const hprof = cc.hermes_profiles || {};
-  const entries = Object.entries(hprof).slice(0, 5);
+  const rt = state.liveRuntime;
+  const sessions = rt && rt.sessions ? rt.sessions : [];
   const colors = ['var(--teal-d)', 'var(--violet-d)', 'var(--blue-d)', 'var(--green-d)', 'var(--amber-d)'];
   const fc = ['var(--teal)', 'var(--violet)', 'var(--blue)', 'var(--green)', 'var(--amber)'];
-  if (!entries.length) {
-    $('#crewList').innerHTML = '<div style="font-size:11px;color:var(--tx3);padding:8px">暂无活跃配置</div>';
-    return;
+  
+  if (sessions.length) {
+    // Use live sessions from /api/live/runtime
+    $('#crewList').innerHTML = sessions.slice(0, 6).map((s, i) => {
+      const init = (s.source || s.model || 'A').charAt(0).toUpperCase();
+      const model = s.model || 'Unknown';
+      const runtime = s.runtime_min != null ? Math.round(s.runtime_min) + 'm' : '';
+      return `<div class="crew-row">
+        <span class="av pulse" style="background:${colors[i%5]};color:${fc[i%5]}">${init}</span>
+        <div style="font-size:12.5px">${s.source||model}<div style="font-size:10px;color:var(--tx3)">${model}${runtime?' · '+runtime:''}</div></div>
+      </div>`;
+    }).join('');
+  } else {
+    // Fallback to old data
+    const cc = state.data.cc || {};
+    const hprof = cc.hermes_profiles || {};
+    const entries = Object.entries(hprof).slice(0, 5);
+    if (!entries.length) {
+      $('#crewList').innerHTML = '<div style="font-size:11px;color:var(--tx3);padding:8px">暂无活跃配置</div>';
+      return;
+    }
+    $('#crewList').innerHTML = entries.map(([k, v], i) => {
+      const init = (v && v.name ? v.name[0] : k[0]).toUpperCase();
+      const status = v && v.status === 'online' ? 'active' : 'idle';
+      return `<div class="crew-row">
+        <span class="av" style="background:${colors[i%5]};color:${fc[i%5]}">${init}</span>
+        <div style="font-size:12.5px">${v && v.name || k}<div style="font-size:10px;color:var(--tx3)">${v && v.role || 'Agent'} · ${status}</div></div>
+      </div>`;
+    }).join('');
   }
-  $('#crewList').innerHTML = entries.map(([k, v], i) => {
-    const init = (v && v.name ? v.name[0] : k[0]).toUpperCase();
-    const status = v && v.status === 'online' ? 'active' : 'idle';
-    return `<div class="crew-row">
-      <span class="av" style="background:${colors[i%5]};color:${fc[i%5]}">${init}</span>
-      <div style="font-size:12.5px">${v && v.name || k}<div style="font-size:10px;color:var(--tx3)">${v && v.role || 'Agent'} · ${status}</div></div>
-    </div>`;
-  }).join('');
 }
 
 /* ========== Toast ========== */
@@ -630,7 +675,49 @@ function renderDashboard() {
    VIEW 2: PROJECT WAR ROOM
    ================================================================= */
 async function loadProjectView() {
-  // Re-fetch tasks + workloads
+  // Populate project dropdown from live API
+  const projects = await fetchJSON(API + '/live/projects');
+  if (projects && Array.isArray(projects)) {
+    state.liveProjects = projects;
+    const sel = $('#pjSwitch');
+    if (sel) {
+      const currentVal = sel.value;
+      sel.innerHTML = '<option value="">-- 选择项目 --</option>' +
+        projects.map(p => `<option value="${p.name}">${p.name} (${p.task_count||0} 任务${p.has_team?' · 有团队':''})</option>`).join('');
+      // Restore selection if possible
+      if (state.selectedProject) {
+        sel.value = state.selectedProject;
+      } else if (currentVal && currentVal !== 'all' && projects.some(p => p.name === currentVal)) {
+        sel.value = currentVal;
+      }
+    }
+  } else {
+    // Fallback: use teams data
+    const d = state.data;
+    const teams = d.teams || [];
+    const pjNames = [...new Set([...teams.map(t => t.name || t.project || t.id).filter(Boolean), '羽球宝AI', 'Apex', '深圳羽球地图'])];
+    const sel = $('#pjSwitch');
+    if (sel && sel.options.length <= 1) {
+      sel.innerHTML = '<option value="all">全部项目</option>' + pjNames.map(n => `<option value="${n}">${n}</option>`).join('');
+    }
+  }
+
+  // If a project is selected, fetch its detail
+  const pjName = $('#pjSwitch') && $('#pjSwitch').value;
+  if (pjName && pjName !== 'all' && pjName !== '') {
+    const pjData = await fetchJSON(API + '/live/project/' + encodeURIComponent(pjName));
+    if (pjData && !pjData.error) {
+      state.liveProject = pjData;
+      state.selectedProject = pjName;
+    } else {
+      state.liveProject = null;
+    }
+  } else {
+    state.liveProject = null;
+    state.selectedProject = null;
+  }
+
+  // Also refresh workloads and tasks for fallback
   const [tasks, workloads] = await Promise.all([
     fetchJSON(API + '/tasks'),
     fetchJSON(API + '/ops/agents/workloads')
@@ -641,52 +728,174 @@ async function loadProjectView() {
 }
 
 function renderProject() {
-  const d = state.data;
-  const tasks = d.tasks || [];
-  const workloads = d.workloads || [];
-  const teams = d.teams || [];
+  const pj = state.liveProject;
 
-  // Project dropdown
-  const pjNames = [...new Set([...teams.map(t => t.name || t.project || t.id).filter(Boolean), '羽球宝AI', 'Apex', '深圳羽球地图'])];
-  const sel = $('#pjSwitch');
-  if (sel && sel.options.length <= 1) {
-    sel.innerHTML = '<option value="all">全部项目</option>' + pjNames.map(n => `<option value="${n}">${n}</option>`).join('');
-  }
+  if (pj) {
+    // ===== LIVE PROJECT VIEW =====
+    // Health bar
+    const healthPct = pj.health_pct != null ? Math.round(pj.health_pct) : 0;
+    const healthColor = healthPct >= 75 ? 'var(--green)' : healthPct >= 50 ? 'var(--amber)' : 'var(--red)';
+    const statusTag = pj.status ? `<span class="tag ${pj.status==='active'||pj.status==='running'?'green':pj.status==='warning'||pj.status==='at_risk'?'amber':'gray'}">${pj.status}</span>` : '';
 
-  // Kanban columns
-  const cols = { todo: ['待办', 'ti-inbox', 'var(--tx3)'], run: ['进行中', 'ti-loader', 'var(--blue)'],
-    gate: ['待审', 'ti-eye', 'var(--amber)'], done: ['完成', 'ti-check', 'var(--green)'] };
-  const grouped = { todo: [], run: [], gate: [], done: [] };
-  tasks.forEach(t => {
-    const s = t.status || 'todo';
-    if (grouped[s]) grouped[s].push(t);
-    else grouped.todo.push(t);
-  });
+    // Clear kanban and replace with project overview
+    $('#kanban').innerHTML = `
+      <div class="card" style="grid-column:1/-1">
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px">
+          <div style="font-family:var(--disp);font-size:16px;font-weight:600">${pj.project||state.selectedProject} ${statusTag}</div>
+          <div style="font-size:12px;color:var(--tx2)">总任务: ${pj.total_tasks||0} · 健康度: ${healthPct}%</div>
+        </div>
+        <div style="margin-bottom:6px;display:flex;align-items:center;gap:10px">
+          <span style="font-size:11px;color:var(--tx3);min-width:50px">健康度</span>
+          <div class="bar" style="flex:1;height:10px"><i style="width:${healthPct}%;background:${healthColor}"></i></div>
+          <span class="mono" style="font-size:12px;color:${healthColor};font-weight:600">${healthPct}%</span>
+        </div>
+        <div style="font-size:11px;color:var(--tx3);margin-top:4px">${pj.health_status||''}</div>
+      </div>`;
 
-  $('#kanban').innerHTML = Object.entries(cols).map(([k, [lbl, ic, tone]]) => {
-    return `<div class="col"><h4 style="color:${tone}"><i class="ti ${ic}"></i>${lbl} (${grouped[k].length})</h4>
-      ${grouped[k].map(t => `<div class="task b-${k}">
-        ${t.title||t.id}<div class="assign">→ ${t.assignee||'未分配'} · 优先级${t.priority||'?'}</div>
-      </div>`).join('')}</div>`;
-  }).join('');
+    // Agent workload cards
+    const agents = pj.agents || [];
+    let agentsHTML = '';
+    if (agents.length) {
+      agentsHTML = `<div class="card" style="grid-column:1/-1">
+        <div class="sec-h"><i class="ti ti-robot"></i>Agent 工作负载</div>
+        <div class="profile-grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">`;
+      agents.forEach(a => {
+        const loadPct = Math.min(100, Math.round((a.load_pct || 0) * 100));
+        const loadColor = loadPct > 80 ? 'var(--red)' : loadPct > 50 ? 'var(--amber)' : 'var(--green)';
+        const saturationLabel = loadPct > 80 ? '过载' : loadPct > 50 ? '忙碌' : '空闲';
+        const saturationColor = loadPct > 80 ? 'var(--red)' : loadPct > 50 ? 'var(--amber)' : 'var(--green)';
+        agentsHTML += `<div class="profile-card">
+          <div class="pname"><i class="ti ti-robot" style="color:var(--violet)"></i>${a.agent_id||a.name||'Agent'}</div>
+          <div class="prole" style="display:flex;align-items:center;gap:6px">
+            <span class="tag" style="background:${saturationColor}15;color:${saturationColor};border:1px solid ${saturationColor}40">${saturationLabel}</span>
+            <span class="mono" style="font-size:11px">${loadPct}%</span>
+          </div>
+          <div class="bar" style="margin:8px 0 6px;height:6px"><i style="width:${loadPct}%;background:${loadColor}"></i></div>
+          <div style="display:flex;gap:10px;font-size:11px;color:var(--tx2);flex-wrap:wrap">
+            <span><span style="color:var(--green)">✓</span> ${a.done||0}</span>
+            <span><span style="color:var(--blue)">⟳</span> ${a.in_progress||0}</span>
+            <span><span style="color:var(--tx3)">○</span> ${a.ready||0}</span>
+            <span><span style="color:var(--red)">⊘</span> ${a.blocked||0}</span>
+          </div>
+        </div>`;
+      });
+      agentsHTML += `</div></div>`;
+    }
 
-  // Workloads
-  if (workloads && workloads.length) {
-    $('#workloads').innerHTML = workloads.slice(0, 8).map(w => {
-      const pct = Math.min(100, Math.round((w.load || w.saturation || 0) * 100));
-      const color = pct > 80 ? 'var(--red)' : pct > 50 ? 'var(--amber)' : 'var(--green)';
-      return `<div style="margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-          <span style="font-weight:500">${w.name||w.agent||w.id}</span>
-          <span class="mono" style="color:${color}">${pct}%</span></div>
-        <div class="bar"><i style="width:${pct}%;background:${color}"></i></div></div>`;
-    }).join('');
+    // Blockers + Ready tasks
+    const blockers = pj.blockers || [];
+    const readyTasks = pj.ready_tasks || [];
+    let sideHTML = '<div class="grid" style="grid-template-columns:1fr 1fr;grid-column:1/-1">';
+    sideHTML += `<div class="card"><div class="sec-h"><i class="ti ti-alert-triangle" style="color:var(--red)"></i>阻塞项 (${blockers.length})</div>`;
+    if (blockers.length) {
+      sideHTML += blockers.slice(0, 8).map(b => {
+        const title = typeof b === 'string' ? b : (b.title || b.task || b.id || JSON.stringify(b));
+        return `<div class="li"><div class="ic" style="background:var(--red-d);color:var(--red)"><i class="ti ti-lock"></i></div>
+          <div style="flex:1"><div class="t">${title}</div></div></div>`;
+      }).join('');
+    } else {
+      sideHTML += '<div style="color:var(--tx3);font-size:12px;padding:10px">无阻塞项 ✨</div>';
+    }
+    sideHTML += `</div>`;
+
+    sideHTML += `<div class="card"><div class="sec-h"><i class="ti ti-inbox" style="color:var(--teal)"></i>待分配 (${readyTasks.length})</div>`;
+    if (readyTasks.length) {
+      sideHTML += readyTasks.slice(0, 8).map(t => {
+        const title = typeof t === 'string' ? t : (t.title || t.task || t.id || JSON.stringify(t));
+        return `<div class="li"><div class="ic" style="background:var(--teal-d);color:var(--teal)"><i class="ti ti-circle-dot"></i></div>
+          <div style="flex:1"><div class="t">${title}</div></div></div>`;
+      }).join('');
+    } else {
+      sideHTML += '<div style="color:var(--tx3);font-size:12px;padding:10px">没有待分配任务</div>';
+    }
+    sideHTML += `</div></div>`;
+
+    // Standup section
+    const standup = pj.standup || {};
+    const completions = standup.completions || [];
+    let standupHTML = `<div class="sec-h"><i class="ti ti-clipboard-list"></i>站会报告 · 过去24小时完成</div>`;
+    if (completions.length) {
+      standupHTML += `<div style="font-size:12px;color:var(--tx2);margin-bottom:8px">已完成 ${standup.completed_24h||completions.length} 项</div>`;
+      standupHTML += completions.map(c => {
+        const agent = c.agent || '';
+        const task = c.task || '';
+        return `<div class="li">
+          <div class="ic" style="background:var(--green-d);color:var(--green)"><i class="ti ti-check"></i></div>
+          <div style="flex:1"><div class="t">${task}</div><div class="d">完成者: ${agent}</div></div>
+        </div>`;
+      }).join('');
+    } else {
+      standupHTML += '<div style="color:var(--tx3);font-size:12px;padding:10px">暂无24小时内完成记录。点击下方按钮运行站会。</div>';
+    }
+    // Assemble kanban area with the new layout
+    $('#kanban').innerHTML += agentsHTML + sideHTML;
+    $('#workloads').innerHTML = '';
+    $('#standupMini').innerHTML = standupHTML;
+
   } else {
-    $('#workloads').innerHTML = '<div style="color:var(--tx3);font-size:12px">暂无负载数据</div>';
+    // ===== FALLBACK: original static/fetched project view =====
+    const d = state.data;
+    const tasks = d.tasks || [];
+    const workloads = d.workloads || [];
+    const teams = d.teams || [];
+
+    // Project dropdown
+    const pjNames = [...new Set([...teams.map(t => t.name || t.project || t.id).filter(Boolean), '羽球宝AI', 'Apex', '深圳羽球地图'])];
+    const sel = $('#pjSwitch');
+    if (sel && sel.options.length <= 1) {
+      sel.innerHTML = '<option value="all">全部项目</option>' + pjNames.map(n => `<option value="${n}">${n}</option>`).join('');
+    }
+
+    // Kanban columns
+    const cols = { todo: ['待办', 'ti-inbox', 'var(--tx3)'], run: ['进行中', 'ti-loader', 'var(--blue)'],
+      gate: ['待审', 'ti-eye', 'var(--amber)'], done: ['完成', 'ti-check', 'var(--green)'] };
+    const grouped = { todo: [], run: [], gate: [], done: [] };
+    tasks.forEach(t => {
+      const s = t.status || 'todo';
+      if (grouped[s]) grouped[s].push(t);
+      else grouped.todo.push(t);
+    });
+
+    $('#kanban').innerHTML = Object.entries(cols).map(([k, [lbl, ic, tone]]) => {
+      return `<div class="col"><h4 style="color:${tone}"><i class="ti ${ic}"></i>${lbl} (${grouped[k].length})</h4>
+        ${grouped[k].map(t => `<div class="task b-${k}">
+          ${t.title||t.id}<div class="assign">→ ${t.assignee||'未分配'} · 优先级${t.priority||'?'}</div>
+        </div>`).join('')}</div>`;
+    }).join('');
+
+    // Workloads
+    if (workloads && workloads.length) {
+      $('#workloads').innerHTML = workloads.slice(0, 8).map(w => {
+        const pct = Math.min(100, Math.round((w.load || w.saturation || 0) * 100));
+        const color = pct > 80 ? 'var(--red)' : pct > 50 ? 'var(--amber)' : 'var(--green)';
+        return `<div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+            <span style="font-weight:500">${w.name||w.agent||w.id}</span>
+            <span class="mono" style="color:${color}">${pct}%</span></div>
+          <div class="bar"><i style="width:${pct}%;background:${color}"></i></div></div>`;
+      }).join('');
+    } else {
+      $('#workloads').innerHTML = '<div style="color:var(--tx3);font-size:12px">暂无负载数据</div>';
+    }
+
+    $('#standupMini').innerHTML = '<div style="font-size:12px;color:var(--tx2)">点击「站会报告」按钮加载</div>';
   }
 }
 
 async function loadStandup() {
+  // If we're in project view with live data, re-fetch and show toast
+  const pj = state.liveProject;
+  if (pj && state.selectedProject) {
+    const fresh = await fetchJSON(API + '/live/project/' + encodeURIComponent(state.selectedProject));
+    if (fresh && !fresh.error) {
+      state.liveProject = fresh;
+      renderProject();
+      toast('站会报告已刷新 · ' + (fresh.standup ? fresh.standup.completed_24h || 0 : 0) + ' 项完成');
+      return;
+    }
+  }
+
+  // Fallback: old standup endpoint
   const data = await fetchJSON(API + '/ops/standup');
   if (!data || data.error) {
     toast('站会报告加载失败');
@@ -736,6 +945,33 @@ async function renderFleet() {
   const apexP = d.profiles || [];
   const workloads = d.workloads || [];
   const teams = d.teams || [];
+  const rt = state.liveRuntime;
+
+  // ===== Runtime stats card (NEW - placed at top) =====
+  if (rt) {
+    const sessions = rt.active_sessions || (rt.sessions ? rt.sessions.length : 0);
+    const processes = rt.running_processes || (rt.processes ? rt.processes.length : 0);
+    const procList = rt.processes || [];
+    const cpuTotal = procList.reduce((s, p) => s + (p.cpu || 0), 0).toFixed(1);
+    const memTotal = procList.reduce((s, p) => s + (p.mem || 0), 0).toFixed(1);
+    // Inject runtime card before hermesProfiles
+    const fleetHeader = document.querySelector('#v-fleet .sec-h');
+    if (fleetHeader) {
+      // Insert KPI row at top of fleet view
+      const fleetSection = document.getElementById('v-fleet');
+      let kpiRow = fleetSection.querySelector('.runtime-kpis');
+      if (!kpiRow) {
+        kpiRow = document.createElement('div');
+        kpiRow.className = 'grid kpis runtime-kpis';
+        fleetSection.insertBefore(kpiRow, fleetSection.firstChild);
+      }
+      kpiRow.innerHTML =
+        kpiHTML('ti-activity-heartbeat', '活跃会话', sessions, 'Hermes 运行中', '') +
+        kpiHTML('ti-cpu', '运行进程', processes, cpuTotal + '% CPU · ' + memTotal + '% MEM', '') +
+        kpiHTML('ti-robot', 'Agent 总数', workloads.length || apexP.length || 0, '已配置 agent', '') +
+        kpiHTML('ti-users', '团队数', teams.length, '组织架构', '');
+    }
+  }
 
   // Hermes profiles
   if (fleetP.length) {
@@ -998,12 +1234,21 @@ $('#chatIn') && $('#chatIn').addEventListener('keydown', e => {
 });
 
 /* ========== Auto-refresh ========== */
+// Full data refresh every 30s
 setInterval(async () => {
   await loadAllData();
 }, 30000);
 
+// Live runtime pulse refresh every 15s
+setInterval(async () => {
+  await fetchLiveRuntime();
+}, 15000);
+
 /* ========== Boot ========== */
-loadAllData().then(() => {
+Promise.all([
+  loadAllData(),
+  fetchLiveRuntime()
+]).then(() => {
   renderDashboard();
   toast('Apex 指挥中心已就绪');
 });
