@@ -314,6 +314,45 @@ body{
 .cost-clock .cc-value{font-weight:700;font-size:18px;color:var(--text-primary);font-variant-numeric:tabular-nums}
 .cost-clock .cc-today{color:var(--text-muted);font-size:12px}
 
+/* FLEET MANAGER */
+.fleet-form-group{margin-bottom:10px}
+.fleet-form-group label{display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.3px}
+.fleet-form-group input,.fleet-form-group textarea,.fleet-form-group select{
+  width:100%;padding:7px 10px;background:var(--bg-input);border:1px solid var(--border);
+  border-radius:var(--radius-xs);color:var(--text-primary);font-size:12px;font-family:inherit;outline:none;resize:vertical
+}
+.fleet-form-group input:focus,.fleet-form-group textarea:focus,.fleet-form-group select:focus{border-color:var(--accent)}
+.fleet-form-group textarea{min-height:80px;font-family:'SF Mono','Fira Code',monospace;font-size:11px}
+.fleet-btn{
+  padding:5px 14px;border-radius:var(--radius-xs);font-size:12px;font-weight:500;cursor:pointer;
+  border:1px solid transparent;transition:var(--transition);display:inline-flex;align-items:center;gap:5px
+}
+.fleet-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.fleet-btn.primary:hover{background:var(--accent-light)}
+.fleet-btn.danger{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+.fleet-btn.danger:hover{background:var(--red);color:#fff}
+.fleet-btn.ghost{background:transparent;color:var(--text-secondary);border-color:var(--border)}
+.fleet-btn.ghost:hover{background:var(--bg-hover);color:var(--text-primary)}
+.fleet-btn.sm{padding:3px 8px;font-size:10px}
+.fleet-team-card{
+  background:var(--bg-secondary);border-radius:var(--radius-sm);border:1px solid var(--border);
+  padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:var(--transition)
+}
+.fleet-team-card:hover{border-color:var(--border-light);background:var(--bg-hover)}
+.fleet-team-card .ftc-name{font-size:13px;font-weight:600;color:var(--text-primary)}
+.fleet-team-card .ftc-meta{font-size:10px;color:var(--text-muted);margin-top:2px;display:flex;gap:12px}
+.fleet-member-row{
+  display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--bg-card);
+  border-radius:var(--radius-xs);margin-bottom:4px;font-size:12px;border:1px solid var(--border)
+}
+.fleet-member-row .fm-agent{color:var(--accent-light);font-weight:500}
+.fleet-member-row .fm-role{color:var(--text-muted);font-size:10px;margin-left:auto}
+.fleet-detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.fleet-detail-header .fdh-title{font-size:13px;font-weight:600;color:var(--text-primary)}
+.fleet-status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.fleet-status-dot.config{background:var(--green);box-shadow:0 0 6px rgba(34,197,94,0.4)}
+.fleet-status-dot.missing{background:var(--red);box-shadow:0 0 6px rgba(239,68,68,0.4)}
+
 /* RESPONSIVE */
 @media(max-width:768px){
   .navbar{padding:0 14px;gap:12px;overflow-x:auto}
@@ -344,6 +383,7 @@ body{
     <button class="nav-tab" data-tab="tab5">🗂 Task Factory</button>
     <button class="nav-tab" data-tab="tab6">🧠 Knowledge Temple</button>
     <button class="nav-tab" data-tab="tab7">🔐 Audit Hall</button>
+    <button class="nav-tab" data-tab="tab8">🚢 Fleet Manager</button>
   </div>
   <div class="nav-right">
     <span class="nav-clock" id="navClock">--:--:--</span>
@@ -582,6 +622,38 @@ body{
     </div>
   </div>
 
+  <!-- TAB 8: Fleet Manager -->
+  <div class="tab-panel" id="tab8">
+    <div class="panels-2col">
+      <!-- LEFT: Hermes Profiles -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">⚓ Hermes Profiles <span class="badge" id="fleetProfileCount">0</span></div>
+          <button id="fleetNewProfileBtn" style="font-size:11px;color:var(--accent-light);cursor:pointer;background:var(--accent-glow);border:1px solid var(--accent);border-radius:var(--radius-xs);padding:4px 10px;font-weight:500">+ New Profile</button>
+        </div>
+        <div class="profile-grid" id="fleetProfileGrid"><div class="empty-state" style="grid-column:1/-1">Loading...</div></div>
+        <div id="fleetProfileDetail" style="display:none;margin-top:12px;padding:14px;background:var(--bg-secondary);border-radius:var(--radius-sm);border:1px solid var(--border)"></div>
+      </div>
+      <!-- RIGHT: Project Teams -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">👥 Project Teams <span class="badge" id="fleetTeamCount">0</span></div>
+          <button id="fleetNewTeamBtn" style="font-size:11px;color:var(--accent-light);cursor:pointer;background:var(--accent-glow);border:1px solid var(--accent);border-radius:var(--radius-xs);padding:4px 10px;font-weight:500">+ New Team</button>
+        </div>
+        <div id="fleetTeamList"><div class="empty-state">Loading...</div></div>
+        <div id="fleetTeamDetail" style="display:none;margin-top:12px;padding:14px;background:var(--bg-secondary);border-radius:var(--radius-sm);border:1px solid var(--border)"></div>
+      </div>
+    </div>
+    <!-- Org Chart -->
+    <div class="panels-full" style="margin-top:14px">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">🌐 Fleet Org Chart</div></div>
+        <canvas id="fleetOrgCanvas" class="knowledge-canvas" style="height:350px"></canvas>
+        <div id="fleetOrgLegend" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:8px;font-size:11px;color:var(--text-muted)"></div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -598,6 +670,8 @@ const state = {
   environment: null,
   evolution: null,
   logEntries: [],
+  fleetProfiles: [],
+  fleetTeams: {},
   activeTab: 'tab1',
 };
 
@@ -671,6 +745,7 @@ function renderActiveTab(){
     case 'tab5': renderTab5(); break;
     case 'tab6': renderTab6(); break;
     case 'tab7': renderTab7(); break;
+    case 'tab8': renderTab8(); break;
   }
 }
 
@@ -694,6 +769,8 @@ async function loadAll(){
     {key:'knowledge',url:'/api/knowledge'},
     {key:'environment',url:'/api/environment'},
     {key:'evolution',url:'/api/evolution'},
+    {key:'fleetProfiles',url:'/api/fleet/profiles/list'},
+    {key:'fleetTeams',url:'/api/fleet/teams/list'},
   ];
 
   const settled=await Promise.allSettled(fetchers.map(f=>fetchJSON(f.url).then(d=>({key:f.key,data:d}))));
@@ -1466,6 +1543,406 @@ function renderTab7(){
   $('cmdHistory').innerHTML='<div class="empty-state">No audit entries yet</div>';
 
   // Audit log already rendered by renderLog() into auditLogEntries
+}
+
+// ============================================================
+// TAB 8: FLEET MANAGER
+// ============================================================
+let fleetSelectedProfile=null;
+let fleetSelectedTeam=null;
+
+async function renderTab8(){
+  const fps=state.fleetProfiles||[];
+  const teamsData=state.fleetTeams||{};
+  const teams=teamsData.teams||{};
+
+  // --- LEFT: Profile Grid ---
+  const pGrid=$('fleetProfileGrid');
+  $('fleetProfileCount').textContent=fps.length;
+  pGrid.innerHTML='';
+  if(!fps.length){
+    pGrid.innerHTML='<div class="empty-state" style="grid-column:1/-1">No Hermes profiles found</div>';
+  }else{
+    fps.forEach(p=>{
+      const hasConfig=p.has_config||p.has_soul;
+      const dotClass=hasConfig?'config':'missing';
+      const dotTitle=hasConfig?'Configured':'Missing config';
+      const card=el('div',{class:'profile-card',style:'cursor:pointer'},[
+        el('div',{class:'profile-card-top'},[
+          el('div',{class:'profile-icon '+(hasConfig?'green':'red')},'⚓'),
+          el('div',{style:'flex:1;min-width:0'},[
+            el('div',{class:'profile-name'},p.name),
+            el('div',{style:'font-size:10px;color:var(--text-muted)'},p.is_default?'Default':'Custom'),
+          ]),
+          el('span',{class:'fleet-status-dot '+dotClass,title:dotTitle}),
+        ]),
+        el('div',{style:'display:flex;align-items:center;gap:6px;margin-top:4px'},[
+          el('span',{class:'profile-model'},p.model||'--'),
+          el('button',{class:'fleet-btn danger sm',style:'margin-left:auto',onclick:function(e){
+            e.stopPropagation();
+            if(confirm('Delete profile '+p.name+'?')) deleteFleetProfile(p.name);
+          }},'Del'),
+        ]),
+      ]);
+      card.addEventListener('click',()=>showFleetProfileDetail(p.name));
+      pGrid.appendChild(card);
+    });
+  }
+
+  // --- RIGHT: Team List ---
+  const teamList=$('fleetTeamList');
+  const teamEntries=Object.entries(teams);
+  $('fleetTeamCount').textContent=teamEntries.length;
+  teamList.innerHTML='';
+  if(!teamEntries.length){
+    teamList.innerHTML='<div class="empty-state">No teams found</div>';
+  }else{
+    teamEntries.forEach(([name,team])=>{
+      const memberCount=(team.members||[]).length;
+      const card=el('div',{class:'fleet-team-card'},[
+        el('div',{class:'ftc-name'},'👥 '+escapeHtml(name)),
+        el('div',{class:'ftc-meta'},[
+          el('span',{},'📁 '+escapeHtml(team.project||'--')),
+          el('span',{},'👤 '+memberCount+' agents'),
+        ]),
+      ]);
+      card.addEventListener('click',()=>showFleetTeamDetail(name,team));
+      teamList.appendChild(card);
+    });
+  }
+
+  // --- New Profile Button ---
+  $('fleetNewProfileBtn').onclick=function(){
+    const name=prompt('Profile name:');
+    if(!name||!name.trim())return;
+    const model=prompt('Model (e.g. deepseek-v4-pro):','deepseek-v4-pro');
+    if(!model||!model.trim())return;
+    createFleetProfile(name.trim(),model.trim());
+  };
+
+  // --- New Team Button ---
+  $('fleetNewTeamBtn').onclick=function(){
+    const name=prompt('Team name:');
+    if(!name||!name.trim())return;
+    const desc=prompt('Description:','');
+    const project=prompt('Project:','');
+    createFleetTeam(name.trim(),desc||'',project||'');
+  };
+
+  // --- Org Chart ---
+  renderFleetOrgChart(fps,teams);
+}
+
+// --- Profile Detail ---
+async function showFleetProfileDetail(name){
+  fleetSelectedProfile=name;
+  const detail=$('fleetProfileDetail');
+  detail.style.display='block';
+  detail.innerHTML='<div class=\"loading-pulse\"><span class=\"pulse-dot\"></span><span class=\"pulse-dot\"></span><span class=\"pulse-dot\"></span> Loading '+escapeHtml(name)+'...</div>';
+
+  try{
+    const r=await fetch('/api/fleet/profiles/'+encodeURIComponent(name));
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    const soul=data.soul||{};
+    const soulsRaw=soul.raw||'';
+    const config=data.config||{};
+    const configYaml=typeof config==='string'?config:(config.yaml||JSON.stringify(config,null,2));
+    const model=data.model||(config.model||'deepseek-v4-pro');
+
+    detail.innerHTML=
+      '<div class=\"fleet-detail-header\">'+
+        '<div class=\"fdh-title\">⚓ '+escapeHtml(name)+'</div>'+
+        '<button class=\"fleet-btn ghost sm\" onclick=\"document.getElementById(\\'fleetProfileDetail\\').style.display=\\'none\\';fleetSelectedProfile=null\">✕ Close</button>'+
+      '</div>'+
+      '<div class=\"fleet-form-group\">'+
+        '<label>📝 SOUL.md</label>'+
+        '<textarea id=\"fleetSoulTextarea\" rows=\"10\">'+escapeHtml(soulsRaw)+'</textarea>'+
+      '</div>'+
+      '<div class=\"fleet-form-group\">'+
+        '<label>🤖 Model</label>'+
+        '<select id=\"fleetModelSelect\">'+
+          '<option value=\"deepseek-v4-pro\"'+(model==='deepseek-v4-pro'?' selected':'')+'>DeepSeek V4 Pro</option>'+
+          '<option value=\"deepseek-chat\"'+(model==='deepseek-chat'?' selected':'')+'>DeepSeek Chat</option>'+
+          '<option value=\"deepseek-reasoner\"'+(model==='deepseek-reasoner'?' selected':'')+'>DeepSeek Reasoner</option>'+
+          '<option value=\"gpt-4o\"'+(model==='gpt-4o'?' selected':'')+'>GPT-4o</option>'+
+          '<option value=\"claude-3-opus\"'+(model==='claude-3-opus'?' selected':'')+'>Claude 3 Opus</option>'+
+          '<option value=\"gemini-pro\"'+(model==='gemini-pro'?' selected':'')+'>Gemini Pro</option>'+
+        '</select>'+
+      '</div>'+
+      '<div class=\"fleet-form-group\">'+
+        '<label>⚙️ config.yaml</label>'+
+        '<textarea id=\"fleetConfigTextarea\" rows=\"8\">'+escapeHtml(configYaml)+'</textarea>'+
+      '</div>'+
+      '<div style=\"display:flex;gap:8px;margin-top:4px\">'+
+        '<button class=\"fleet-btn primary\" onclick=\"saveFleetProfile(\\''+escapeHtml(name)+'\\')\">💾 Save Profile</button>'+
+        '<button class=\"fleet-btn ghost\" onclick=\"document.getElementById(\\'fleetProfileDetail\\').style.display=\\'none\\';fleetSelectedProfile=null\">Cancel</button>'+
+      '</div>';
+  }catch(e){
+    detail.innerHTML='<div class=\"empty-state\" style=\"color:var(--red)\">Failed to load profile: '+escapeHtml(e.message)+'</div>';
+  }
+}
+
+async function saveFleetProfile(name){
+  const soul=$('fleetSoulTextarea')?.value||'';
+  const model=$('fleetModelSelect')?.value||'deepseek-v4-pro';
+  const configRaw=$('fleetConfigTextarea')?.value||'';
+  let configObj={};
+  try{
+    configObj=JSON.parse(configRaw);
+  }catch(e){
+    configObj={yaml:configRaw,model:model};
+  }
+  try{
+    const r=await fetch('/api/fleet/profiles/'+encodeURIComponent(name),{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({soul:soul,config:configObj,model:model}),
+    });
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    addLog('success','Fleet profile '+name+' saved');
+    alert('Profile '+name+' saved successfully!');
+  }catch(e){
+    addLog('error','Failed to save profile: '+e.message);
+    alert('Failed to save: '+e.message);
+  }
+}
+
+async function createFleetProfile(name,model){
+  try{
+    const r=await fetch('/api/fleet/profiles/create',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:name,model:model,soul:''}),
+    });
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    addLog('success','Fleet profile '+name+' created');
+    alert('Profile '+name+' created!');
+    loadAll();
+  }catch(e){
+    addLog('error','Failed to create profile: '+e.message);
+    alert('Failed to create: '+e.message);
+  }
+}
+
+async function deleteFleetProfile(name){
+  try{
+    const r=await fetch('/api/fleet/profiles/'+encodeURIComponent(name),{method:'DELETE'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    addLog('success','Fleet profile '+name+' deleted');
+    loadAll();
+  }catch(e){
+    addLog('error','Failed to delete profile: '+e.message);
+    alert('Failed to delete: '+e.message);
+  }
+}
+
+// --- Team Detail ---
+async function showFleetTeamDetail(name,team){
+  fleetSelectedTeam=name;
+  const detail=$('fleetTeamDetail');
+  detail.style.display='block';
+  detail.innerHTML='<div class=\"loading-pulse\"><span class=\"pulse-dot\"></span><span class=\"pulse-dot\"></span><span class=\"pulse-dot\"></span> Loading team '+escapeHtml(name)+'...</div>';
+
+  try{
+    const r=await fetch('/api/fleet/teams/'+encodeURIComponent(name));
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    const members=data.members||team.members||[];
+    const desc=data.description||team.description||'';
+    const project=data.project||team.project||'';
+
+    let membersHTML='';
+    if(!members.length){
+      membersHTML='<div class=\"empty-state\">No members in this team</div>';
+    }else{
+      membersHTML=members.map((m,i)=>{
+        const agentId=m.agent_id||m.name||'Agent';
+        const role=m.role||'member';
+        return '<div class=\"fleet-member-row\">'+
+          '<span style=\"font-size:14px\">🤖</span>'+
+          '<span class=\"fm-agent\">'+escapeHtml(agentId)+'</span>'+
+          '<span class=\"fm-role\">'+escapeHtml(role)+'</span>'+
+          '<button class=\"fleet-btn danger sm\" onclick=\"removeTeamMember(\\''+escapeHtml(name)+'\\',\\''+escapeHtml(agentId)+'\\')\">✕</button>'+
+        '</div>';
+      }).join('');
+    }
+
+    // Get profile names for dropdown
+    const cc=state.commandCenter||{};
+    const hp=cc.hermes_profiles||[];
+    const profileOpts=hp.map(p=>'<option value=\"'+escapeHtml(p.name)+'\">'+escapeHtml(p.name)+'</option>').join('');
+
+    detail.innerHTML=
+      '<div class=\"fleet-detail-header\">'+
+        '<div class=\"fdh-title\">👥 '+escapeHtml(name)+'</div>'+
+        '<div style=\"display:flex;gap:6px\">'+
+          '<button class=\"fleet-btn danger sm\" onclick=\"if(confirm(\\'Delete team '+escapeHtml(name)+'?\\'))deleteFleetTeam(\\''+escapeHtml(name)+'\\')\">🗑 Delete</button>'+
+          '<button class=\"fleet-btn ghost sm\" onclick=\"document.getElementById(\\'fleetTeamDetail\\').style.display=\\'none\\';fleetSelectedTeam=null\">✕ Close</button>'+
+        '</div>'+
+      '</div>'+
+      '<div style=\"font-size:11px;color:var(--text-muted);margin-bottom:8px\">'+
+        '<span>📁 Project: <strong style=\"color:var(--text-primary)\">'+escapeHtml(project||'--')+'</strong></span>'+
+        ' &nbsp;|&nbsp; <span>📝 '+escapeHtml(desc||'No description')+'</span>'+
+      '</div>'+
+      '<div class=\"section-title\" style=\"margin-top:8px\">Team Members <small>('+members.length+')</small></div>'+
+      '<div id=\"fleetTeamMembersList\">'+membersHTML+'</div>'+
+      '<div style=\"display:flex;gap:8px;align-items:flex-end;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)\">'+
+        '<div class=\"fleet-form-group\" style=\"flex:1;margin-bottom:0\">'+
+          '<label>Add Agent</label>'+
+          '<select id=\"fleetAddAgentSelect\"><option value=\"\">-- Select agent --</option>'+profileOpts+'</select>'+
+        '</div>'+
+        '<div class=\"fleet-form-group\" style=\"width:120px;margin-bottom:0\">'+
+          '<label>Role</label>'+
+          '<input id=\"fleetAddAgentRole\" placeholder=\"e.g. developer\" value=\"agent\">'+
+        '</div>'+
+        '<button class=\"fleet-btn primary\" onclick=\"addTeamMember(\\''+escapeHtml(name)+'\\')\" style=\"margin-bottom:0\">+ Add</button>'+
+      '</div>';
+  }catch(e){
+    detail.innerHTML='<div class=\"empty-state\" style=\"color:var(--red)\">Failed to load team: '+escapeHtml(e.message)+'</div>';
+  }
+}
+
+async function addTeamMember(teamName){
+  const agentId=$('fleetAddAgentSelect')?.value;
+  if(!agentId)return alert('Select an agent');
+  const role=$('fleetAddAgentRole')?.value||'agent';
+  try{
+    const r=await fetch('/api/fleet/teams/'+encodeURIComponent(teamName),{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({add_member:{agent_id:agentId,role:role,profile_type:'hermes'}}),
+    });
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    addLog('success','Added '+agentId+' to team '+teamName);
+    showFleetTeamDetail(teamName,null);
+  }catch(e){
+    addLog('error','Failed to add member: '+e.message);
+    alert('Failed to add: '+e.message);
+  }
+}
+
+async function removeTeamMember(teamName,agentId){
+  if(!confirm('Remove '+agentId+' from '+teamName+'?'))return;
+  try{
+    const r=await fetch('/api/fleet/teams/'+encodeURIComponent(teamName),{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({remove_member:agentId}),
+    });
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    addLog('success','Removed '+agentId+' from team '+teamName);
+    showFleetTeamDetail(teamName,null);
+  }catch(e){
+    addLog('error','Failed to remove member: '+e.message);
+    alert('Failed to remove: '+e.message);
+  }
+}
+
+async function createFleetTeam(name,desc,project){
+  try{
+    const r=await fetch('/api/fleet/teams/create',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:name,description:desc,project:project}),
+    });
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    addLog('success','Team '+name+' created');
+    alert('Team '+name+' created!');
+    loadAll();
+  }catch(e){
+    addLog('error','Failed to create team: '+e.message);
+    alert('Failed to create: '+e.message);
+  }
+}
+
+async function deleteFleetTeam(name){
+  try{
+    const r=await fetch('/api/fleet/teams/'+encodeURIComponent(name),{method:'DELETE'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    addLog('success','Team '+name+' deleted');
+    loadAll();
+  }catch(e){
+    addLog('error','Failed to delete team: '+e.message);
+    alert('Failed to delete: '+e.message);
+  }
+}
+
+// --- Org Chart ---
+function renderFleetOrgChart(profiles,teams){
+  const canvas=$('fleetOrgCanvas');
+  if(!canvas)return;
+  const parentW=canvas.parentElement.clientWidth;
+  canvas.width=Math.max(parentW-40,600);
+  canvas.height=350;
+  const w=canvas.width,h=canvas.height;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,w,h);
+
+  const teamEntries=Object.entries(teams);
+  if(!teamEntries.length){
+    ctx.fillStyle='#5a6f8a';
+    ctx.font='13px sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('No teams to display',w/2,h/2);
+    $('fleetOrgLegend').innerHTML='';
+    return;
+  }
+
+  const colors=['#3b82f6','#22c55e','#eab308','#a855f7','#f97316','#06b6d4','#ec4899','#84cc16','#f43f5e','#8b5cf6'];
+  const legendParts=[];
+
+  // Layout: teams arranged horizontally with members below
+  const teamCount=teamEntries.length;
+  const spacingX=w/(teamCount+1);
+  const teamY=50;
+  const memberStartY=teamY+80;
+  const maxMembersPerTeam=Math.max(...teamEntries.map(([,t])=>(t.members||[]).length),1);
+
+  teamEntries.forEach(([teamName,team],ti)=>{
+    const cx=spacingX*(ti+1);
+    const color=colors[ti%colors.length];
+    legendParts.push('<span style=\"color:'+color+'\">● '+escapeHtml(teamName)+'</span>');
+
+    // Team node
+    const teamR=22;
+    ctx.beginPath();ctx.arc(cx,teamY,teamR,0,2*Math.PI);
+    ctx.fillStyle=color+'33';ctx.fill();
+    ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle=color;ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(teamName.length>12?teamName.substring(0,11)+'…':teamName,cx,teamY);
+
+    // Members
+    const members=team.members||[];
+    members.forEach((m,mi)=>{
+      const memberX=cx+(mi-Math.floor(members.length/2))*55;
+      const memberY=memberStartY;
+
+      // Line from team to member
+      ctx.beginPath();ctx.moveTo(cx,teamY+teamR);ctx.lineTo(memberX,memberY-16);
+      ctx.strokeStyle=color+'44';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+
+      // Member node
+      ctx.beginPath();ctx.arc(memberX,memberY,14,0,2*Math.PI);
+      ctx.fillStyle=color+'22';ctx.fill();
+      ctx.strokeStyle=color+'88';ctx.lineWidth=1.5;ctx.stroke();
+      ctx.fillStyle='#e8edf5';ctx.font='10px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      const label=m.agent_id||m.name||'?';
+      ctx.fillText(label.length>10?label.substring(0,9)+'…':label,memberX,memberY);
+
+      // Role label
+      ctx.fillStyle='#5a6f8a';ctx.font='8px sans-serif';
+      ctx.fillText(m.role||'',memberX,memberY+16);
+    });
+
+    // If no members, show "+" hint
+    if(!members.length){
+      ctx.fillStyle='#5a6f8a';ctx.font='10px sans-serif';ctx.textAlign='center';
+      ctx.fillText('(empty)',cx,memberStartY);
+    }
+  });
+
+  $('fleetOrgLegend').innerHTML=legendParts.join(' &nbsp;&nbsp; ');
 }
 
 // ============================================================

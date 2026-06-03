@@ -7,7 +7,7 @@
 
 <p align="center">
   <strong>One person, infinite capacity.</strong><br>
-  <em>The world's most advanced open-source Multi-Agent Operating System — with 7 built-in innovations no other framework has.</em>
+  <em>The world's most advanced open-source Multi-Agent Operating System — one command to your AI fleet.</em>
 </p>
 
 <p align="center">
@@ -23,22 +23,30 @@
   <a href="https://github.com/lcyluke/apex/stargazers"><img src="https://img.shields.io/github/stars/lcyluke/apex?style=social" alt="Stars"></a>
   <a href="https://github.com/lcyluke/apex/network/members"><img src="https://img.shields.io/github/forks/lcyluke/apex?style=social" alt="Forks"></a>
   <a href="https://github.com/lcyluke/apex/watchers"><img src="https://img.shields.io/github/watchers/lcyluke/apex?style=social" alt="Watchers"></a>
-  <a href="https://github.com/lcyluke/apex/issues"><img src="https://img.shields.io/github/issues/lcyluke/apex?style=social" alt="Issues"></a>
-  <a href="https://github.com/lcyluke/apex/pulls"><img src="https://img.shields.io/github/issues-pr/lcyluke/apex?style=social" alt="PRs"></a>
-  <a href="https://twitter.com/intent/tweet?text=Apex%20-%20Multi-Agent%20Operating%20System&url=https://github.com/lcyluke/apex"><img src="https://img.shields.io/twitter/url?style=social&url=https://github.com/lcyluke/apex" alt="Tweet"></a>
+  <a href="https://twitter.com/intent/tweet?text=Apex%20-%20One%20command%20to%20your%20AI%20fleet&url=https://github.com/lcyluke/apex"><img src="https://img.shields.io/twitter/url?style=social&url=https://github.com/lcyluke/apex" alt="Tweet"></a>
 </p>
 
-<p align="center">
-  <a href="#-quick-start">Quick Start</a>
-  · <a href="#-why-apex">Why Apex?</a>
-  · <a href="#-7-core-innovations">7 Innovations</a>
-  · <a href="#-orchestration-modes">Modes</a>
-  · <a href="#-comparison-vs-top-frameworks">Comparison</a>
-  · <a href="#-agent-templates">Templates</a>
-  · <a href="#-installation">Install</a>
-  · <a href="#%EF%B8%8F-web-dashboard">Dashboard</a>
-  · <a href="#-autonomous-engine">Autonomous</a>
-</p>
+---
+
+### ⚡ 5 Minutes to Your AI Fleet
+
+```bash
+pip install apex-multiagent      # 1. Install
+apex init my-project             # 2. Create project
+apex demo                        # 3. Launch your fleet + Command Center
+```
+
+<p align="center"><em>One command spawns 3 agents. A browser opens. You see everything.</em></p>
+
+> **Try it now:** `apex demo` → opens http://localhost:8080/v5 — your 7-tab Command Center with real-time Agent Fleet, Token Economy, GPU Monitor, Kanban Board, Knowledge Graph, and more. **No API key needed for the demo.**
+
+| Quick Links | |
+|-------------|---|
+| [🚀 Quick Start](#-quick-start) | [💡 Why Apex?](#-why-apex) |
+| [🔬 7 Innovations](#-7-core-innovations) | [🎯 Orchestration Modes](#-orchestration-modes) |
+| [📊 Comparison](#-comparison-vs-top-frameworks) | [🤖 Agent Templates](#-agent-templates) |
+| [📥 Install](#-installation) | [🖥️ Dashboard](#%EF%B8%8F-web-dashboard) |
+| [⚙️ Autonomous](#-autonomous-engine) | [📦 PyPI](https://pypi.org/project/apex-multiagent/) |
 
 ---
 

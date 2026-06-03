@@ -23,6 +23,7 @@ from .commands import origin as origin_cmds
 from apex.orchestration.crew import crew as crew_group
 from .commands import autonomous as autonomous_cmds
 from .commands import ops as ops_cmds
+from .commands import task_mgmt as task_cmds
 
 # New mode CLIs
 from apex.orchestration import (
@@ -149,6 +150,24 @@ def dashboard(host: str, port: int):
     except ImportError as e:
         console.print(f"[red]✗ Failed to start: {e}[/]")
         console.print("Run [bold]pip install flask[/bold] to install dependencies")
+
+
+# ─── demo command ───
+@cli.command()
+@click.option("--port", "-p", default=8080, help="Dashboard port")
+@click.option("--host", default="127.0.0.1", help="Bind address")
+@click.option("--no-browser", is_flag=True, help="Don't open browser")
+@click.option("--skip-tasks", is_flag=True, help="Don't create demo tasks")
+def demo(port: int, host: str, no_browser: bool, skip_tasks: bool):
+    """Run Apex demo — create AI fleet and open Command Center"""
+    try:
+        from apex.cli.commands.demo import run_demo
+        run_demo(console=console, port=port, host=host,
+                 no_browser=no_browser, skip_tasks=skip_tasks)
+    except Exception as e:
+        console.print(f"[red]✗ Demo failed: {e}[/]")
+        import traceback
+        console.print(traceback.format_exc())
 
 
 # ─── company commands ───
@@ -668,3 +687,91 @@ def ops_expert_list():
 def autonomous_alerts():
     """Show unresolved alerts"""
     autonomous_cmds.alerts_cmd()
+
+
+# ─── task management commands ───
+@cli.group()
+def task():
+    """📋 Task Management — Hierarchical tasks with PM workflow"""
+    pass
+
+@task.command(name="create")
+@click.argument("title")
+@click.option("--description", "-d", default="", help="Task description")
+@click.option("--type", "-t", "task_type", default="task",
+              type=click.Choice(["epic", "story", "task", "subtask"]), help="Task type")
+@click.option("--phase", "-p", default="development", help="Development phase")
+@click.option("--priority", default=2, type=int, help="Priority (0-3)")
+@click.option("--assignee", "-a", default="", help="Assign to agent")
+@click.option("--parent", default="", help="Parent task ID")
+@click.option("--project", default="", help="Project name")
+@click.option("--hours", default=0.0, type=float, help="Estimated hours")
+def task_create(title: str, description: str, task_type: str, phase: str,
+                priority: int, assignee: str, parent: str, project: str, hours: float):
+    """Create a hierarchical task"""
+    task_cmds.task_create_cmd(title, description, task_type, phase, priority, assignee, parent, project, hours)
+
+@task.command(name="list")
+@click.option("--project", help="Filter by project")
+@click.option("--assignee", "-a", help="Filter by assignee")
+@click.option("--type", "-t", "task_type", help="Filter by task type")
+@click.option("--status", "-s", help="Filter by workflow status")
+@click.option("--phase", "-p", help="Filter by phase")
+def task_list(project: str, assignee: str, task_type: str, status: str, phase: str):
+    """List hierarchical tasks"""
+    task_cmds.task_list_cmd(project or "", assignee or "", task_type or "", status or "", phase or "")
+
+@task.command(name="show")
+@click.argument("task_id")
+def task_show(task_id: str):
+    """Show task with full tree"""
+    task_cmds.task_show_cmd(task_id)
+
+@task.command(name="status")
+@click.argument("task_id")
+@click.argument("new_status")
+@click.option("--notes", "-n", default="", help="PM notes or feedback")
+def task_status(task_id: str, new_status: str, notes: str):
+    """Transition task workflow status (draft→requested→pm_review→approved→assigned→
+    in_progress→completed→pm_verify→verified→closed)"""
+    task_cmds.task_status_cmd(task_id, new_status, notes)
+
+@task.command(name="epic")
+@click.argument("epic_title", required=False, default="")
+def task_epic(epic_title: str):
+    """Show epic tree overview"""
+    task_cmds.epic_cmd(epic_title or "")
+
+@cli.command()
+@click.option("--agent", "-a", default="", help="Filter by agent name")
+def capacity(agent: str):
+    """🤖 Show agent capacity and load"""
+    task_cmds.capacity_cmd(agent)
+
+@cli.command()
+def dispatch():
+    """📨 Auto-dispatch tasks to agents by capacity"""
+    task_cmds.dispatch_cmd()
+
+@cli.command()
+@click.argument("agent")
+@click.argument("title")
+@click.option("--description", "-d", default="", help="Description of help needed")
+@click.option("--task", "-t", default="", help="Source task ID")
+def help_request(agent: str, title: str, description: str, task: str):
+    """🆘 Request help from PM for another agent"""
+    task_cmds.help_request_cmd(agent, title, description, task)
+
+@cli.command()
+@click.argument("request_id")
+@click.option("--agent", "-a", required=True, help="Helper agent to assign")
+@click.option("--notes", "-n", default="", help="PM notes")
+def help_approve(request_id: str, agent: str, notes: str):
+    """✅ PM approves help request and assigns helper"""
+    task_cmds.help_approve_cmd(request_id, agent, notes)
+
+@cli.command()
+@click.option("--status", "-s", default="", help="Filter by status")
+def help_list(status: str):
+    """📋 List help requests"""
+    task_cmds.help_list_cmd(status or "")

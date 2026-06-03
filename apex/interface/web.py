@@ -859,6 +859,243 @@ def create_app():
             info["disk"] = "unknown"
         return jsonify(info)
 
+    @app.route("/api/fleet/profiles/list")
+    def api_fleet_profiles_list():
+        """List all Hermes profiles with full details"""
+        try:
+            from apex.interface.fleet_manager import list_hermes_profiles
+            return jsonify(list_hermes_profiles())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/fleet/profiles/<name>", methods=["GET", "PUT", "DELETE"])
+    def api_fleet_profile_detail(name: str):
+        """Get/Update/Delete a Hermes profile"""
+        try:
+            from apex.interface.fleet_manager import get_profile_detail, update_profile, delete_profile
+            if request.method == "GET":
+                return jsonify(get_profile_detail(name))
+            elif request.method == "PUT":
+                data = request.get_json(force=True) or {}
+                return jsonify(update_profile(name, data))
+            elif request.method == "DELETE":
+                return jsonify(delete_profile(name))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/fleet/profiles/create", methods=["POST"])
+    def api_fleet_create_profile():
+        """Create a new Hermes profile"""
+        try:
+            from apex.interface.fleet_manager import create_profile
+            data = request.get_json(force=True) or {}
+            name = data.get("name", "")
+            model = data.get("model", "deepseek-chat")
+            soul = data.get("soul", None)
+            if not name:
+                return jsonify({"error": "name is required"}), 400
+            return jsonify(create_profile(name, model, soul))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/fleet/teams/list")
+    def api_fleet_teams_list():
+        """List all project teams"""
+        try:
+            from apex.interface.fleet_manager import list_teams
+            return jsonify(list_teams())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/fleet/teams/create", methods=["POST"])
+    def api_fleet_create_team():
+        """Create a new project team"""
+        try:
+            from apex.interface.fleet_manager import create_team
+            data = request.get_json(force=True) or {}
+            return jsonify(create_team(
+                name=data.get("name", ""),
+                description=data.get("description", ""),
+                project=data.get("project", ""),
+            ))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/fleet/teams/<name>", methods=["GET", "PUT", "DELETE"])
+    def api_fleet_team_detail(name: str):
+        """Get/Update/Delete a project team"""
+        try:
+            from apex.interface.fleet_manager import update_team, delete_team, get_team_org_chart
+            if request.method == "GET":
+                return jsonify(get_team_org_chart(name))
+            elif request.method == "PUT":
+                data = request.get_json(force=True) or {}
+                return jsonify(update_team(name, data))
+            elif request.method == "DELETE":
+                return jsonify(delete_team(name))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    # ══════════════════════════════════════════════════════════
+    # SECTION 16: Task Management API
+    # ══════════════════════════════════════════════════════════
+
+    @app.route("/api/taskmgr/create", methods=["POST"])
+    @request_logger
+    def api_taskmgr_create():
+        """Create a hierarchical task (epic/story/task/subtask)."""
+        try:
+            from apex.orchestration.task_manager import get_task_manager
+            data = request.get_json(force=True) or {}
+            tm = get_task_manager()
+            task = tm.create_task(
+                title=data.get("title", "Untitled"),
+                description=data.get("description", ""),
+                task_type=data.get("task_type", "task"),
+                phase=data.get("phase", "development"),
+                priority=data.get("priority", 2),
+                assignee=data.get("assignee", ""),
+                parent_id=data.get("parent_id", ""),
+                project=data.get("project", ""),
+                estimated_hours=data.get("estimated_hours", 0.0),
+            )
+            push_event("task", {"action": "created", "id": task.id, "title": task.title})
+            return jsonify(task.to_dict()), 201
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/taskmgr/list")
+    @request_logger
+    def api_taskmgr_list():
+        """List tasks with optional filters."""
+        try:
+            from apex.orchestration.task_manager import get_task_manager
+            tm = get_task_manager()
+            tasks = tm.list_tasks(
+                project=request.args.get("project", ""),
+                assignee=request.args.get("assignee", ""),
+                task_type=request.args.get("type", ""),
+                workflow_status=request.args.get("status", ""),
+                phase=request.args.get("phase", ""),
+                limit=request.args.get("limit", 50, type=int),
+            )
+            return jsonify([t.to_dict() for t in tasks])
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/taskmgr/<task_id>")
+    @request_logger
+    def api_taskmgr_detail(task_id: str):
+        """Get task with optional tree."""
+        try:
+            from apex.orchestration.task_manager import get_task_manager
+            tm = get_task_manager()
+            include_tree = request.args.get("tree", "0") == "1"
+            depth = request.args.get("depth", 3, type=int)
+            if include_tree:
+                return jsonify(tm.get_task_tree(task_id, depth=depth))
+            task = tm.get_task(task_id)
+            if not task:
+                return jsonify({"error": "Task not found"}), 404
+            return jsonify(task.to_dict())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/taskmgr/<task_id>/status", methods=["PUT"])
+    @request_logger
+    def api_taskmgr_status(task_id: str):
+        """Transition task workflow status."""
+        try:
+            from apex.orchestration.task_manager import get_task_manager
+            data = request.get_json(force=True) or {}
+            new_status = data.get("status", "")
+            notes = data.get("notes", "")
+            tm = get_task_manager()
+            task = tm.update_task_status(task_id, new_status, notes=notes)
+            push_event("task", {"action": "status", "id": task_id,
+                       "from": "", "to": new_status})
+            return jsonify(task.to_dict())
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 400
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/taskmgr/epics")
+    @request_logger
+    def api_taskmgr_epics():
+        """Get all epic trees."""
+        try:
+            from apex.orchestration.task_manager import get_task_manager
+            tm = get_task_manager()
+            epics = tm.get_epic_tree()
+            return jsonify(epics)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/capacity")
+    @request_logger
+    def api_capacity():
+        """Get all agent capacity."""
+        try:
+            from apex.orchestration.task_manager import get_task_manager
+            tm = get_task_manager()
+            capacities = tm.get_agent_capacity()
+            return jsonify([c.to_dict() for c in capacities])
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/dispatch", methods=["POST"])
+    @request_logger
+    def api_dispatch():
+        """Auto-dispatch tasks by capacity."""
+        try:
+            from apex.orchestration.task_manager import get_task_manager
+            tm = get_task_manager()
+            max_per = request.get_json(force=True) or {}
+            actions = tm.auto_dispatch(max_per_cycle=max_per.get("max", 3))
+            push_event("dispatch", {"actions": len(actions)})
+            return jsonify({"dispatched": len(actions), "actions": actions})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/help/request", methods=["GET", "POST"])
+    @request_logger
+    def api_help_request():
+        """Create or list help requests."""
+        from apex.orchestration.task_manager import get_task_manager
+        tm = get_task_manager()
+        if request.method == "POST":
+            data = request.get_json(force=True) or {}
+            req = tm.request_help(
+                requesting_agent=data.get("agent", ""),
+                title=data.get("title", "Help needed"),
+                description=data.get("description", ""),
+                source_task_id=data.get("task_id", ""),
+            )
+            push_event("help_request", {"id": req.id, "agent": req.requesting_agent})
+            return jsonify(req.to_dict()), 201
+        # GET
+        requests = tm.list_help_requests(status=request.args.get("status", ""))
+        return jsonify([r.to_dict() for r in requests])
+
+    @app.route("/api/help/approve", methods=["POST"])
+    @request_logger
+    def api_help_approve():
+        """PM approves a help request."""
+        try:
+            from apex.orchestration.task_manager import get_task_manager
+            data = request.get_json(force=True) or {}
+            tm = get_task_manager()
+            req = tm.approve_help(
+                request_id=data.get("request_id", ""),
+                assigned_agent=data.get("agent", ""),
+                pm_notes=data.get("notes", ""),
+            )
+            push_event("help_request", {"action": "approved", "id": req.id})
+            return jsonify(req.to_dict())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
     return app
 
 
