@@ -24,6 +24,7 @@ from apex.orchestration.crew import crew as crew_group
 from .commands import autonomous as autonomous_cmds
 from .commands import ops as ops_cmds
 from .commands import task_mgmt as task_cmds
+from .commands import skill_mgmt as skill_cmds
 
 # New mode CLIs
 from apex.orchestration import (
@@ -250,6 +251,78 @@ def evolution_status():
 def evolution_agent(name: str):
     """Agent evolution report"""
     evolution_cmds.agent_cmd(name)
+
+
+# ─── skill commands ───
+@cli.group()
+def skill():
+    """Skill Registry — Agent skill levels, assessment, and task matching"""
+    pass
+
+@skill.command(name="list")
+@click.option("--category", "-c", default="", help="Filter by category")
+@click.option("--agent", "-a", "show_agent", is_flag=True, help="List agents and their skills")
+def skill_list(category: str, show_agent: bool):
+    """List all skills or agent skill levels"""
+    skill_cmds.list_cmd(category=category, agent=show_agent)
+
+@skill.command(name="show")
+@click.argument("agent_name")
+def skill_show(agent_name: str):
+    """Show agent skill levels with evidence chain"""
+    skill_cmds.show_cmd(agent_name)
+
+@skill.command(name="assess")
+@click.argument("agent_name")
+@click.argument("skill_spec")
+@click.option("--confidence", "-c", default="", help="Confidence 0.0-1.0 (default: 0.7)")
+def skill_assess(agent_name: str, skill_spec: str, confidence: str):
+    """Assess/update agent skill level. skill_spec format: skill_name:L3"""
+    skill_cmds.assess_cmd(agent_name, skill_spec, confidence)
+
+@skill.command(name="match")
+@click.argument("task")
+@click.option("--difficulty", "-d", default="L2",
+              type=click.Choice(["L1", "L2", "L3", "L4", "L5"]),
+              help="Minimum difficulty level")
+@click.option("--skills", "-s", "", "required_skills",
+              help="Comma-separated required skills")
+def skill_match(task: str, difficulty: str, required_skills: str):
+    """Find best agent for a task by skill matching"""
+    skill_cmds.match_cmd(task, difficulty, required_skills or "")
+
+@skill.command(name="evidence")
+@click.argument("agent_name")
+@click.argument("skill_name")
+@click.option("--type", "-t", "ev_type", default="task", help="Evidence type (task/pr/review/session)")
+@click.option("--ref", "-r", "ev_ref", required=True, help="Reference (task ID / PR URL)")
+@click.option("--desc", "-d", "ev_desc", required=True, help="Description of evidence")
+def skill_evidence(agent_name: str, skill_name: str, ev_type: str, ev_ref: str, ev_desc: str):
+    """Add evidence for an agent's skill demonstration"""
+    skill_cmds.evidence_cmd(agent_name, skill_name, ev_type, ev_ref, ev_desc)
+
+@skill.command(name="diff")
+@click.argument("agent_a")
+@click.argument("agent_b")
+def skill_diff(agent_a: str, agent_b: str):
+    """Compare two agents' skill profiles"""
+    skill_cmds.diff_cmd(agent_a, agent_b)
+
+@skill.command(name="sync")
+@click.argument("agent_name")
+def skill_sync(agent_name: str):
+    """Generate SKILL.md for agent's Hermes profile"""
+    skill_cmds.sync_cmd(agent_name)
+
+@skill.command(name="sync-all")
+def skill_sync_all():
+    """Generate SKILL.md for ALL registered agents"""
+    skill_cmds.sync_all_cmd()
+
+@skill.command(name="evaluate")
+def skill_evaluate():
+    """Run skill evaluation pipeline — assess completed tasks for skill evidence"""
+    skill_cmds.evaluate_cmd()
 
 
 # ─── chain commands ───

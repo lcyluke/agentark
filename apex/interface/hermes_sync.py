@@ -413,6 +413,13 @@ def create_team_from_template(template_name: str) -> dict:
         result = sync_profile_to_hermes(profile_name, hermes_display_name=soul_data["role"])
         created.append(result)
 
+        # Generate SKILL.md
+        try:
+            from apex.interface.skill_registry import sync_skill_md
+            sync_skill_md(profile_name)
+        except Exception:
+            pass  # Non-blocking — SKILL.md is supplementary
+
     return {
         "template": template_name,
         "name": template["name"],

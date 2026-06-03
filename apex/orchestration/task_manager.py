@@ -235,9 +235,11 @@ class TaskManager:
             created_at=now,
         )
 
-        # Auto-set assignee if not specified — round-robin from available agents
+        # Auto-set assignee if not specified — skill-match from available agents
         if not assignee:
-            task.assignee = self._pick_best_agent(phase)
+            task.assignee = self._pick_best_agent(
+                phase=phase, task_title=title, task_description=description
+            )
 
         # If task has an assignee, set status to assigned
         if task.assignee:
@@ -524,10 +526,11 @@ class TaskManager:
                     "agent": task.assignee, "action": "dispatched",
                 })
 
-        # Also check for tasks that no assigned agent — assign to least loaded
+        # Also check for tasks that no assigned agent — assign by skill match
         unassigned = self.list_tasks(workflow_status="requested")
         for task in unassigned[:max_per_cycle]:
-            best = self._pick_best_agent(task.phase)
+            best = self._pick_best_agent(phase=task.phase, task_title=task.title,
+                                          task_description=task.description)
             if best:
                 task.assignee = best
                 task.workflow_status = WorkflowStatus.ASSIGNED
@@ -543,10 +546,61 @@ class TaskManager:
     # Internal Helpers
     # ════════════════════════════════════════════════════════════
 
-    def _pick_best_agent(self, phase: str = "") -> str:
-        """Pick the best available agent (least loaded) for a task phase."""
-        capacities = self.get_agent_capacity()
-        # Prefer agents with matching role
+    def _pick_best_agent(self, phase: str = "",
+                          task_title: str = "",
+                          task_description: str = "",
+                          required_skills: list[str] = None) -> str:
+        """Pick the best available agent using skill matching + capacity.
+
+        Uses SkillRegistry to match agents by skill, then filters by capacity.
+        Falls back to original phase-based matching if registry not available.
+
+        Args:
+            phase: Project phase for traditional matching fallback.
+            task_title: Task title for skill inference.
+            task_description: Task description for skill inference.
+            required_skills: Explicit skill requirements (optional).
+
+        Returns:
+            Best matching agent name, or empty string.
+        """
+        capacities = {c.agent_name: c for c in self.get_agent_capacity()}
+
+        # Try skill-based matching first
+        try:
+            from apex.interface.skill_registry import get_registry
+            registry = get_registry()
+
+            # Build a combined text for skill inference
+            search_text = f"{task_title} {task_description} {phase}"
+
+            if search_text.strip() or required_skills:
+                results = registry.match_task(
+                    description=search_text,
+                    required_skills=required_skills,
+                    difficulty="L2",
+                )
+
+                if results:
+                    # Score: skill match (0-1) × available slots (capped at 3)
+                    scored = []
+                    for r in results[:5]:  # Top 5 skill matches
+                        cap = capacities.get(r.agent_name)
+                        if cap and cap.available_slots > 0:
+                            # skill score (0-1) + capacity bonus
+                            score = r.match_score * 10 + min(cap.available_slots, 3) * 0.5
+                            scored.append((score, r.agent_name, r.match_score, r.details))
+
+                    if scored:
+                        scored.sort(reverse=True)
+                        best = scored[0][1]
+                        return best
+        except ImportError:
+            pass
+        except Exception:
+            pass
+
+        # Fallback to original phase-based matching
         role_map = {
             "frontend": ["frontend-dev", "frontend"],
             "backend": ["backend", "developer", "architect"],
@@ -556,9 +610,8 @@ class TaskManager:
         }
         preferred = role_map.get(phase.lower(), [])
 
-        # Sort by available slots descending, then by preference
         scored = []
-        for cap in capacities:
+        for cap in self.get_agent_capacity():
             preference_bonus = 10 if cap.agent_name in preferred else 0
             scored.append((cap.available_slots + preference_bonus, cap.agent_name))
 
