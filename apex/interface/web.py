@@ -83,6 +83,10 @@ def create_app():
     def dashboard_v5():
         return render_template("dashboard_v5.html") if (Path(__file__).parent / "templates" / "dashboard_v5.html").exists() else render_template("dashboard.html")
 
+    @app.route("/v6")
+    def dashboard_v6():
+        return render_template("dashboard_daily.html") if (Path(__file__).parent / "templates" / "dashboard_daily.html").exists() else render_template("dashboard.html")
+
     @app.route("/traces")
     def traces_page():
         return render_template("dashboard.html", page="traces")
@@ -94,6 +98,11 @@ def create_app():
     @app.route("/logs")
     def logs_page():
         return render_template("dashboard.html", page="logs")
+
+    @app.route("/auth")
+    def auth_page():
+        """🏛️ Authorization Management Dashboard — 审批/记录/审计可视化"""
+        return render_template("auth.html")
 
     # ══════════════════════════════════════════════════════════
     # SECTION 2: System & Health
@@ -627,8 +636,116 @@ def create_app():
             return jsonify({"error": str(e)}), 500
 
     # ══════════════════════════════════════════════════════════
-    # SECTION 14: ⚓ Origin Agent
+    # SECTION 14.5: 🔀 智能消息路由 (Message Router)
     # ══════════════════════════════════════════════════════════
+
+    _router = None
+
+    def get_router():
+        nonlocal _router
+        if _router is None:
+            from apex.orchestration.message_router import MessageRouter
+            _router = MessageRouter()
+        return _router
+
+    @app.route("/api/router/analyze", methods=["POST"])
+    def api_router_analyze():
+        """分析消息 → 返回项目/类别/Agent，不执行"""
+        data = request.get_json(silent=True) or {}
+        message = data.get("message", "")
+        prefer_project = data.get("project", "")
+        if not message:
+            return jsonify({"error": "message is required"}), 400
+        try:
+            result = get_router().analyze(message, prefer_project=prefer_project)
+            return jsonify({
+                "project": result.project,
+                "project_name": result.project_name,
+                "project_emoji": result.project_emoji,
+                "category": result.category,
+                "category_name": result.category_name,
+                "agent_profile": result.agent_profile,
+                "agent_role": result.agent_role,
+                "agent_emoji": result.agent_emoji,
+                "confidence": result.confidence,
+                "keywords_matched": result.keywords_matched,
+                "reasoning": result.reasoning,
+            })
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/router/dispatch", methods=["POST"])
+    def api_router_dispatch():
+        """分析消息 + 分发到对应 Agent Profile 执行"""
+        data = request.get_json(silent=True) or {}
+        message = data.get("message", "")
+        prefer_project = data.get("project", "")
+        execute = data.get("execute", False)  # 是否真正调用 Agent
+        if not message:
+            return jsonify({"error": "message is required"}), 400
+        try:
+            router_obj = get_router()
+            result = router_obj.analyze(message, prefer_project=prefer_project)
+
+            response = {
+                "analysis": {
+                    "project": result.project,
+                    "project_name": result.project_name,
+                    "project_emoji": result.project_emoji,
+                    "category": result.category,
+                    "category_name": result.category_name,
+                    "agent_profile": result.agent_profile,
+                    "agent_role": result.agent_role,
+                    "agent_emoji": result.agent_emoji,
+                    "confidence": result.confidence,
+                    "reasoning": result.reasoning,
+                },
+                "formatted": result.format_output(f"消息已路由至 {result.agent_role}"),
+            }
+
+            if execute:
+                # 调用 Agent 执行
+                try:
+                    prof = pm.load(result.agent_profile)
+                except FileNotFoundError:
+                    prof = pm.create_default(result.agent_profile)
+                from apex.core.runtime import Agent
+                agent = Agent(prof)
+                start = time.time()
+                output = agent.run(message)
+                duration = int((time.time() - start) * 1000)
+                response["execution"] = {
+                    "success": True,
+                    "output": output[:3000],
+                    "agent": result.agent_profile,
+                    "duration_ms": duration,
+                    "cost": round(agent.context.cost, 6),
+                }
+                push_event("router", {"action": "dispatched", "project": result.project,
+                           "agent": result.agent_profile, "category": result.category})
+
+            return jsonify(response)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/router/matrix")
+    def api_router_matrix():
+        """返回完整的项目-类别-Agent映射矩阵"""
+        try:
+            return jsonify(get_router().get_matrix())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/router/quick")
+    def api_router_quick():
+        """快速分析 (GET参数 ?msg=...)"""
+        msg = request.args.get("msg", "")
+        if not msg:
+            return jsonify({"error": "msg parameter required"}), 400
+        try:
+            return jsonify({"quick": get_router().quick(msg)})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
     @app.route("/api/origin/overview")
     def api_origin_overview():
@@ -746,6 +863,280 @@ def create_app():
         try:
             from apex.interface.openclaw_bridge import get_workflows
             return jsonify(get_workflows())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    # ══════════════════════════════════════════════════════════
+    # SECTION 13.5: 🏛️ Authorization Engine (特权操作授权)
+    # ══════════════════════════════════════════════════════════
+
+    _auth_engine = None
+
+    def get_auth_engine():
+        nonlocal _auth_engine
+        if _auth_engine is None:
+            from apex.orchestration.authorization import AuthorizationEngine
+            _auth_engine = AuthorizationEngine()
+        return _auth_engine
+
+    @app.route("/api/auth/scopes")
+    def api_auth_scopes():
+        """列出所有授权 scope 定义"""
+        try:
+            return jsonify(get_auth_engine().get_scopes())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/auth/stats")
+    def api_auth_stats():
+        """授权统计：总数/待审/活跃/按scope分布"""
+        try:
+            return jsonify(get_auth_engine().stats())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/auth/verify")
+    def api_auth_verify():
+        """验证哈希链完整性"""
+        try:
+            return jsonify(get_auth_engine().verify())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/auth/request", methods=["POST"])
+    def api_auth_request():
+        """请求授权 — Agent 发起特权操作前"""
+        data = request.get_json(silent=True) or {}
+        agent = data.get("agent", "")
+        scope = data.get("scope", "")
+        purpose = data.get("purpose", "")
+        ttl_min = data.get("ttl_min")
+
+        if not agent or not scope:
+            return jsonify({"error": "agent and scope are required"}), 400
+
+        try:
+            result = get_auth_engine().request(
+                agent=agent, scope=scope, purpose=purpose or "(未指定)",
+                ttl_min=ttl_min,
+            )
+            if result.get("ok"):
+                push_event("auth", {"action": "requested", "request_code": result["request_code"],
+                           "agent": agent, "scope": scope})
+                log_event("info", f"Auth requested: {agent} → {scope} (#{result['request_code']})")
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/auth/approve", methods=["POST"])
+    def api_auth_approve():
+        """审批授权 — 老卢通过微信确认码审批"""
+        data = request.get_json(silent=True) or {}
+        request_code = data.get("request_code", "")
+
+        if not request_code:
+            return jsonify({"error": "request_code is required"}), 400
+
+        try:
+            result = get_auth_engine().approve(request_code)
+            if result.get("ok"):
+                push_event("auth", {"action": "approved", "request_code": request_code,
+                           "agent": result["agent"], "scope": result["scope"]})
+                log_event("info", f"Auth approved: #{request_code} → {result['agent']} / {result['scope']}")
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/auth/deny", methods=["POST"])
+    def api_auth_deny():
+        """拒绝授权"""
+        data = request.get_json(silent=True) or {}
+        request_code = data.get("request_code", "")
+
+        if not request_code:
+            return jsonify({"error": "request_code is required"}), 400
+
+        try:
+            result = get_auth_engine().deny(request_code)
+            if result.get("ok"):
+                push_event("auth", {"action": "denied", "request_code": request_code})
+                log_event("info", f"Auth denied: #{request_code}")
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/auth/check")
+    def api_auth_check():
+        """检查 Agent 是否有有效授权"""
+        agent = request.args.get("agent", "")
+        scope = request.args.get("scope", "")
+
+        if not agent or not scope:
+            return jsonify({"error": "agent and scope are required"}), 400
+
+        try:
+            result = get_auth_engine().check(agent, scope)
+            return jsonify({
+                "authorized": result.authorized,
+                "message": result.message,
+                "grant_id": result.grant_id,
+                "request_code": result.request_code,
+                "remaining_minutes": result.remaining_minutes,
+                "scope": result.scope,
+                "agent": result.agent,
+            })
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/auth/consume", methods=["POST"])
+    def api_auth_consume():
+        """使用授权 — 执行后标记已用"""
+        data = request.get_json(silent=True) or {}
+        grant_id = data.get("grant_id", "")
+
+        if not grant_id:
+            return jsonify({"error": "grant_id is required"}), 400
+
+        try:
+            result = get_auth_engine().consume(grant_id)
+            if result.get("ok"):
+                push_event("auth", {"action": "consumed", "grant_id": grant_id})
+                log_event("info", f"Auth consumed: {grant_id}")
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/auth/revoke", methods=["POST"])
+    def api_auth_revoke():
+        """吊销授权"""
+        data = request.get_json(silent=True) or {}
+        grant_id = data.get("grant_id", "")
+        reason = data.get("reason", "")
+
+        if not grant_id:
+            return jsonify({"error": "grant_id is required"}), 400
+
+        try:
+            result = get_auth_engine().revoke(grant_id, reason)
+            if result.get("ok"):
+                push_event("auth", {"action": "revoked", "grant_id": grant_id})
+                log_event("info", f"Auth revoked: {grant_id} — {reason}")
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/auth/grants")
+    def api_auth_grants():
+        """列出授权记录（支持筛选）"""
+        try:
+            agent = request.args.get("agent", "")
+            scope = request.args.get("scope", "")
+            status = request.args.get("status", "")
+            limit = request.args.get("limit", 50, type=int)
+            grants = get_auth_engine().list_grants(
+                agent=agent, scope=scope, status=status, limit=limit,
+            )
+            return jsonify(grants)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/auth/audit")
+    def api_auth_audit():
+        """获取审计日志"""
+        try:
+            days = request.args.get("days", 7, type=int)
+            limit = request.args.get("limit", 200, type=int)
+            logs = get_auth_engine().get_audit(days=days, limit=limit)
+            return jsonify(logs)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    # ── v3: 委派管理 & 双重审批 ──────────────────────────
+
+    @app.route("/api/auth/delegations")
+    def api_auth_delegations():
+        """委派矩阵 — 谁可以批什么"""
+        try:
+            return jsonify(get_auth_engine().get_delegation_matrix())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/auth/delegations/list")
+    def api_auth_delegations_list():
+        """列出所有委派记录"""
+        try:
+            delegator = request.args.get("delegator", "")
+            delegate = request.args.get("delegate", "")
+            delegations = get_auth_engine().list_delegations(delegator, delegate)
+            return jsonify(delegations)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/auth/delegations/modify", methods=["POST"])
+    def api_auth_delegations_modify():
+        """修改委派关系 (仅始祖)"""
+        data = request.get_json(silent=True) or {}
+        delegator = data.get("delegator", "")
+        delegate = data.get("delegate", "")
+        scopes = data.get("scopes", [])
+        description = data.get("description", "")
+
+        if not delegator or not delegate or not scopes:
+            return jsonify({"error": "delegator, delegate, scopes are required"}), 400
+
+        try:
+            result = get_auth_engine().modify_delegation(delegator, delegate, scopes, description)
+            if result.get("ok"):
+                push_event("auth", {"action": "delegation_modified", "delegate": delegate})
+                log_event("info", f"Delegation modified: {delegator} → {delegate} ({len(scopes)} scopes)")
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/auth/delegations/revoke", methods=["POST"])
+    def api_auth_delegations_revoke():
+        """吊销委派"""
+        data = request.get_json(silent=True) or {}
+        delegator = data.get("delegator", "")
+        delegate = data.get("delegate", "")
+
+        if not delegator or not delegate:
+            return jsonify({"error": "delegator and delegate are required"}), 400
+
+        try:
+            result = get_auth_engine().revoke_delegation(delegator, delegate)
+            if result.get("ok"):
+                push_event("auth", {"action": "delegation_revoked", "delegate": delegate})
+                log_event("info", f"Delegation revoked: {delegate}")
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/auth/delegations/check")
+    def api_auth_delegations_check():
+        """检查委派范围内的 scope"""
+        delegate = request.args.get("delegate", "")
+        scope = request.args.get("scope", "")
+        if not delegate or not scope:
+            return jsonify({"error": "delegate and scope are required"}), 400
+        try:
+            return jsonify(get_auth_engine().check_delegation_scope(delegate, scope))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/auth/origin-pre-approve", methods=["POST"])
+    def api_auth_origin_pre_approve():
+        """始祖预批 — 双重审批第一步"""
+        data = request.get_json(silent=True) or {}
+        request_code = data.get("request_code", "")
+        if not request_code:
+            return jsonify({"error": "request_code is required"}), 400
+        try:
+            result = get_auth_engine().origin_pre_approve(request_code)
+            if result.get("ok"):
+                push_event("auth", {"action": "origin_pre_approved", "request_code": request_code})
+                log_event("info", f"Origin pre-approved: #{request_code} → {result.get('next_step', '')}")
+            return jsonify(result)
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
@@ -1093,6 +1484,71 @@ def create_app():
             )
             push_event("help_request", {"action": "approved", "id": req.id})
             return jsonify(req.to_dict())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    # ══════════════════════════════════════════
+    # Project Operations — PM协作引擎
+    # ══════════════════════════════════════════
+
+    @app.route("/api/ops/agents/workloads")
+    def api_agent_workloads():
+        """Agent workload tracking — saturation, free slots, velocity"""
+        try:
+            from apex.interface.project_ops import get_agent_workloads
+            return jsonify(get_agent_workloads())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/ops/agents/match", methods=["POST"])
+    def api_match_task():
+        """Match a task to the best agent"""
+        try:
+            from apex.interface.project_ops import match_task_to_agent, auto_assign_task
+            data = request.get_json(force=True) or {}
+            title = data.get("title", "")
+            desc = data.get("description", "")
+            auto = data.get("auto_assign", False)
+            if auto:
+                return jsonify(auto_assign_task(title, desc, data.get("priority", 2)))
+            return jsonify(match_task_to_agent(title, desc))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/ops/standup")
+    def api_standup():
+        """PM standup report — project status + agent load + blockers"""
+        try:
+            from apex.interface.project_ops import generate_standup_report
+            project = request.args.get("project", None)
+            return jsonify(generate_standup_report(project))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/ops/knowledge/search")
+    def api_knowledge_search():
+        """Search known solutions across agents"""
+        try:
+            from apex.interface.project_ops import search_solutions, get_knowledge_base_stats
+            q = request.args.get("q", "")
+            if q:
+                return jsonify(search_solutions(q))
+            return jsonify(get_knowledge_base_stats())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/ops/knowledge/record", methods=["POST"])
+    def api_knowledge_record():
+        """Record a new solution for cross-agent learning"""
+        try:
+            from apex.interface.project_ops import record_solution
+            data = request.get_json(force=True) or {}
+            return jsonify(record_solution(
+                problem=data.get("problem", ""),
+                solution=data.get("solution", ""),
+                solved_by=data.get("solved_by", "unknown"),
+                tags=data.get("tags", []),
+            ))
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 

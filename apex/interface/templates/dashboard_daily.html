@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apex PM — 三项目日报</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-primary:#0a0e17;
+  --bg-secondary:#111827;
+  --bg-card:#151d2b;
+  --bg-hover:#1a2332;
+  --bg-input:#1e293b;
+  --border:#1e2d45;
+  --border-light:#2a3f5a;
+  --text-primary:#e8edf5;
+  --text-secondary:#8899b4;
+  --text-muted:#5a6f8a;
+  --accent:#3b82f6;
+  --accent-light:#60a5fa;
+  --accent-glow:rgba(59,130,246,0.15);
+  --green:#22c55e;
+  --green-bg:rgba(34,197,94,0.12);
+  --yellow:#eab308;
+  --yellow-bg:rgba(234,179,8,0.12);
+  --red:#ef4444;
+  --red-bg:rgba(239,68,68,0.12);
+  --blue:#3b82f6;
+  --blue-bg:rgba(59,130,246,0.12);
+  --orange:#f97316;
+  --orange-bg:rgba(249,115,22,0.12);
+  --purple:#a855f7;
+  --purple-bg:rgba(168,85,247,0.12);
+  --cyan:#06b6d4;
+  --cyan-bg:rgba(6,182,212,0.12);
+  --radius:12px;
+  --radius-sm:8px;
+  --radius-xs:6px;
+  --shadow-card:0 4px 24px rgba(0,0,0,0.3);
+  --transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Helvetica Neue',Arial,sans-serif;
+  background:var(--bg-primary);
+  color:var(--text-primary);
+  overflow-x:hidden;
+  line-height:1.5;
+  font-size:14px;
+}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-light);border-radius:3px}
+
+/* NAV */
+.navbar{
+  position:sticky;top:0;z-index:1000;
+  display:flex;align-items:center;gap:20px;
+  padding:0 24px;height:56px;
+  background:rgba(10,14,23,0.94);
+  backdrop-filter:blur(20px) saturate(1.4);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{
+  display:flex;align-items:center;gap:8px;
+  font-size:18px;font-weight:700;color:var(--accent-light);
+  white-space:nowrap;text-decoration:none;
+}
+.nav-logo span{
+  background:linear-gradient(135deg,var(--accent-light),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.nav-links{display:flex;gap:4px;flex:1}
+.nav-link{
+  padding:6px 14px;border-radius:var(--radius-sm);font-size:13px;
+  color:var(--text-secondary);cursor:pointer;text-decoration:none;
+  transition:var(--transition);white-space:nowrap;border:none;background:transparent;
+}
+.nav-link:hover{color:var(--text-primary);background:var(--bg-hover)}
+.nav-link.active{color:var(--accent-light);background:var(--accent-glow)}
+.nav-right{display:flex;align-items:center;gap:14px;white-space:nowrap;font-size:12px;color:var(--text-secondary)}
+
+/* LAYOUT */
+.container{max-width:1500px;margin:0 auto;padding:20px 24px 60px}
+.header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;flex-wrap:wrap;gap:12px;
+}
+.header h1{font-size:22px;font-weight:700}
+.header h1 em{font-style:normal;color:var(--accent-light)}
+.header .date-badge{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:10px 16px;
+  font-size:14px;color:var(--text-secondary);
+  font-variant-numeric:tabular-nums;
+}
+
+/* SUMMARY BANNER */
+.summary-bar{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:12px;margin-bottom:22px;
+}
+.summary-card{
+  background:var(--bg-card);border-radius:var(--radius);
+  padding:14px 16px;border:1px solid var(--border);
+  display:flex;flex-direction:column;gap:4px;
+  transition:var(--transition);
+}
+.summary-card:hover{border-color:var(--border-light);box-shadow:var(--shadow-card)}
+.summary-card .s-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px}
+.summary-card .s-value{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.summary-card .s-sub{font-size:11px;color:var(--text-muted)}
+.status-ok{color:var(--green)}
+.status-warn{color:var(--yellow)}
+.status-err{color:var(--red)}
+
+/* PROJECT GRID */
+.projects-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;margin-bottom:22px;
+}
+@media(max-width:1200px){.projects-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.projects-grid{grid-template-columns:1fr}}
+
+.project-card{
+  background:var(--bg-card);border-radius:var(--radius);
+  border:1px solid var(--border);overflow:hidden;
+  transition:var(--transition);
+}
+.project-card:hover{border-color:var(--border-light);box-shadow:var(--shadow-card)}
+.project-card-header{
+  padding:14px 18px;display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--border);
+  background:var(--bg-secondary);
+}
+.project-card-header .p-emoji{font-size:28px}
+.project-card-header .p-name{font-size:16px;font-weight:700;flex:1}
+.project-card-header .p-health{
+  font-size:12px;padding:2px 10px;border-radius:20px;
+  font-weight:500;
+}
+.health-green{background:var(--green-bg);color:var(--green)}
+.health-yellow{background:var(--yellow-bg);color:var(--yellow)}
+.health-red{background:var(--red-bg);color:var(--red)}
+.health-none{background:var(--bg-input);color:var(--text-muted)}
+
+.project-card-body{padding:14px 18px}
+.card-section{margin-bottom:14px}
+.card-section:last-child{margin-bottom:0}
+.card-section .cs-title{
+  font-size:11px;color:var(--text-muted);text-transform:uppercase;
+  letter-spacing:0.5px;margin-bottom:6px;font-weight:600;
+}
+.metric-row{
+  display:flex;align-items:center;gap:8px;margin-bottom:4px;
+  font-size:13px;
+}
+.metric-row .m-icon{width:18px;text-align:center}
+.metric-row .m-value{font-weight:600;font-variant-numeric:tabular-nums}
+.metric-row .m-label{color:var(--text-muted);font-size:12px}
+.metric-row .m-cost{color:var(--text-secondary);font-size:11px}
+
+/* TASK BAR */
+.task-bar-outer{
+  height:8px;background:var(--bg-input);border-radius:4px;
+  overflow:hidden;margin:6px 0;
+}
+.task-bar-inner{
+  height:100%;border-radius:4px;transition:width 1.2s ease;
+}
+.task-counts{
+  display:flex;gap:10px;font-size:11px;color:var(--text-secondary);
+  margin-top:4px;
+}
+.task-counts span.pill{
+  padding:1px 8px;border-radius:10px;font-weight:500;
+}
+.pill-done{background:var(--green-bg);color:var(--green)}
+.pill-progress{background:var(--blue-bg);color:var(--blue)}
+.pill-blocked{background:var(--red-bg);color:var(--red)}
+.pill-todo{background:var(--bg-input);color:var(--text-muted)}
+
+/* BUG LIST */
+.bug-indicator{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:3px 10px;border-radius:10px;font-size:12px;font-weight:500;
+}
+.bug-critical{background:var(--red-bg);color:var(--red)}
+.bug-warn{background:var(--yellow-bg);color:var(--yellow)}
+.bug-ok{background:var(--green-bg);color:var(--green)}
+
+/* SERVICE DOTS */
+.svc-dots{display:flex;gap:5px}
+.svc-dot{
+  width:8px;height:8px;border-radius:50%;
+  animation:pulse-dot 2s ease-in-out infinite;
+}
+.svc-dot.up{background:var(--green);box-shadow:0 0 6px rgba(34,197,94,0.5)}
+.svc-dot.down{background:var(--red);box-shadow:0 0 6px rgba(239,68,68,0.5)}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:0.5}}
+
+/* SYS BAR */
+.sys-bar{
+  display:flex;gap:16px;flex-wrap:wrap;
+  padding:14px 18px;background:var(--bg-card);
+  border-radius:var(--radius);border:1px solid var(--border);
+  font-size:13px;color:var(--text-secondary);
+}
+.sys-bar .sys-item{display:flex;align-items:center;gap:6px}
+.sys-bar .sys-val{color:var(--text-primary);font-weight:600}
+
+/* LOADING & ERROR */
+.loading{
+  display:flex;align-items:center;justify-content:center;
+  height:200px;color:var(--text-muted);font-size:14px;
+}
+.error-banner{
+  background:var(--red-bg);color:var(--red);border:1px solid var(--red);
+  border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:16px;
+  font-size:13px;
+}
+.refresher{
+  font-size:11px;color:var(--text-muted);
+  display:flex;align-items:center;gap:6px;
+}
+.spin{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="/" class="nav-logo">🦅 <span>Apex PM</span></a>
+  <div class="nav-links">
+    <a href="/" class="nav-link">🏠 总览</a>
+    <a href="/v6" class="nav-link active">📊 三项目日报</a>
+    <a href="/agents" class="nav-link">👥 舰队</a>
+    <a href="/logs" class="nav-link">📝 日志</a>
+  </div>
+  <div class="nav-right">
+    <span class="refresher">
+      <span id="autoRefresh">⏱ 自动刷新</span>
+      <span id="lastUpdate">—</span>
+    </span>
+  </div>
+</nav>
+
+<div class="container">
+  <!-- Error display -->
+  <div id="errorBanner" class="error-banner" style="display:none"></div>
+
+  <!-- Header -->
+  <div class="header">
+    <h1>📊 多项目 <em>PM 日报</em></h1>
+    <div class="date-badge" id="reportDate">—</div>
+  </div>
+
+  <!-- Summary Bar -->
+  <div class="summary-bar" id="summaryBar">
+    <div class="summary-card"><span class="s-label">总体状态</span><span class="s-value" id="sumStatus">—</span></div>
+    <div class="summary-card"><span class="s-label">今日 Token</span><span class="s-value" id="sumTokens">—</span><span class="s-sub" id="sumCost">—</span></div>
+    <div class="summary-card"><span class="s-label">完成任务</span><span class="s-value" id="sumDone">—</span></div>
+    <div class="summary-card"><span class="s-label">开放 Bug</span><span class="s-value" id="sumBugs">—</span></div>
+    <div class="summary-card"><span class="s-label">GPU / Cron</span><span class="s-value" id="sumSys">—</span></div>
+  </div>
+
+  <!-- Project Grid -->
+  <div class="projects-grid" id="projectsGrid">
+    <div class="loading">⏳ 加载日报数据...</div>
+  </div>
+
+  <!-- System Bar -->
+  <div class="sys-bar" id="sysBar" style="display:none">
+    <div class="sys-item">🖥️ GPU: <span class="sys-val" id="sysGpu">—</span></div>
+    <div class="sys-item">⏱️ Cron: <span class="sys-val" id="sysCron">—</span></div>
+    <div class="sys-item">📅 日期: <span class="sys-val" id="sysDate">—</span></div>
+  </div>
+</div>
+
+<script>
+const API = '/api/daily-report';
+let refreshTimer = null;
+
+function fmtTokens(n) {
+  if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+  if (n >= 1e3) return Math.round(n/1e3)+'K';
+  return String(n||0);
+}
+
+function progressBar(done, total, color) {
+  const pct = total ? Math.round(done/total*100) : 0;
+  return `<div class="task-bar-outer">
+    <div class="task-bar-inner" style="width:${pct}%;background:${color}"></div>
+  </div>`;
+}
+
+function healthClass(pct) {
+  if (pct >= 75) return 'health-green';
+  if (pct >= 40) return 'health-yellow';
+  return 'health-red';
+}
+
+function healthLabel(pct) {
+  if (pct >= 75) return '✅ 健康';
+  if (pct >= 40) return '⚠️ 进行中';
+  return '🔴 滞后';
+}
+
+function renderProject(p) {
+  const color = p.color || '#3b82f6';
+  const taskPct = p.health.task_pct;
+  const hClass = healthClass(taskPct);
+  const hLabel = healthLabel(taskPct);
+
+  // Bug display
+  let bugHTML = '';
+  if (p.bugs.critical > 0) {
+    bugHTML = `<span class="bug-indicator bug-critical">🔴 ${p.bugs.critical} 严重 · ${p.bugs.open} 开放</span>`;
+  } else if (p.bugs.open > 0) {
+    bugHTML = `<span class="bug-indicator bug-warn">🟡 ${p.bugs.open} 开放</span>`;
+  } else {
+    bugHTML = `<span class="bug-indicator bug-ok">🟢 无 Bug</span>`;
+  }
+
+  // Service dots
+  let svcHTML = '';
+  if (p.services.total > 0) {
+    svcHTML = `<div class="svc-dots">`;
+    for (let i = 0; i < p.services.total; i++) {
+      svcHTML += `<div class="svc-dot ${i < p.services.healthy ? 'up' : 'down'}"></div>`;
+    }
+    svcHTML += `</div>`;
+  } else {
+    svcHTML = `<span style="color:var(--text-muted);font-size:11px">无服务</span>`;
+  }
+
+  // Git
+  let gitHTML = '';
+  if (p.git.commits_today > 0) {
+    gitHTML = `📝 ${p.git.commits_today} commits (${p.git.branch || 'main'})`;
+  } else {
+    gitHTML = `💤 今日无提交`;
+  }
+
+  // Auth
+  let authHTML = '';
+  if (p.auth.pending > 0) {
+    authHTML += `<span style="color:var(--yellow)">⏳ ${p.auth.pending} 待审批</span>`;
+  }
+  if (p.auth.active > 0) {
+    authHTML += (authHTML ? ' · ' : '') + `<span style="color:var(--green)">✅ ${p.auth.active} 有效</span>`;
+  }
+
+  return `
+  <div class="project-card" style="border-top:3px solid ${color}">
+    <div class="project-card-header">
+      <span class="p-emoji">${p.emoji}</span>
+      <span class="p-name">${p.name}</span>
+      <span class="p-health ${hClass}">${hLabel}</span>
+    </div>
+    <div class="project-card-body">
+      <!-- Tokens -->
+      <div class="card-section">
+        <div class="cs-title">💰 今日消耗</div>
+        <div class="metric-row">
+          <span class="m-icon">🪙</span>
+          <span class="m-value">${p.tokens.today_fmt || '0'}</span>
+          <span class="m-label">Token</span>
+          <span class="m-cost">$${p.tokens.today_cost.toFixed(4)}</span>
+        </div>
+        <div class="metric-row" style="font-size:11px;color:var(--text-muted)">
+          会话 ${p.tokens.sessions_today} · 累计 ${p.tokens.total_fmt || '0'} Token / $${p.tokens.total_cost.toFixed(4)}
+        </div>
+      </div>
+
+      <!-- Tasks -->
+      <div class="card-section">
+        <div class="cs-title">📋 任务进度 (${p.tasks.done}/${p.tasks.total})</div>
+        ${progressBar(p.tasks.done, p.tasks.total, color)}
+        <div class="task-counts">
+          <span class="pill pill-done">✅ ${p.tasks.done} 完成</span>
+          <span class="pill pill-progress">🚧 ${p.tasks.in_progress} 进行</span>
+          <span class="pill pill-blocked">⛔ ${p.tasks.blocked} 阻塞</span>
+          <span class="pill pill-todo">📋 ${p.tasks.todo} 待办</span>
+        </div>
+      </div>
+
+      <!-- Bugs -->
+      <div class="card-section">
+        <div class="cs-title">🐛 缺陷追踪</div>
+        ${bugHTML}
+      </div>
+
+      <!-- Services -->
+      <div class="card-section">
+        <div class="cs-title">🔌 服务健康</div>
+        <div class="metric-row">
+          ${svcHTML}
+          <span style="font-size:11px;color:var(--text-muted)">${p.services.healthy}/${p.services.total}</span>
+        </div>
+      </div>
+
+      <!-- Git & Auth -->
+      <div class="card-section" style="font-size:12px;color:var(--text-secondary);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px">
+        <span>${gitHTML}</span>
+        ${authHTML ? `<span>${authHTML}</span>` : ''}
+      </div>
+
+      <div style="font-size:10px;color:var(--text-muted);text-align:right;margin-top:8px">
+        更新: ${p.updated_at || '—'}
+      </div>
+    </div>
+  </div>`;
+}
+
+async function fetchReport() {
+  const grid = document.getElementById('projectsGrid');
+  const err = document.getElementById('errorBanner');
+
+  try {
+    const resp = await fetch(API);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+    const data = await resp.json();
+
+    if (data.error) {
+      err.textContent = '⚠️ ' + data.error;
+      err.style.display = 'block';
+      return;
+    }
+
+    err.style.display = 'none';
+
+    // Date
+    document.getElementById('reportDate').textContent = '📅 ' + data.date;
+
+    // Summary
+    const s = data.summary;
+    document.getElementById('sumStatus').textContent = s.status;
+    document.getElementById('sumStatus').className = 's-value ' + (
+      s.all_ok ? 'status-ok' : (data.projects.some(p => p.health.service_status === '🔴') ? 'status-err' : 'status-warn')
+    );
+    document.getElementById('sumTokens').textContent = s.total_tokens_fmt || '0';
+    document.getElementById('sumCost').textContent = '费用 $' + s.total_cost_today.toFixed(4);
+    document.getElementById('sumDone').textContent = s.total_tasks_done;
+    document.getElementById('sumBugs').textContent = s.total_bugs_open;
+    document.getElementById('sumSys').textContent = `GPU ${data.system.gpu_online}/${data.system.gpu_total} · Cron ${data.system.cron_active}`;
+
+    // Project cards
+    grid.innerHTML = data.projects.map(renderProject).join('');
+
+    // System bar
+    const sysBar = document.getElementById('sysBar');
+    document.getElementById('sysGpu').textContent = `${data.system.gpu_online}/${data.system.gpu_total}`;
+    document.getElementById('sysCron').textContent = data.system.cron_active;
+    document.getElementById('sysDate').textContent = data.date;
+    sysBar.style.display = 'flex';
+
+    // Last update time
+    const now = new Date();
+    document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('zh-CN', {hour12:false});
+
+  } catch (e) {
+    err.textContent = '🔴 日报加载失败: ' + e.message;
+    err.style.display = 'block';
+    grid.innerHTML = '<div class="loading">⚠️ 数据加载失败，请检查 Apex Dashboard 是否运行</div>';
+  }
+}
+
+// Auto-refresh every 5 minutes
+function startAutoRefresh() {
+  fetchReport();
+  refreshTimer = setInterval(fetchReport, 300000); // 5 min
+}
+
+document.addEventListener('DOMContentLoaded', startAutoRefresh);
+</script>
+</body>
+</html>

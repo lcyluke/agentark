@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apex — 🏛️ Authorization Command</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-primary:#0a0e17;
+  --bg-secondary:#111827;
+  --bg-card:#151d2b;
+  --bg-hover:#1a2332;
+  --bg-input:#1e293b;
+  --border:#1e2d45;
+  --border-light:#2a3f5a;
+  --text-primary:#e8edf5;
+  --text-secondary:#8899b4;
+  --text-muted:#5a6f8a;
+  --accent:#3b82f6;
+  --accent-light:#60a5fa;
+  --accent-glow:rgba(59,130,246,0.15);
+  --green:#22c55e;
+  --green-bg:rgba(34,197,94,0.12);
+  --yellow:#eab308;
+  --yellow-bg:rgba(234,179,8,0.12);
+  --red:#ef4444;
+  --red-bg:rgba(239,68,68,0.12);
+  --blue:#3b82f6;
+  --blue-bg:rgba(59,130,246,0.12);
+  --orange:#f97316;
+  --orange-bg:rgba(249,115,22,0.12);
+  --purple:#a855f7;
+  --purple-bg:rgba(168,85,247,0.12);
+  --cyan:#06b6d4;
+  --cyan-bg:rgba(6,182,212,0.12);
+  --pink:#ec4899;
+  --radius:12px;
+  --radius-sm:8px;
+  --radius-xs:6px;
+  --shadow-card:0 4px 24px rgba(0,0,0,0.3);
+  --shadow-glow:0 0 40px rgba(59,130,246,0.08);
+  --transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Helvetica Neue',Arial,sans-serif;
+  background:var(--bg-primary);
+  color:var(--text-primary);
+  overflow-x:hidden;
+  line-height:1.5;
+  font-size:14px;
+}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-light);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+
+/* NAV */
+.navbar{
+  position:sticky;top:0;z-index:1000;
+  display:flex;align-items:center;gap:24px;
+  padding:0 28px;height:60px;
+  background:rgba(10,14,23,0.92);
+  backdrop-filter:blur(20px) saturate(1.4);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;color:var(--accent-light);letter-spacing:-0.5px;white-space:nowrap}
+.nav-logo span{background:linear-gradient(135deg,var(--accent-light),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-links{display:flex;gap:4px;flex:1}
+.nav-link{padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;transition:var(--transition);white-space:nowrap;text-decoration:none}
+.nav-link:hover{color:var(--text-primary);background:var(--bg-hover)}
+.nav-link.active{color:var(--accent-light);background:var(--accent-glow)}
+.nav-right{display:flex;align-items:center;gap:18px;white-space:nowrap}
+.nav-clock{font-size:13px;font-weight:500;color:var(--text-secondary);font-variant-numeric:tabular-nums}
+.conn-indicator{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary)}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px rgba(34,197,94,0.5);animation:pulse-dot 2s ease-in-out infinite}
+.conn-dot.offline{background:var(--red);box-shadow:0 0 8px rgba(239,68,68,0.5)}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:0.5}}
+
+/* LAYOUT */
+.dashboard{max-width:1600px;margin:0 auto;padding:20px 28px 60px;display:flex;flex-direction:column;gap:20px}
+.section-title{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.section-title small{font-size:12px;font-weight:400;color:var(--text-muted)}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.stat-card{
+  background:var(--bg-card);border-radius:var(--radius);padding:16px 18px;
+  border:1px solid var(--border);transition:var(--transition);position:relative;overflow:hidden;
+}
+.stat-card:hover{border-color:var(--border-light);transform:translateY(-2px);box-shadow:var(--shadow-card)}
+.stat-card .stat-icon{font-size:22px;margin-bottom:6px}
+.stat-card .stat-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:500}
+.stat-card .stat-value{font-size:26px;font-weight:700;color:var(--text-primary);margin:4px 0 6px;font-variant-numeric:tabular-nums}
+.stat-card .stat-sub{font-size:12px;display:flex;align-items:center;gap:6px}
+.stat-bar{height:4px;border-radius:2px;background:var(--bg-input);margin-top:8px;overflow:hidden}
+.stat-bar-fill{height:100%;border-radius:2px;transition:width 1s ease}
+
+/* PANELS */
+.panels-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.panels-full{display:grid;grid-template-columns:1fr;gap:20px}
+.panels-3col{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:1100px){.panels-2col,.panels-3col{grid-template-columns:1fr}}
+.panel{
+  background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border);
+  padding:18px 20px;transition:var(--transition);
+}
+.panel:hover{border-color:var(--border-light)}
+.panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.panel-title{font-size:14px;font-weight:600;color:var(--text-primary);display:flex;align-items:center;gap:8px}
+.panel-title .badge{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--accent-glow);color:var(--accent-light);font-weight:500}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.filter-bar select,.filter-bar input{
+  padding:6px 10px;background:var(--bg-input);border:1px solid var(--border);
+  border-radius:var(--radius-xs);color:var(--text-primary);font-size:12px;outline:none
+}
+.filter-bar select:focus,.filter-bar input:focus{border-color:var(--accent)}
+.filter-bar .filter-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px}
+
+/* BUTTONS */
+.btn{
+  padding:5px 14px;border-radius:var(--radius-xs);font-size:12px;font-weight:500;cursor:pointer;
+  border:1px solid transparent;transition:var(--transition);display:inline-flex;align-items:center;gap:5px
+}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent-light)}
+.btn.success{background:var(--green-bg);color:var(--green);border-color:var(--green)}
+.btn.success:hover{background:var(--green);color:#fff}
+.btn.danger{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+.btn.danger:hover{background:var(--red);color:#fff}
+.btn.warning{background:var(--yellow-bg);color:var(--yellow);border-color:var(--yellow)}
+.btn.warning:hover{background:var(--yellow);color:#000}
+.btn.ghost{background:transparent;color:var(--text-secondary);border-color:var(--border)}
+.btn.ghost:hover{background:var(--bg-hover);color:var(--text-primary)}
+.btn.sm{padding:3px 8px;font-size:10px}
+
+/* GRANT TABLE */
+.grant-table{width:100%;font-size:12px;border-collapse:collapse}
+.grant-table th,.grant-table td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+.grant-table th{color:var(--text-muted);font-weight:500;text-transform:uppercase;font-size:10px;letter-spacing:0.5px;white-space:nowrap}
+.grant-table td{color:var(--text-secondary)}
+.grant-table tr:hover{background:var(--bg-hover)}
+.grant-table .mono{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:11px}
+.grant-table td strong{color:var(--text-primary)}
+
+/* STATUS BADGES */
+.status-badge{
+  display:inline-block;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:600;
+  text-transform:uppercase;letter-spacing:0.3px;
+}
+.status-pending{background:var(--yellow-bg);color:var(--yellow)}
+.status-approved{background:var(--green-bg);color:var(--green)}
+.status-used{background:var(--blue-bg);color:var(--blue)}
+.status-expired{background:var(--bg-input);color:var(--text-muted)}
+.status-revoked{background:var(--red-bg);color:var(--red)}
+.status-denied{background:var(--bg-input);color:var(--text-muted)}
+
+/* RISK BADGES */
+.risk-badge{
+  display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;
+}
+.risk-low{background:var(--green-bg);color:var(--green)}
+.risk-medium{background:var(--yellow-bg);color:var(--yellow)}
+.risk-high{background:var(--orange-bg);color:var(--orange)}
+.risk-critical{background:var(--red-bg);color:var(--red)}
+
+/* SCOPE TAGS */
+.scope-tag{
+  display:inline-block;padding:3px 10px;border-radius:4px;
+  background:var(--bg-input);border:1px solid var(--border);
+  font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:11px;
+  color:var(--accent-light);cursor:pointer;transition:var(--transition);
+}
+.scope-tag:hover{background:var(--accent-glow);border-color:var(--accent)}
+
+/* AUDIT LOG */
+.audit-container{
+  background:#060a12;border-radius:var(--radius-sm);padding:12px;
+  font-family:'SF Mono','Fira Code','Cascadia Code','JetBrains Mono','Consolas',monospace;
+  font-size:12px;line-height:1.6;max-height:400px;overflow-y:auto;
+  border:1px solid var(--border);
+}
+.audit-entry{padding:2px 0;white-space:pre-wrap;word-break:break-all}
+.audit-entry .ts{color:var(--text-muted);margin-right:6px}
+.audit-entry .action{font-weight:600;margin-right:8px}
+.audit-entry .action.REQUEST{color:var(--blue)}
+.audit-entry .action.APPROVE{color:var(--green)}
+.audit-entry .action.DENY{color:var(--red)}
+.audit-entry .action.CONSUME{color:var(--purple)}
+.audit-entry .action.REVOKE{color:var(--orange)}
+.audit-entry .detail{color:var(--text-secondary)}
+
+/* CHAIN STATUS */
+.chain-status{
+  display:flex;align-items:center;gap:10px;padding:14px 18px;
+  border-radius:var(--radius-sm);margin-bottom:12px;
+}
+.chain-valid{
+  background:var(--green-bg);border:1px solid var(--green);
+}
+.chain-broken{
+  background:var(--red-bg);border:1px solid var(--red);
+}
+.chain-icon{font-size:28px}
+.chain-info{flex:1}
+.chain-info .ci-label{font-size:12px;color:var(--text-secondary)}
+.chain-info .ci-value{font-size:16px;font-weight:700;color:var(--text-primary);margin-top:2px}
+.chain-breaks{margin-top:6px;font-size:11px;font-family:'SF Mono','Fira Code',monospace;color:var(--red)}
+
+/* SCOPE GRID */
+.scope-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+.scope-item{
+  display:flex;align-items:center;gap:8px;padding:8px 12px;
+  background:var(--bg-secondary);border-radius:var(--radius-xs);
+  border:1px solid var(--border);font-size:12px;transition:var(--transition);
+}
+.scope-item:hover{border-color:var(--border-light);background:var(--bg-hover)}
+.scope-item .scope-code{
+  font-family:'SF Mono','Fira Code',monospace;font-size:11px;
+  color:var(--accent-light);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.scope-item .scope-desc{font-size:10px;color:var(--text-muted);white-space:nowrap}
+.scope-ro{opacity:0.5}
+
+/* PENDING QUEUE */
+.pending-list{display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto}
+.pending-item{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  background:var(--bg-secondary);border-radius:var(--radius-sm);
+  border:1px solid var(--border);transition:var(--transition);
+}
+.pending-item:hover{border-color:var(--border-light);background:var(--bg-hover)}
+.pending-item .pi-code{
+  font-family:'SF Mono','Fira Code',monospace;font-size:16px;font-weight:700;
+  color:var(--yellow);min-width:60px;text-align:center;
+}
+.pending-item .pi-info{flex:1;min-width:0}
+.pending-item .pi-info .pi-agent{font-size:13px;font-weight:600;color:var(--text-primary)}
+.pending-item .pi-info .pi-purpose{font-size:11px;color:var(--text-muted);margin-top:2px}
+.pending-item .pi-actions{display:flex;gap:6px;flex-shrink:0}
+
+/* EMPTY / LOADING */
+.empty-state{text-align:center;padding:30px;color:var(--text-muted);font-size:13px}
+.loading-pulse{display:flex;align-items:center;justify-content:center;padding:30px;color:var(--text-muted);font-size:13px;gap:8px}
+.loading-pulse .pulse-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse-dot 1.2s ease-in-out infinite}
+.loading-pulse .pulse-dot:nth-child(2){animation-delay:0.2s}
+.loading-pulse .pulse-dot:nth-child(3){animation-delay:0.4s}
+
+/* TOOLTIP */
+.tooltip{position:relative;cursor:help}
+.tooltip:hover::after{
+  content:attr(data-tip);position:absolute;bottom:120%;left:50%;transform:translateX(-50%);
+  padding:4px 10px;background:var(--bg-input);border:1px solid var(--border);
+  border-radius:4px;font-size:10px;color:var(--text-primary);white-space:nowrap;
+  z-index:100;pointer-events:none;
+}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .navbar{padding:0 14px;gap:12px;overflow-x:auto}
+  .nav-link{padding:6px 10px;font-size:12px}
+  .dashboard{padding:12px 14px 40px;gap:14px}
+  .stats-row{grid-template-columns:repeat(2,1fr);gap:10px}
+  .stat-card .stat-value{font-size:22px}
+  .scope-grid{grid-template-columns:1fr}
+  .grant-table{font-size:10px}
+  .grant-table th,.grant-table td{padding:5px 6px}
+}
+@media(max-width:480px){
+  .stats-row{grid-template-columns:1fr}
+}
+
+/* NOTIFICATION TOAST */
+.toast{
+  position:fixed;top:70px;right:20px;z-index:9999;
+  padding:12px 18px;border-radius:var(--radius-sm);
+  font-size:13px;font-weight:500;animation:slideIn 0.3s ease;
+  opacity:0;transition:opacity 0.3s ease;
+  max-width:360px;
+}
+.toast.show{opacity:1}
+.toast.success{background:var(--green-bg);border:1px solid var(--green);color:var(--green)}
+.toast.error{background:var(--red-bg);border:1px solid var(--red);color:var(--red)}
+@keyframes slideIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="navbar">
+  <div class="nav-logo">🏛️ <span>Authorization</span></div>
+  <div class="nav-links">
+    <a href="/" class="nav-link">⚡ Dashboard</a>
+    <a href="/auth" class="nav-link active">🔐 Auth Center</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-clock" id="navClock">--:--:--</span>
+    <div class="conn-indicator"><span class="conn-dot" id="connDot"></span><span id="connLabel">Connected</span></div>
+  </div>
+</nav>
+
+<div class="dashboard">
+
+  <!-- STATS ROW -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card">
+      <div class="stat-icon">📋</div>
+      <div class="stat-label">Total Grants</div>
+      <div class="stat-value" id="statTotal">--</div>
+      <div class="stat-sub" style="color:var(--text-muted)">All time</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-label">Pending</div>
+      <div class="stat-value" id="statPending" style="color:var(--yellow)">--</div>
+      <div class="stat-sub" style="color:var(--yellow)">Awaiting approval</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-label">Active</div>
+      <div class="stat-value" id="statActive" style="color:var(--green)">--</div>
+      <div class="stat-sub" style="color:var(--green)">Valid now</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🔗</div>
+      <div class="stat-label">Chain Integrity</div>
+      <div class="stat-value" id="statChain">--</div>
+      <div class="stat-sub" style="color:var(--text-muted)">SHA256 hash chain</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">👤</div>
+      <div class="stat-label">Approver</div>
+      <div class="stat-value" style="font-size:20px">老卢</div>
+      <div class="stat-sub" style="color:var(--text-muted)">luke · sole approver</div>
+    </div>
+  </div>
+
+  <!-- PENDING APPROVAL QUEUE -->
+  <div class="panels-full">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">⏳ Pending Approval Queue <span class="badge" id="pendingBadge">0</span></div>
+        <button class="btn ghost sm" onclick="refreshAll()">🔄 Refresh</button>
+      </div>
+      <div class="pending-list" id="pendingQueue">
+        <div class="loading-pulse"><span class="pulse-dot"></span><span class="pulse-dot"></span><span class="pulse-dot"></span> Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRANT RECORDS + FILTER -->
+  <div class="panels-full">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📋 Grant Records <span class="badge" id="grantCount">0</span></div>
+        <div style="display:flex;gap:6px">
+          <select id="filterStatus" onchange="loadGrants()" style="padding:5px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-primary);font-size:11px;outline:none">
+            <option value="">All Status</option>
+            <option value="pending">⏳ Pending</option>
+            <option value="approved">✅ Approved</option>
+            <option value="used">✔️ Used</option>
+            <option value="expired">⏰ Expired</option>
+            <option value="revoked">🚫 Revoked</option>
+            <option value="denied">❌ Denied</option>
+          </select>
+          <input type="text" id="filterAgent" placeholder="Agent..." oninput="loadGrants()" style="padding:5px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-primary);font-size:11px;outline:none;width:120px">
+          <input type="text" id="filterScope" placeholder="Scope..." oninput="loadGrants()" style="padding:5px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-primary);font-size:11px;outline:none;width:140px">
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="grant-table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Agent</th>
+              <th>Scope</th>
+              <th>Purpose</th>
+              <th>Risk</th>
+              <th>Status</th>
+              <th>Requested</th>
+              <th>Expires</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="grantTableBody">
+            <tr><td colspan="9"><div class="loading-pulse"><span class="pulse-dot"></span><span class="pulse-dot"></span><span class="pulse-dot"></span> Loading...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUDIT LOG + CHAIN VERIFICATION -->
+  <div class="panels-2col">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📜 Audit Trail <span class="badge" id="auditCount">0</span></div>
+        <select id="auditDays" onchange="loadAudit()" style="padding:5px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-primary);font-size:11px;outline:none">
+          <option value="1">24h</option>
+          <option value="3">3 days</option>
+          <option value="7" selected>7 days</option>
+          <option value="30">30 days</option>
+        </select>
+      </div>
+      <div class="audit-container" id="auditContainer">
+        <div class="loading-pulse"><span class="pulse-dot"></span><span class="pulse-dot"></span><span class="pulse-dot"></span> Loading...</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <!-- Chain Verification -->
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">🔗 Hash Chain Verification</div></div>
+        <div class="chain-status" id="chainStatus">
+          <div class="loading-pulse"><span class="pulse-dot"></span><span class="pulse-dot"></span><span class="pulse-dot"></span> Verifying...</div>
+        </div>
+        <div id="chainBreaks" style="font-size:11px;color:var(--red);margin-top:6px"></div>
+        <button class="btn ghost sm" onclick="loadVerify()" style="margin-top:8px">🔄 Re-verify</button>
+      </div>
+      <!-- Scope Definitions -->
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">📐 Scope Definitions</div></div>
+        <div class="scope-grid" id="scopeGrid">
+          <div class="loading-pulse"><span class="pulse-dot"></span><span class="pulse-dot"></span><span class="pulse-dot"></span> Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// CLOCK
+// ============================================================
+function updateClock(){
+  const now=new Date();
+  document.getElementById('navClock').textContent=now.toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+updateClock();setInterval(updateClock,1000);
+
+// ============================================================
+// CONNECTION
+// ============================================================
+function setConnected(v){
+  const dot=document.getElementById('connDot');
+  dot.className='conn-dot'+(v?'':' offline');
+  document.getElementById('connLabel').textContent=v?'Connected':'Disconnected';
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function $(id){return document.getElementById(id)}
+function escapeHtml(s){
+  if(!s)return'';
+  const d=document.createElement('div');d.textContent=s;return d.innerHTML;
+}
+function fmtTs(ts){
+  if(!ts)return'--';
+  const d=new Date(ts*1000);
+  return d.toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+function fmtTsFull(ts){
+  if(!ts)return'--';
+  const d=new Date(ts*1000);
+  return d.toLocaleString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+function statusClass(s){return'status-'+s}
+function riskClass(r){return'risk-'+r}
+function riskEmoji(r){
+  const m={low:'🟢',medium:'🟡',high:'🟠',critical:'🔴'};
+  return m[r]||'❓';
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer=null;
+function showToast(msg,type){
+  let t=document.getElementById('toast');
+  if(!t){
+    t=document.createElement('div');t.id='toast';t.className='toast';document.body.appendChild(t);
+  }
+  t.className='toast '+type;t.textContent=msg;
+  setTimeout(()=>t.classList.add('show'),10);
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{t.classList.remove('show')},3000);
+}
+
+// ============================================================
+// API
+// ============================================================
+async function api(url,opts){
+  const r=await fetch(url,opts);
+  if(!r.ok)throw new Error('HTTP '+r.status+' '+url);
+  return await r.json();
+}
+
+async function postJSON(url,data){
+  return api(url,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(data)
+  });
+}
+
+// ============================================================
+// LOAD ALL
+// ============================================================
+async function refreshAll(){
+  await Promise.all([loadStats(),loadPending(),loadGrants(),loadAudit(),loadVerify(),loadScopes()]);
+  setConnected(true);
+}
+
+// ============================================================
+// STATS
+// ============================================================
+async function loadStats(){
+  try{
+    const d=await api('/api/auth/stats');
+    $('statTotal').textContent=d.total||0;
+    $('statPending').textContent=d.pending||0;
+    $('statActive').textContent=d.active||0;
+    $('pendingBadge').textContent=d.pending||0;
+  }catch(e){
+    $('statTotal').textContent='err';
+    $('statPending').textContent='err';
+    $('statActive').textContent='err';
+  }
+}
+
+// ============================================================
+// PENDING QUEUE
+// ============================================================
+async function loadPending(){
+  const container=$('pendingQueue');
+  try{
+    const grants=await api('/api/auth/grants?status=pending&limit=20');
+    $('pendingBadge').textContent=grants.length;
+
+    if(!grants.length){
+      container.innerHTML='<div class="empty-state">✅ No pending approvals — all clear!</div>';
+      return;
+    }
+
+    container.innerHTML='';
+    grants.forEach(g=>{
+      const item=document.createElement('div');
+      item.className='pending-item';
+      item.innerHTML=`
+        <div class="pi-code">#${escapeHtml(g.request_code)}</div>
+        <div class="pi-info">
+          <div class="pi-agent">🤖 ${escapeHtml(g.agent)}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+            <span class="scope-tag">${escapeHtml(g.scope)}</span>
+            <span class="risk-badge ${riskClass(g.risk_level)}">${riskEmoji(g.risk_level)} ${escapeHtml(g.risk_level)}</span>
+            <span style="font-size:10px;color:var(--text-muted)">TTL: ${g.ttl_min}min</span>
+          </div>
+          <div class="pi-purpose">📝 ${escapeHtml(g.purpose||'(no purpose)')}</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${fmtTsFull(g.requested_at)}</div>
+        </div>
+        <div class="pi-actions">
+          <button class="btn success" onclick="approveGrant('${escapeHtml(g.request_code)}')">✅ Approve</button>
+          <button class="btn danger" onclick="denyGrant('${escapeHtml(g.request_code)}')">❌ Deny</button>
+        </div>
+      `;
+      container.appendChild(item);
+    });
+  }catch(e){
+    container.innerHTML='<div class="empty-state">Failed to load: '+escapeHtml(e.message)+'</div>';
+  }
+}
+
+// ============================================================
+// APPROVE / DENY / REVOKE
+// ============================================================
+async function approveGrant(code){
+  try{
+    const r=await postJSON('/api/auth/approve',{request_code:code});
+    if(r.ok){
+      showToast('✅ Approved #'+code+' — '+r.agent+' / '+r.scope,'success');
+      refreshAll();
+    }else{
+      showToast('❌ '+r.error,'error');
+    }
+  }catch(e){
+    showToast('Error: '+e.message,'error');
+  }
+}
+
+async function denyGrant(code){
+  if(!confirm('Deny authorization #'+code+'?'))return;
+  try{
+    const r=await postJSON('/api/auth/deny',{request_code:code});
+    if(r.ok){
+      showToast('❌ Denied #'+code,'success');
+      refreshAll();
+    }else{
+      showToast('❌ '+r.error,'error');
+    }
+  }catch(e){
+    showToast('Error: '+e.message,'error');
+  }
+}
+
+async function revokeGrant(grantId){
+  if(!confirm('Revoke grant '+grantId+'?'))return;
+  try{
+    const r=await postJSON('/api/auth/revoke',{grant_id:grantId,reason:'Manual revoke from dashboard'});
+    if(r.ok){
+      showToast('🚫 Revoked '+grantId,'success');
+      refreshAll();
+    }else{
+      showToast('❌ '+r.error,'error');
+    }
+  }catch(e){
+    showToast('Error: '+e.message,'error');
+  }
+}
+
+// ============================================================
+// GRANTS TABLE
+// ============================================================
+async function loadGrants(){
+  const status=$('filterStatus').value;
+  const agent=$('filterAgent').value.trim();
+  const scope=$('filterScope').value.trim();
+
+  const params=new URLSearchParams();
+  if(status)params.set('status',status);
+  if(agent)params.set('agent',agent);
+  if(scope)params.set('scope',scope);
+  params.set('limit','100');
+
+  const tbody=$('grantTableBody');
+  try{
+    const grants=await api('/api/auth/grants?'+params.toString());
+    $('grantCount').textContent=grants.length;
+
+    if(!grants.length){
+      tbody.innerHTML='<tr><td colspan="9"><div class="empty-state">No grants found</div></td></tr>';
+      return;
+    }
+
+    tbody.innerHTML='';
+    grants.forEach(g=>{
+      const tr=document.createElement('tr');
+      const actions=[];
+      if(g.status==='pending'){
+        actions.push('<button class="btn success sm" onclick="approveGrant(\''+escapeHtml(g.request_code)+'\')">✅</button>');
+        actions.push('<button class="btn danger sm" onclick="denyGrant(\''+escapeHtml(g.request_code)+'\')">❌</button>');
+      }else if(g.status==='approved'){
+        actions.push('<button class="btn warning sm" onclick="revokeGrant(\''+escapeHtml(g.id)+'\')">🚫</button>');
+      }
+
+      tr.innerHTML=`
+        <td><span class="mono" style="color:var(--accent-light)">#${escapeHtml(g.request_code)}</span></td>
+        <td><strong>${escapeHtml(g.agent)}</strong></td>
+        <td><span class="scope-tag">${escapeHtml(g.scope)}</span></td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(g.purpose||'')}">${escapeHtml(g.purpose||'--')}</td>
+        <td><span class="risk-badge ${riskClass(g.risk_level)}">${riskEmoji(g.risk_level)} ${escapeHtml(g.risk_level)}</span></td>
+        <td><span class="status-badge ${statusClass(g.status)}">${escapeHtml(g.status)}</span></td>
+        <td style="white-space:nowrap">${fmtTs(g.requested_at)}</td>
+        <td style="white-space:nowrap">${g.expires_at?fmtTs(g.expires_at):'--'}</td>
+        <td style="white-space:nowrap">${actions.join(' ')}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }catch(e){
+    tbody.innerHTML='<tr><td colspan="9"><div class="empty-state">Failed to load: '+escapeHtml(e.message)+'</div></td></tr>';
+  }
+}
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+async function loadAudit(){
+  const days=$('auditDays').value;
+  const container=$('auditContainer');
+  try{
+    const logs=await api('/api/auth/audit?days='+days+'&limit=300');
+    $('auditCount').textContent=logs.length;
+
+    if(!logs.length){
+      container.innerHTML='<div class="empty-state">No audit entries for this period</div>';
+      return;
+    }
+
+    container.innerHTML='';
+    logs.forEach(l=>{
+      const div=document.createElement('div');
+      div.className='audit-entry';
+      const actionClass=l.action||'';
+      div.innerHTML=`
+        <span class="ts">${escapeHtml(l.timestamp_str||'')}</span>
+        <span class="action ${actionClass}">${escapeHtml(l.action||'')}</span>
+        <span style="color:var(--text-muted);margin-right:6px">${escapeHtml(l.request_code?'#'+l.request_code:'')}</span>
+        <span style="color:var(--accent-light);margin-right:6px">${escapeHtml(l.agent||'')}</span>
+        <span style="color:var(--text-secondary);margin-right:6px">${escapeHtml(l.scope||'')}</span>
+        <span class="detail">${escapeHtml(l.detail||'')}</span>
+        ${l.chain_hash?'<span style="color:var(--text-muted);font-size:10px;margin-left:6px">🔗'+escapeHtml(l.chain_hash.substring(0,8))+'</span>':''}
+      `;
+      container.appendChild(div);
+    });
+  }catch(e){
+    container.innerHTML='<div class="empty-state">Failed to load: '+escapeHtml(e.message)+'</div>';
+  }
+}
+
+// ============================================================
+// CHAIN VERIFICATION
+// ============================================================
+async function loadVerify(){
+  const status=$('chainStatus');
+  const breaks=$('chainBreaks');
+  try{
+    const v=await api('/api/auth/verify');
+    const valid=v.valid;
+    const total=v.total_records||0;
+
+    $('statChain').textContent=valid?'✅ Valid':'❌ Broken';
+    $('statChain').style.color=valid?'var(--green)':'var(--red)';
+
+    status.className='chain-status '+(valid?'chain-valid':'chain-broken');
+    status.innerHTML=`
+      <div class="chain-icon">${valid?'✅':'❌'}</div>
+      <div class="chain-info">
+        <div class="ci-label">Hash Chain Status</div>
+        <div class="ci-value">${valid?'INTACT — All '+total+' records verified':'BROKEN — Chain integrity compromised'}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">
+          SHA256 hash chain · ${total} records · ${valid?'0':'⚠️'} breaks detected
+        </div>
+      </div>
+    `;
+
+    if(v.breaks&&v.breaks.length){
+      breaks.innerHTML=v.breaks.map(b=>'<div>⚠️ '+escapeHtml(b)+'</div>').join('');
+    }else if(!valid){
+      breaks.innerHTML='<div>⚠️ Hash chain integrity check FAILED</div>';
+    }else{
+      breaks.innerHTML='';
+    }
+  }catch(e){
+    status.innerHTML='<div class="chain-icon">⚠️</div><div class="chain-info"><div class="ci-label">Verification Error</div><div class="ci-value" style="color:var(--red)">'+escapeHtml(e.message)+'</div></div>';
+    $('statChain').textContent='⚠️';
+    $('statChain').style.color='var(--yellow)';
+  }
+}
+
+// ============================================================
+// SCOPE DEFINITIONS
+// ============================================================
+async function loadScopes(){
+  const grid=$('scopeGrid');
+  try{
+    const scopes=await api('/api/auth/scopes');
+    grid.innerHTML='';
+
+    // Readonly scopes
+    (scopes.readonly||[]).forEach(s=>{
+      const item=document.createElement('div');
+      item.className='scope-item scope-ro';
+      item.innerHTML=`
+        <span style="font-size:14px">📖</span>
+        <span class="scope-code">${escapeHtml(s)}</span>
+        <span class="scope-desc" style="color:var(--green)">Read-only</span>
+      `;
+      grid.appendChild(item);
+    });
+
+    // Privileged scopes
+    Object.entries(scopes.privileged||{}).forEach(([name,cfg])=>{
+      const item=document.createElement('div');
+      item.className='scope-item';
+      item.innerHTML=`
+        <span style="font-size:14px">${escapeHtml(cfg.emoji||'❓')}</span>
+        <span class="scope-code">${escapeHtml(name)}</span>
+        <span class="risk-badge ${riskClass(cfg.risk)}" style="flex-shrink:0">${escapeHtml(cfg.risk)}</span>
+        <span class="scope-desc">${escapeHtml(cfg.desc||'')} · ${cfg.ttl_min}min</span>
+      `;
+      grid.appendChild(item);
+    });
+
+    if(!(scopes.readonly||[]).length&&!Object.keys(scopes.privileged||{}).length){
+      grid.innerHTML='<div class="empty-state">No scope definitions loaded</div>';
+    }
+  }catch(e){
+    grid.innerHTML='<div class="empty-state">Failed to load: '+escapeHtml(e.message)+'</div>';
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+refreshAll();
+</script>
+
+</body>
+</html>

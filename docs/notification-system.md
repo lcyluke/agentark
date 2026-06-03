@@ -1,64 +1,112 @@
-# 角色驱动通知系统
+# 角色驱动通知系统 v2
 
-## 架构
+## 架构升级
 
 ```
-notification_dispatcher.py (no_agent脚本)
-    ├── origin   → 始祖舰队巡检 (每2h, 异常才通知)
-    ├── health   → 全局健康巡检 (每30m, 异常才通知)
-    └── (LLM驱动) PM 晨/暮报 (每天9:00 + 21:00, 必须通知)
+v1 (旧)                          v2 (新)
+══════════                       ═══════════
+硬编码 ROLES 字典                notification_config.json ← 控制中心
+notify_*() 固定格式              templates/<role>.md     ← 独立模板
+无激活/暂停                      白名单/黑名单/全开/全关
+无 Profile 感知                  读取 SOUL.md 注入角色个性
+无聚合                           始祖可汇总子角色快照
 ```
 
-## 角色-关注点矩阵
+## 文件清单
 
-| 角色 | Emoji | Profile | 关注点 | 通知策略 |
-|:--|:--|:--|:--|:--|
-| 始祖Agent | ⚓ | default | 舰队总览/战略里程碑/跨项目阻塞/资源分配 | 每2h巡检, 正常不通知 |
-| 项目PM | 🎯 | yuji-pm, architect | 任务进度/阻塞项/燃尽率/Sprint状态 | 每天9:00+21:00, 必须通知 |
-| 技术专项 | 🔧 | ai-algorithm, ai-vision, frontend-dev, ops-engineer | 构建/测试/部署/API健康 | 每天9:00摘要, 异常实时告警 |
-| 商业/内容 | 📊 | content-marketing, fundraising-pitch | 用户增长/转化/内容计划/融资 | 每周一10:00, 有变更才通知 |
-| 运维/安全 | 🛡️ | ops-engineer, security-compliance | 服务器/安全漏洞/备份/成本 | 每天9:00摘要, 异常实时告警 |
+```
+~/.hermes/scripts/
+├── notification_config.json      ← 控制中心 (改完即时生效)
+├── notification_dispatcher.py    ← v2 引擎
+└── templates/
+    ├── origin.md                 ← 始祖格式
+    ├── pm.md                     ← PM格式
+    ├── tech.md                   ← 技术格式
+    ├── biz.md                    ← 商业格式
+    └── ops.md                    ← 运维格式
 
-## Cron 清单
+~/.hermes/notification_state/
+└── <role>.json                   ← 自动生成的状态文件
+```
 
-| ID | 名称 | 角色 | 频率 | 模式 |
-|:--|:--|:--|:--|:--|
-| 9762e4ee746b | ⚓ 始祖舰队巡检 | origin | 每2h | no_agent |
-| 164c020654bd | 🛡️ 健康巡检 | health | 每30m | no_agent |
-| a5981094038f | AutoDL 隧道健康监控 | health | 每2m | no_agent |
-| 724b352db633 | 🎯 羽球宝PM日报(晨) | pm | 每天9:00 | LLM |
-| 3d8d64605b92 | 🎯 羽球宝PM日报(暮) | pm | 每天21:00 | LLM |
-| 3cd6b26ea9df | apex-bridge-sync | sync | 每5m | LLM→local |
+## 操作手册
 
-## 静默规则
-
-- **始祖巡检**: 所有服务🟢 + 无Cron异常 → 4小时内不重复通知
-- **健康巡检**: 全部服务🟢 → 不通知; 断开 → 10分钟冷却
-- **AutoDL监控**: 同状态300秒冷却; 恢复立即通知
-- **PM日报**: 永远通知 (每天不打扰)
-- **Bridge同步**: local模式 (不推送微信)
-
-## 调整方法
-
+### 查看角色矩阵
 ```bash
-# 查看所有cron
-hermes cron list
-
-# 修改频率
-hermes cron edit <id>    # 交互式修改 schedule
-
-# 修改角色通知规则
-vi ~/.hermes/scripts/notification_dispatcher.py
-# 编辑 ROLES 字典中的 silence_rule / cadence
-
-# 添加新角色
-# 在 ROLES 中定义, 在脚本尾部添加 notify_xxx() 函数
-# 然后 hermes cron create ... --script notification_dispatcher.py xxx
+cd ~/.hermes/scripts && python3 notification_dispatcher.py roles
 ```
 
-## 已删除的旧Job
+输出:
+```
+  始祖Agent      ⚓      default                        ✅  🔗聚合
+  项目PM         🎯      yuji-pm, architect             ✅
+  技术专项       🔧      ai-algorithm, ...              ⭕  🔗聚合
+  商业/内容      📊      content-marketing, ...         ⭕
+  运维/安全      🛡️     ops-engineer, security          ⭕
+```
 
-| ID | 名称 | 原因 |
-|:--|:--|:--|
-| eaf1eb1033a1 | autodl-complete-and-report | prompt中含明文密码 |
-| d99c98baf69c | autodl-batch-progress | prompt中含明文密码 |
+### 切换角色激活
+
+编辑 `notification_config.json` → `control` 部分:
+
+```json
+{
+  "control": {
+    "mode": "whitelist",
+    "active_roles": ["origin", "pm", "health"],
+    "paused_roles": ["tech", "biz", "ops"]
+  }
+}
+```
+
+四种模式:
+- `whitelist` — 仅 `active_roles` 生效
+- `blacklist` — 除 `paused_roles` 外全开
+- `all` — 全部角色
+- `off` — 全部关闭
+
+### 修改模板
+
+编辑 `templates/<role>.md`，支持:
+- `{{var}}` — 变量替换
+- `[?cond:text?]` — 条件渲染
+- `{{#each list}}...{{/each}}` — 循环
+
+### 手动触发测试
+```bash
+python3 notification_dispatcher.py origin    # 始祖
+python3 notification_dispatcher.py pm        # PM
+python3 notification_dispatcher.py tech      # 技术
+python3 notification_dispatcher.py biz       # 商业
+python3 notification_dispatcher.py ops       # 运维
+python3 notification_dispatcher.py health    # 健康巡检
+python3 notification_dispatcher.py all       # 全部
+```
+
+### Cron 清单
+
+| Job ID | 名称 | 频率 | 模式 |
+|:--|:--|:--|:--|
+| 9762e4ee746b | ⚓ 始祖舰队巡检 | 每120m | no_agent |
+| 164c020654bd | 🛡️ 健康巡检 | 每30m | no_agent |
+| 724b352db633 | 🎯 PM日报(晨) | 每天9:00 | LLM |
+| 3d8d64605b92 | 🎯 PM日报(暮) | 每天21:00 | LLM |
+| a5981094038f | AutoDL 隧道监控 | 每2m | no_agent |
+| 02bf73371e3f | 🎭 角色矩阵状态 | 每周一10:00 | LLM |
+
+## 角色-Profile 绑定
+
+| 角色 | emoji | 关联 Profile | 激活 |
+|:--|:--|:--|:--|
+| 始祖Agent | ⚓ | default | ✅ |
+| 项目PM | 🎯 | yuji-pm, architect | ✅ |
+| 技术专项 | 🔧 | ai-algorithm, ai-vision, frontend-dev, ops-engineer | ⭕ |
+| 商业/内容 | 📊 | content-marketing, fundraising-pitch | ⭕ |
+| 运维/安全 | 🛡️ | ops-engineer, security-compliance | ⭕ |
+
+## 通知策略
+
+- **恶化(🟢→🔴)** — 立即通知，跳过冷却
+- **恢复(🔴→🟢)** — 立即通知
+- **稳定正常** — 冷却期内不重复 (默认4h)
+- **稳定异常** — 冷却期内不重复 (默认10min)

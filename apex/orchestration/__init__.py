@@ -29,6 +29,10 @@ try:
     from .autonomous import AutonomousEngine, get_engine, AutonomousReport
 except ImportError:
     pass
+try:
+    from .authorization import AuthorizationEngine, get_engine as get_auth_engine
+except ImportError:
+    pass
 
 __all__ = [
     "Swarm", "SwarmResult",
@@ -40,4 +44,5 @@ __all__ = [
     "Router", "RouterResult",
     "Supervisor", "SupervisorResult",
     "Monitor", "MonitorResult",
+    "AuthorizationEngine",
 ]

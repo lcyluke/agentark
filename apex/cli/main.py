@@ -775,3 +775,143 @@ def help_approve(request_id: str, agent: str, notes: str):
 def help_list(status: str):
     """📋 List help requests"""
     task_cmds.help_list_cmd(status or "")
+
+
+# ─── hermes integration commands ───
+@cli.group()
+def hermes():
+    """🤖 Hermes Integration — Manage & launch Hermes agent profiles"""
+    pass
+
+@hermes.command(name="start")
+@click.argument("profile_name")
+@click.option("--query", "-q", default="", help="Initial query (non-interactive)")
+def hermes_start(profile_name: str, query: str):
+    """Launch Hermes with a specific agent profile
+    
+    Opens a new Hermes chat session with the given profile's 
+    role, personality, and capabilities pre-configured.
+    The terminal will show the agent's role name, not 'Hermes'.
+    """
+    from apex.interface.hermes_sync import start_hermes_profile
+    start_hermes_profile(profile_name, query)
+
+@hermes.command(name="profiles")
+def hermes_profiles():
+    """List all Hermes profiles"""
+    from apex.interface.hermes_sync import list_hermes_profiles
+    from rich.console import Console
+    from rich.table import Table
+    console = Console()
+    profiles = list_hermes_profiles()
+    if not profiles:
+        console.print("[yellow]No Hermes profiles found[/]")
+        return
+    table = Table(title="🤖 Hermes Profiles", box=None)
+    table.add_column("Profile", style="cyan")
+    table.add_column("Role", style="white")
+    table.add_column("Config", style="green")
+    table.add_column("SOUL.md", style="green")
+    table.add_column("Wrapper", style="green")
+    for p in profiles:
+        table.add_row(
+            p["name"],
+            p.get("title", "—")[:30],
+            "✅" if p["has_config"] else "❌",
+            "✅" if p["has_soul"] else "❌",
+            "✅" if p["has_wrapper"] else "❌",
+        )
+    console.print(table)
+
+
+# ─── team template commands ───
+@team.command(name="sync")
+@click.argument("profile_name")
+@click.option("--hermes-name", help="Name for the Hermes profile (default: same)")
+@click.option("--display", help="Display name in SOUL.md")
+def team_sync(profile_name: str, hermes_name: str, display: str):
+    """Sync an Apex profile to a Hermes profile (config + SOUL.md + wrapper)"""
+    from apex.interface.hermes_sync import sync_profile_to_hermes
+    from rich.console import Console
+    from rich.panel import Panel
+    console = Console()
+    result = sync_profile_to_hermes(
+        profile_name,
+        hermes_profile_name=hermes_name,
+        hermes_display_name=display,
+    )
+    console.print(Panel(
+        f"[bold]✅ Synced: {result['profile_name']}[/]\n"
+        f"Role: {result['display_name']}\n"
+        f"SOUL.md: {result['soul_file']}\n"
+        f"Wrapper: [green]{result['wrapper_path']}[/]\n\n"
+        f"Run: [bold cyan]{result['profile_name']} chat[/]",
+        title="🤖 → Hermes Profile", border_style="green",
+    ))
+
+@team.command(name="sync-all")
+def team_sync_all():
+    """Sync all Apex profiles to Hermes"""
+    from apex.interface.hermes_sync import sync_all_profiles
+    from rich.console import Console
+    from rich.table import Table
+    console = Console()
+    results = sync_all_profiles()
+    table = Table(title="📋 Profile Sync Results", box=None)
+    table.add_column("Profile", style="cyan")
+    table.add_column("Status", style="green")
+    for r in results:
+        status = r.get("error", "✅")
+        table.add_row(r["profile_name"], status)
+    console.print(table)
+
+@team.command(name="template")
+@click.argument("template_name")
+@click.option("--setup-script", is_flag=True, help="Generate setup shell script")
+def team_template(template_name: str, setup_script: bool):
+    """Create a full agent team from a template
+    
+    Templates: webapp, content, data, startup, research
+    """
+    from apex.interface.hermes_sync import create_team_from_template, get_team_setup_script, TEAM_TEMPLATES
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich.table import Table
+    console = Console()
+
+    if template_name == "list":
+        table = Table(title="📋 Available Team Templates", box=None)
+        table.add_column("Template", style="cyan")
+        table.add_column("Name", style="white")
+        table.add_column("Description", style="dim")
+        table.add_column("Roles", style="green")
+        for name, tmpl in TEAM_TEMPLATES.items():
+            table.add_row(name, tmpl["name"], tmpl["description"][:50], ", ".join(tmpl["profiles"]))
+        console.print(table)
+        return
+
+    if setup_script:
+        script = get_team_setup_script(template_name, template_name)
+        console.print(script)
+        return
+
+    try:
+        team = create_team_from_template(template_name)
+        console.print(Panel(
+            f"[bold]✅ Team Created: {team['name']}[/]\n"
+            f"Template: {team['template']}\n"
+            f"Agents: {team['total']}",
+            title="🚀 Team Ready", border_style="green",
+        ))
+        table = Table(box=None)
+        table.add_column("Profile", style="cyan")
+        table.add_column("Role", style="white")
+        table.add_column("Wrapper", style="green")
+        for p in team["profiles"]:
+            table.add_row(p["profile_name"], p["display_name"], p["wrapper_path"])
+        console.print(table)
+        console.print("\n[bold]Open terminals and run:[/]")
+        for p in team["profiles"]:
+            console.print(f"  [cyan]{p['profile_name']} chat[/]  # {p['display_name']}")
+    except ValueError as e:
+        console.print(f"[red]❌ {e}[/]")

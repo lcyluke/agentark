@@ -228,14 +228,74 @@ def get_hermes_profile_status() -> list[dict]:
 # GPU / Monitor Data
 # ══════════════════════════════════════════
 
+AUTODL_INSTANCES = [
+    {"id": "cabf47a278", "name": "GPU-1 (cabf47a278)", "host": "connect.bjb2.seetacloud.com", "port": 32581, "user": "root"},
+    {"id": "cac99c71", "name": "GPU-2 (cac99c71)", "host": "connect.bjb2.seetacloud.com", "port": 32581, "user": "root"},
+]
+
+def get_gpu_instances_status() -> dict:
+    """Get status for all AutoDL GPU instances"""
+    instances = []
+    for inst in AUTODL_INSTANCES:
+        status = _check_instance_ssh(inst)
+        instances.append(status)
+    
+    online = [i for i in instances if i.get("online")]
+    offline = [i for i in instances if not i.get("online")]
+    
+    return {
+        "total": len(instances),
+        "online": len(online),
+        "offline": len(offline),
+        "instances": instances,
+    }
+
+def _check_instance_ssh(inst: dict) -> dict:
+    """Check a single AutoDL instance via SSH"""
+    try:
+        import subprocess
+        result = subprocess.run([
+            "ssh", "-o", "StrictHostKeyChecking=no",
+            "-o", "ConnectTimeout=5",
+            "-p", str(inst["port"]),
+            f"{inst['user']}@{inst['host']}",
+            "nvidia-smi --query-gpu=name,utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv,noheader 2>/dev/null && echo '---' && uptime -p"
+        ], capture_output=True, text=True, timeout=10)
+        
+        if result.returncode == 0 and result.stdout.strip():
+            lines = result.stdout.strip().split("\n")
+            gpu_line = lines[0] if lines else ""
+            uptime_line = lines[-1] if "---" in result.stdout else ""
+            
+            parts = gpu_line.split(",")
+            return {
+                "id": inst["id"],
+                "name": inst["name"],
+                "online": True,
+                "gpu_name": parts[0].strip() if len(parts) > 0 else "unknown",
+                "utilization": float(parts[1].strip().replace("%","")) if len(parts) > 1 else 0,
+                "memory_used": parts[2].strip() if len(parts) > 2 else "0",
+                "memory_total": parts[3].strip() if len(parts) > 3 else "0",
+                "temperature": float(parts[4].strip()) if len(parts) > 4 else 0,
+                "uptime": uptime_line.replace("---", "").replace("uptime", "").strip(),
+            }
+        else:
+            return {"id": inst["id"], "name": inst["name"], "online": False, "error": result.stderr.strip()[:100] if result.stderr else "Connection refused"}
+    except Exception as e:
+        return {"id": inst["id"], "name": inst["name"], "online": False, "error": str(e)[:100]}
+
+
 def get_gpu_status() -> dict:
-    """Get GPU status from monitor.db"""
+    """Get GPU status from monitor.db + AutoDL instances"""
+    instances = get_gpu_instances_status()
+    
+    # Also try monitor.db for historical data
     if not MONITOR_DB.exists():
-        return {"status": "offline", "reason": "monitor.db not found", "has_data": False}
+        return {**instances, "monitor_db": False, "has_history": False}
     
     conn = sqlite3.connect(str(MONITOR_DB))
     try:
-        # Latest GPU metrics
+        # Latest GPU metrics from DB
         latest = conn.execute("""
             SELECT timestamp, gpu_name, utilization_gpu, utilization_memory,
                    memory_used_mb, memory_total_mb, temperature_gpu, power_draw
@@ -274,6 +334,11 @@ def get_gpu_status() -> dict:
         return {
             "status": "online" if latest else "no_recent_data",
             "has_data": latest is not None,
+            "monitor_db": True,
+            "has_history": True,
+            "instances": instances["instances"],
+            "instances_online": instances["online"],
+            "instances_offline": instances["offline"],
             "latest": {
                 "timestamp": latest[0],
                 "gpu_name": latest[1],

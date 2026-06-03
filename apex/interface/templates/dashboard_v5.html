@@ -1638,7 +1638,7 @@ async function showFleetProfileDetail(name){
   fleetSelectedProfile=name;
   const detail=$('fleetProfileDetail');
   detail.style.display='block';
-  detail.innerHTML='<div class=\"loading-pulse\"><span class=\"pulse-dot\"></span><span class=\"pulse-dot\"></span><span class=\"pulse-dot\"></span> Loading '+escapeHtml(name)+'...</div>';
+  detail.innerHTML='<div class="loading-pulse"><span class="pulse-dot"></span><span class="pulse-dot"></span><span class="pulse-dot"></span> Loading '+escapeHtml(name)+'...</div>';
 
   try{
     const r=await fetch('/api/fleet/profiles/'+encodeURIComponent(name));
@@ -1651,35 +1651,35 @@ async function showFleetProfileDetail(name){
     const model=data.model||(config.model||'deepseek-v4-pro');
 
     detail.innerHTML=
-      '<div class=\"fleet-detail-header\">'+
-        '<div class=\"fdh-title\">⚓ '+escapeHtml(name)+'</div>'+
-        '<button class=\"fleet-btn ghost sm\" onclick=\"document.getElementById(\\'fleetProfileDetail\\').style.display=\\'none\\';fleetSelectedProfile=null\">✕ Close</button>'+
+      '<div class="fleet-detail-header">'+
+        '<div class="fdh-title">⚓ '+escapeHtml(name)+'</div>'+
+        '<button class="fleet-btn ghost sm" onclick="document.getElementById(\'fleetProfileDetail\').style.display=\'none\';fleetSelectedProfile=null">✕ Close</button>'+
       '</div>'+
-      '<div class=\"fleet-form-group\">'+
+      '<div class="fleet-form-group">'+
         '<label>📝 SOUL.md</label>'+
-        '<textarea id=\"fleetSoulTextarea\" rows=\"10\">'+escapeHtml(soulsRaw)+'</textarea>'+
+        '<textarea id="fleetSoulTextarea" rows="10">'+escapeHtml(soulsRaw)+'</textarea>'+
       '</div>'+
-      '<div class=\"fleet-form-group\">'+
+      '<div class="fleet-form-group">'+
         '<label>🤖 Model</label>'+
-        '<select id=\"fleetModelSelect\">'+
-          '<option value=\"deepseek-v4-pro\"'+(model==='deepseek-v4-pro'?' selected':'')+'>DeepSeek V4 Pro</option>'+
-          '<option value=\"deepseek-chat\"'+(model==='deepseek-chat'?' selected':'')+'>DeepSeek Chat</option>'+
-          '<option value=\"deepseek-reasoner\"'+(model==='deepseek-reasoner'?' selected':'')+'>DeepSeek Reasoner</option>'+
-          '<option value=\"gpt-4o\"'+(model==='gpt-4o'?' selected':'')+'>GPT-4o</option>'+
-          '<option value=\"claude-3-opus\"'+(model==='claude-3-opus'?' selected':'')+'>Claude 3 Opus</option>'+
-          '<option value=\"gemini-pro\"'+(model==='gemini-pro'?' selected':'')+'>Gemini Pro</option>'+
+        '<select id="fleetModelSelect">'+
+          '<option value="deepseek-v4-pro"'+(model==='deepseek-v4-pro'?' selected':'')+'>DeepSeek V4 Pro</option>'+
+          '<option value="deepseek-chat"'+(model==='deepseek-chat'?' selected':'')+'>DeepSeek Chat</option>'+
+          '<option value="deepseek-reasoner"'+(model==='deepseek-reasoner'?' selected':'')+'>DeepSeek Reasoner</option>'+
+          '<option value="gpt-4o"'+(model==='gpt-4o'?' selected':'')+'>GPT-4o</option>'+
+          '<option value="claude-3-opus"'+(model==='claude-3-opus'?' selected':'')+'>Claude 3 Opus</option>'+
+          '<option value="gemini-pro"'+(model==='gemini-pro'?' selected':'')+'>Gemini Pro</option>'+
         '</select>'+
       '</div>'+
-      '<div class=\"fleet-form-group\">'+
+      '<div class="fleet-form-group">'+
         '<label>⚙️ config.yaml</label>'+
-        '<textarea id=\"fleetConfigTextarea\" rows=\"8\">'+escapeHtml(configYaml)+'</textarea>'+
+        '<textarea id="fleetConfigTextarea" rows="8">'+escapeHtml(configYaml)+'</textarea>'+
       '</div>'+
-      '<div style=\"display:flex;gap:8px;margin-top:4px\">'+
-        '<button class=\"fleet-btn primary\" onclick=\"saveFleetProfile(\\''+escapeHtml(name)+'\\')\">💾 Save Profile</button>'+
-        '<button class=\"fleet-btn ghost\" onclick=\"document.getElementById(\\'fleetProfileDetail\\').style.display=\\'none\\';fleetSelectedProfile=null\">Cancel</button>'+
+      '<div style="display:flex;gap:8px;margin-top:4px">'+
+        '<button class="fleet-btn primary" onclick="saveFleetProfile(\''+escapeHtml(name)+'\')">💾 Save Profile</button>'+
+        '<button class="fleet-btn ghost" onclick="document.getElementById(\'fleetProfileDetail\').style.display=\'none\';fleetSelectedProfile=null">Cancel</button>'+
       '</div>';
   }catch(e){
-    detail.innerHTML='<div class=\"empty-state\" style=\"color:var(--red)\">Failed to load profile: '+escapeHtml(e.message)+'</div>';
+    detail.innerHTML='<div class="empty-state" style="color:var(--red)">Failed to load profile: '+escapeHtml(e.message)+'</div>';
   }
 }
 
@@ -1742,7 +1742,7 @@ async function showFleetTeamDetail(name,team){
   fleetSelectedTeam=name;
   const detail=$('fleetTeamDetail');
   detail.style.display='block';
-  detail.innerHTML='<div class=\"loading-pulse\"><span class=\"pulse-dot\"></span><span class=\"pulse-dot\"></span><span class=\"pulse-dot\"></span> Loading team '+escapeHtml(name)+'...</div>';
+  detail.innerHTML='<div class="loading-pulse"><span class="pulse-dot"></span><span class="pulse-dot"></span><span class="pulse-dot"></span> Loading team '+escapeHtml(name)+'...</div>';
 
   try{
     const r=await fetch('/api/fleet/teams/'+encodeURIComponent(name));
@@ -1754,16 +1754,16 @@ async function showFleetTeamDetail(name,team){
 
     let membersHTML='';
     if(!members.length){
-      membersHTML='<div class=\"empty-state\">No members in this team</div>';
+      membersHTML='<div class="empty-state">No members in this team</div>';
     }else{
       membersHTML=members.map((m,i)=>{
         const agentId=m.agent_id||m.name||'Agent';
         const role=m.role||'member';
-        return '<div class=\"fleet-member-row\">'+
-          '<span style=\"font-size:14px\">🤖</span>'+
-          '<span class=\"fm-agent\">'+escapeHtml(agentId)+'</span>'+
-          '<span class=\"fm-role\">'+escapeHtml(role)+'</span>'+
-          '<button class=\"fleet-btn danger sm\" onclick=\"removeTeamMember(\\''+escapeHtml(name)+'\\',\\''+escapeHtml(agentId)+'\\')\">✕</button>'+
+        return '<div class="fleet-member-row">'+
+          '<span style="font-size:14px">🤖</span>'+
+          '<span class="fm-agent">'+escapeHtml(agentId)+'</span>'+
+          '<span class="fm-role">'+escapeHtml(role)+'</span>'+
+          '<button class="fleet-btn danger sm" onclick="removeTeamMember(\''+escapeHtml(name)+'\',\''+escapeHtml(agentId)+'\')">✕</button>'+
         '</div>';
       }).join('');
     }
@@ -1771,35 +1771,35 @@ async function showFleetTeamDetail(name,team){
     // Get profile names for dropdown
     const cc=state.commandCenter||{};
     const hp=cc.hermes_profiles||[];
-    const profileOpts=hp.map(p=>'<option value=\"'+escapeHtml(p.name)+'\">'+escapeHtml(p.name)+'</option>').join('');
+    const profileOpts=hp.map(p=>'<option value="'+escapeHtml(p.name)+'">'+escapeHtml(p.name)+'</option>').join('');
 
     detail.innerHTML=
-      '<div class=\"fleet-detail-header\">'+
-        '<div class=\"fdh-title\">👥 '+escapeHtml(name)+'</div>'+
-        '<div style=\"display:flex;gap:6px\">'+
-          '<button class=\"fleet-btn danger sm\" onclick=\"if(confirm(\\'Delete team '+escapeHtml(name)+'?\\'))deleteFleetTeam(\\''+escapeHtml(name)+'\\')\">🗑 Delete</button>'+
-          '<button class=\"fleet-btn ghost sm\" onclick=\"document.getElementById(\\'fleetTeamDetail\\').style.display=\\'none\\';fleetSelectedTeam=null\">✕ Close</button>'+
+      '<div class="fleet-detail-header">'+
+        '<div class="fdh-title">👥 '+escapeHtml(name)+'</div>'+
+        '<div style="display:flex;gap:6px">'+
+          '<button class="fleet-btn danger sm" onclick="if(confirm(\'Delete team '+escapeHtml(name)+'?\'))deleteFleetTeam(\''+escapeHtml(name)+'\')">🗑 Delete</button>'+
+          '<button class="fleet-btn ghost sm" onclick="document.getElementById(\'fleetTeamDetail\').style.display=\'none\';fleetSelectedTeam=null">✕ Close</button>'+
         '</div>'+
       '</div>'+
-      '<div style=\"font-size:11px;color:var(--text-muted);margin-bottom:8px\">'+
-        '<span>📁 Project: <strong style=\"color:var(--text-primary)\">'+escapeHtml(project||'--')+'</strong></span>'+
+      '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">'+
+        '<span>📁 Project: <strong style="color:var(--text-primary)">'+escapeHtml(project||'--')+'</strong></span>'+
         ' &nbsp;|&nbsp; <span>📝 '+escapeHtml(desc||'No description')+'</span>'+
       '</div>'+
-      '<div class=\"section-title\" style=\"margin-top:8px\">Team Members <small>('+members.length+')</small></div>'+
-      '<div id=\"fleetTeamMembersList\">'+membersHTML+'</div>'+
-      '<div style=\"display:flex;gap:8px;align-items:flex-end;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)\">'+
-        '<div class=\"fleet-form-group\" style=\"flex:1;margin-bottom:0\">'+
+      '<div class="section-title" style="margin-top:8px">Team Members <small>('+members.length+')</small></div>'+
+      '<div id="fleetTeamMembersList">'+membersHTML+'</div>'+
+      '<div style="display:flex;gap:8px;align-items:flex-end;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">'+
+        '<div class="fleet-form-group" style="flex:1;margin-bottom:0">'+
           '<label>Add Agent</label>'+
-          '<select id=\"fleetAddAgentSelect\"><option value=\"\">-- Select agent --</option>'+profileOpts+'</select>'+
+          '<select id="fleetAddAgentSelect"><option value="">-- Select agent --</option>'+profileOpts+'</select>'+
         '</div>'+
-        '<div class=\"fleet-form-group\" style=\"width:120px;margin-bottom:0\">'+
+        '<div class="fleet-form-group" style="width:120px;margin-bottom:0">'+
           '<label>Role</label>'+
-          '<input id=\"fleetAddAgentRole\" placeholder=\"e.g. developer\" value=\"agent\">'+
+          '<input id="fleetAddAgentRole" placeholder="e.g. developer" value="agent">'+
         '</div>'+
-        '<button class=\"fleet-btn primary\" onclick=\"addTeamMember(\\''+escapeHtml(name)+'\\')\" style=\"margin-bottom:0\">+ Add</button>'+
+        '<button class="fleet-btn primary" onclick="addTeamMember(\''+escapeHtml(name)+'\')" style="margin-bottom:0">+ Add</button>'+
       '</div>';
   }catch(e){
-    detail.innerHTML='<div class=\"empty-state\" style=\"color:var(--red)\">Failed to load team: '+escapeHtml(e.message)+'</div>';
+    detail.innerHTML='<div class="empty-state" style="color:var(--red)">Failed to load team: '+escapeHtml(e.message)+'</div>';
   }
 }
 
@@ -1902,7 +1902,7 @@ function renderFleetOrgChart(profiles,teams){
   teamEntries.forEach(([teamName,team],ti)=>{
     const cx=spacingX*(ti+1);
     const color=colors[ti%colors.length];
-    legendParts.push('<span style=\"color:'+color+'\">● '+escapeHtml(teamName)+'</span>');
+    legendParts.push('<span style="color:'+color+'">● '+escapeHtml(teamName)+'</span>');
 
     // Team node
     const teamR=22;
