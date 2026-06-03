@@ -99,6 +99,11 @@ def create_app():
     def logs_page():
         return render_template("dashboard.html", page="logs")
 
+    @app.route("/cc")
+    def command_center_page():
+        """🎛️ Apex Command Center — 多Agent指挥中心"""
+        return render_template("command_center.html")
+
     @app.route("/auth")
     def auth_page():
         """🏛️ Authorization Management Dashboard — 审批/记录/审计可视化"""
@@ -1549,6 +1554,46 @@ def create_app():
                 solved_by=data.get("solved_by", "unknown"),
                 tags=data.get("tags", []),
             ))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    # ══════════════════════════════════════════
+    # Live Status — Real-time Hermes/Project sync
+    # ══════════════════════════════════════════
+
+    @app.route("/api/live/runtime")
+    def api_live_runtime():
+        """Hermes runtime: active sessions, running processes"""
+        try:
+            from apex.interface.live_status import get_hermes_runtime
+            return jsonify(get_hermes_runtime())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/live/projects")
+    def api_live_projects():
+        """Auto-discovered projects from task titles"""
+        try:
+            from apex.interface.live_status import list_projects
+            return jsonify(list_projects())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/live/project/<project>")
+    def api_live_project_dashboard(project: str):
+        """Per-project dashboard: tasks, agents, workload, standup"""
+        try:
+            from apex.interface.live_status import get_project_dashboard
+            return jsonify(get_project_dashboard(project))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/live/standup/<task_id>")
+    def api_live_task_standup(task_id: str):
+        """Standup report when a task completes"""
+        try:
+            from apex.interface.live_status import generate_task_completion_standup
+            return jsonify(generate_task_completion_standup(task_id))
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
