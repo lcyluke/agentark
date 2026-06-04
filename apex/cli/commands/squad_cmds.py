@@ -13,13 +13,11 @@ import subprocess
 import time
 from pathlib import Path
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 from rich import box
-from rich.layout import Layout
-from rich.live import Live
 
-from apex.interface.agent_monitor import get_monitor, AgentState
+from apex.interface.agent_monitor import get_monitor
 
 console = Console()
 
@@ -101,35 +99,43 @@ def status_cmd():
     monitor = get_monitor()
     snapshot = monitor.snapshot(force_refresh=True)
 
+    console.print()
     console.print(Panel(
-        f"[bold]👥 DEV SQUAD — 11 Agents, Superpowers Methodology[/]",
+        "[bold cyan]👥 DEV SQUAD[/]  [bold white]— 11 Agents[/]  [dim]Superpowers Methodology[/]",
         border_style="cyan",
     ))
     console.print()
 
-    # Methodology chain header
-    chain_str = " → ".join(
-        f"{e}[bold]{n}[/]"
-        for e, n in zip(METHODOLOGY_CHAIN_EMOJI, METHODOLOGY_CHAIN_NAMES)
-    )
-    console.print(f"  [dim]Methodology Chain:[/]  {chain_str}")
+    # Methodology chain — single line
+    chain_parts = []
+    for e, n in zip(METHODOLOGY_CHAIN_EMOJI, METHODOLOGY_CHAIN_NAMES):
+        chain_parts.append(f"{e}[dim]{n}[/]")
+    chain_str = " \u2192  ".join(chain_parts)
+    console.print(f"  {chain_str}")
     console.print()
 
-    table = Table(border_style="cyan", box=box.ROUNDED, header_style="bold")
-    table.add_column("", width=3)
-    table.add_column("Agent", no_wrap=True)
-    table.add_column("Role")
-    table.add_column("State", width=10)
-    table.add_column("PID", justify="right")
-    table.add_column("Skills", justify="center")
-    table.add_column("Highest Skill")
-    table.add_column("Done", justify="right")
-    table.add_column("Action")
+    # ── Agent Table ──
+    table = Table(
+        border_style="blue",
+        header_style="bold cyan",
+        show_header=True,
+        box=box.SQUARE,
+        title="",
+    )
+    table.add_column("", width=4)
+    table.add_column("Agent", min_width=22, max_width=22, no_wrap=True)
+    table.add_column("Role", min_width=18, max_width=18, no_wrap=True)
+    table.add_column("State", width=10, justify="center")
+    table.add_column("PID", width=6, justify="right")
+    table.add_column("Skills", width=6, justify="center")
+    table.add_column("Lvl", width=4, justify="center")
+    table.add_column("Done", width=4, justify="right")
+    table.add_column("Command", min_width=15, max_width=18, no_wrap=True)
 
     for agent_name, info in DEV_SQUAD.items():
         agent = snapshot.agents.get(agent_name)
 
-        # Check if process is running
+        # Check if running
         pid = ""
         running = False
         try:
@@ -144,29 +150,39 @@ def status_cmd():
         except Exception:
             pass
 
-        state_emoji = "🟢" if running else ("🟡" if agent and agent.state in (AgentState.WAITING, AgentState.IDLE) else "⚪")
-        state_label = "在线" if running else ("待启动" if agent else "离线")
-
-        skill_highest = agent.highest_skill_level if agent else "—"
-        skill_count = str(agent.skill_count) if agent and agent.skill_count > 0 else "—"
-        completed = str(agent.work_stats.total_completed) if agent and agent.work_stats.total_completed else "0"
-
-        action_hint = f"[dim]{agent_name}[/]" if not running else f"[green]✓[/]"
+        state_str = f"[green]● 在线[/]" if running else f"[dim]○ 待启动[/]"
+        pid_str = f"[dim]{pid}[/]" if pid else "[dim]—[/]"
+        skill_str = f"{agent.skill_count}" if agent and agent.skill_count else "[dim]0[/]"
+        lvl_str = agent.highest_skill_level if agent else "[dim]—[/]"
+        done_str = str(agent.work_stats.total_completed) if agent and agent.work_stats.total_completed else "0"
+        cmd_short = {
+            "frontend-dev": "fe-dev",
+            "backend-dev": "be-dev",
+            "fullstack-dev": "fs-dev",
+            "architect": "arch",
+            "devops": "devops",
+            "vulnerability-scanner": "vuln-scan",
+            "penetration-tester": "pentest",
+            "security-by-design": "sec-design",
+            "project-manager": "pm",
+            "qa-engineer": "qa",
+            "requirements-analyst": "req-analyst",
+        }.get(agent_name, agent_name[:12])
+        cmd_str = f"[dim]{cmd_short} chat[/]" if not running else f"[green]{cmd_short} chat[/]"
 
         table.add_row(
             info["emoji"],
             f"[{info['color']}]{agent_name}[/]",
-            info["title"],
-            f"{state_emoji} {state_label}",
-            pid or "—",
-            skill_count if skill_count != "—" else "[dim]—[/]",
-            skill_highest,
-            completed,
-            action_hint,
+            f"[white]{info['title']}[/]",
+            state_str,
+            pid_str,
+            skill_str,
+            lvl_str,
+            done_str,
+            cmd_str,
         )
 
     console.print(table)
-    console.print()
 
     # Methodology readiness per agent
     console.print("[bold]📋 Methodology Chain Readiness[/]")

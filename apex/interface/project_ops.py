@@ -113,27 +113,52 @@ def get_agent_workloads() -> dict:
 
 # Agent skill profiles for matching
 AGENT_SKILLS = {
-    "default": ["general", "coordination", "documentation"],
-    "frontend-dev": ["react", "vue", "wechat-miniprogram", "html", "css", "javascript"],
-    "architect": ["system-design", "api-design", "database-schema", "architecture"],
-    "devops": ["ci-cd", "docker", "kubernetes", "monitoring", "deployment"],
-    "ai-algorithm": ["machine-learning", "deep-learning", "data-analysis", "python"],
-    "ai-vision": ["computer-vision", "image-processing", "mediapipe", "opencv"],
-    "ops-engineer": ["linux", "nginx", "ssl", "backup", "security"],
-    "content-marketing": ["copywriting", "seo", "social-media", "blogging"],
-    "security-compliance": ["security-audit", "compliance", "gdpr", "privacy"],
-    "fundraising-pitch": ["pitch-deck", "financial-model", "investor-relations"],
-    "yuji-pm": ["project-management", "prd", "sprint-planning", "stakeholder"],
+    # ── 开发线 ──
+    "default": ["general", "coordination", "documentation", "orchestration"],
+    "frontend-dev": ["react", "vue", "wechat-miniprogram", "html", "css", "javascript", "ui-ux"],
+    "backend-dev": ["fastapi", "python", "database", "api", "microservices"],
+    "fullstack-dev": ["react", "fastapi", "python", "fullstack", "deployment"],
+    "architect": ["system-design", "api-design", "database-schema", "architecture", "scalability"],
+    "devops": ["ci-cd", "docker", "kubernetes", "monitoring", "deployment", "infrastructure"],
+    "ops-engineer": ["linux", "nginx", "ssl", "backup", "ssh", "auto-shutdown"],
+    # ── AI线 ──
+    "ai-algorithm": ["machine-learning", "deep-learning", "data-analysis", "python", "recommendation"],
+    "ai-vision": ["computer-vision", "image-processing", "mediapipe", "opencv", "pose-estimation"],
+    # ── PM线 ──
+    "apex-pm": ["apex", "orchestration", "authorization", "dashboard", "kanban"],
+    "yuji-pm": ["project-management", "prd", "sprint-planning", "stakeholder", "badminton"],
+    "product-manager": ["product-strategy", "user-research", "roadmap", "mvp"],
+    "project-manager": ["project-management", "kanban", "sprint", "coordination"],
+    "requirements-analyst": ["requirements", "user-stories", "specification", "analysis"],
+    # ── 安全线 ──
+    "security-compliance": ["security-audit", "compliance", "gdpr", "privacy", "policy"],
+    "security-by-design": ["threat-modeling", "secure-design", "architecture-review"],
+    "vulnerability-scanner": ["vulnerability", "scanning", "cve", "dependency-check"],
+    "penetration-tester": ["penetration-testing", "exploit", "red-team", "owasp"],
+    "audit-guardian": ["audit", "hash-chain", "immutable-log", "verification"],
+    # ── 内容/商业线 ──
+    "content-marketing": ["copywriting", "seo", "social-media", "blogging", "branding"],
+    "editor": ["editing", "quality-assurance", "proofreading", "style-guide"],
+    "writer": ["writing", "content-creation", "storytelling", "blogging"],
+    "publisher": ["publishing", "formatting", "distribution", "cms"],
+    "fundraising-pitch": ["pitch-deck", "financial-model", "investor-relations", "valuation"],
+    # ── 质量线 ──
+    "qa-engineer": ["testing", "quality-assurance", "test-automation", "bug-tracking"],
+    "skill-evaluator": ["evaluation", "benchmark", "skill-assessment", "metrics"],
+    "test-agent": ["testing", "sandbox", "experiment", "validation"],
+    # ── 舰队管理线（监控Agent） ──
+    "fleet-commander": ["fleet", "monitoring", "dashboard", "coordination", "status"],
+    "gpu-sentinel": ["gpu", "nvidia-smi", "cost-tracking", "auto-shutdown", "ssh"],
+    "token-guardian": ["token", "cost", "budget", "usage-tracking", "optimization"],
+    "session-scout": ["session", "classification", "summarization", "discovery"],
+    "cron-medic": ["cron", "health-check", "scheduler", "failure-detection"],
+    "profile-syncer": ["profile", "sync", "gateway", "state", "mapping"],
+    # ── 项目模板 Agent ──
     "羽球宝AI_backend": ["fastapi", "python", "database", "api"],
     "羽球宝AI_frontend": ["wechat-miniprogram", "react", "ui-ux", "responsive"],
     "羽球宝AI_devops": ["ci-cd", "monitoring", "deployment", "auto-shutdown"],
     "羽球宝AI_content": ["copywriting", "video-editing", "social-media"],
     "羽球宝AI_pm": ["project-management", "product-strategy", "user-research"],
-    "test-company_backend": ["fastapi", "python", "database", "api"],
-    "test-company_frontend": ["react", "wechat-miniprogram", "ui-ux"],
-    "test-company_devops": ["ci-cd", "monitoring", "deployment"],
-    "test-company_content": ["copywriting", "seo", "content-strategy"],
-    "test-company_pm": ["project-management", "prd", "sprint-planning"],
 }
 
 
