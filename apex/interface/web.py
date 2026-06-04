@@ -1597,6 +1597,79 @@ def create_app():
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
+    # ── Sprint Pipeline API ──
+
+    @app.route("/api/sprint/list")
+    def api_sprint_list():
+        """List all sprints."""
+        try:
+            from apex.orchestration.sprint_pipeline import SprintManager
+            mgr = SprintManager()
+            sprints = mgr.list_all()
+            return jsonify([s.to_dict() for s in sprints])
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/sprint/<sprint_id>")
+    def api_sprint_get(sprint_id: str):
+        """Get a single sprint."""
+        try:
+            from apex.orchestration.sprint_pipeline import SprintManager
+            mgr = SprintManager()
+            sprint = mgr.get(sprint_id)
+            if not sprint:
+                return jsonify({"error": "Not found"}), 404
+            return jsonify(sprint.to_dict())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/sprint/<sprint_id>/approve", methods=["POST"])
+    def api_sprint_approve(sprint_id: str):
+        """Approve current manual gate."""
+        try:
+            from apex.orchestration.sprint_pipeline import SprintManager
+            mgr = SprintManager()
+            result = mgr.approve(sprint_id)
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    @app.route("/api/sprint/<sprint_id>/complete", methods=["POST"])
+    def api_sprint_complete(sprint_id: str):
+        """Mark current phase as done."""
+        try:
+            from apex.orchestration.sprint_pipeline import SprintManager
+            data = request.get_json(silent=True) or {}
+            mgr = SprintManager()
+            result = mgr.complete_phase(
+                sprint_id,
+                hours=data.get("hours", 0.0),
+                output=data.get("output", ""),
+            )
+            # Auto-advance if possible
+            if result.get("success") and result.get("gate") == "auto":
+                auto = mgr.advance_auto(sprint_id)
+                result["auto_advance"] = auto
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    @app.route("/api/sprint/create", methods=["POST"])
+    def api_sprint_create():
+        """Create a new sprint."""
+        try:
+            from apex.orchestration.sprint_pipeline import SprintManager
+            data = request.get_json(silent=True) or {}
+            goal = data.get("goal", "")
+            mode = data.get("mode", "solo")
+            if not goal:
+                return jsonify({"success": False, "error": "goal is required"}), 400
+            mgr = SprintManager()
+            sprint = mgr.create(goal, mode)
+            return jsonify({"success": True, "sprint": sprint.to_dict()})
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
     return app
 
 

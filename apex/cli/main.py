@@ -27,6 +27,7 @@ from .commands import task_mgmt as task_cmds
 from .commands import skill_mgmt as skill_cmds
 from .commands import fleet_cmds
 from .commands import squad_cmds
+from .commands import sprint as sprint_cmds
 
 # New mode CLIs
 from apex.orchestration import (
@@ -1047,3 +1048,56 @@ def team_template(template_name: str, setup_script: bool):
             console.print(f"  [cyan]{p['profile_name']} chat[/]  # {p['display_name']}")
     except ValueError as e:
         console.print(f"[red]❌ {e}[/]")
+
+
+# ─── sprint pipeline ───
+
+@cli.group()
+def sprint():
+    """Manage Sprint Pipeline — MVP closed-loop development"""
+    pass
+
+
+@sprint.command(name="create")
+@click.argument("goal")
+@click.option("--mode", "-m", default="solo", type=click.Choice(["solo", "swarm"]), help="solo=全栈一人, swarm=前后端分离")
+def sprint_create(goal: str, mode: str):
+    """Start a new MVP sprint"""
+    sprint_cmds.cmd_create(goal, mode)
+
+
+@sprint.command(name="status")
+@click.argument("sprint_id", required=False, default=None)
+def sprint_status(sprint_id: str):
+    """View sprint progress"""
+    sprint_cmds.cmd_status(sprint_id)
+
+
+@sprint.command(name="approve")
+@click.argument("sprint_id", required=False, default=None)
+def sprint_approve(sprint_id: str):
+    """Approve the current manual gate"""
+    sprint_cmds.cmd_approve(sprint_id)
+
+
+@sprint.command(name="reject")
+@click.argument("sprint_id", required=False, default=None)
+@click.option("--reason", "-r", default="", help="Rejection reason")
+def sprint_reject(sprint_id: str, reason: str):
+    """Reject the current manual gate"""
+    sprint_cmds.cmd_reject(sprint_id, reason)
+
+
+@sprint.command(name="complete")
+@click.argument("sprint_id", required=False, default=None)
+@click.option("--hours", "-h", type=float, default=0.0, help="Hours spent")
+@click.option("--output", "-o", default="", help="Phase output summary")
+def sprint_complete(sprint_id: str, hours: float, output: str):
+    """Mark current phase as done"""
+    sprint_cmds.cmd_complete(sprint_id, hours, output)
+
+
+@sprint.command(name="list")
+def sprint_list():
+    """List all sprints"""
+    sprint_cmds.cmd_list()

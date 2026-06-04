@@ -373,6 +373,12 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
           <div class="card"><div class="sec-h"><i class="ti ti-robot"></i>Agent 工作负载</div><div id="workloads"></div></div>
           <div class="card"><div class="sec-h"><i class="ti ti-clipboard-list"></i>站会报告</div><div id="standupMini" style="font-size:12px;color:var(--tx2)">点击「站会报告」按钮加载</div></div>
         </div>
+        <div style="height:18px"></div>
+        <!-- Sprint Pipeline -->
+        <div class="card" id="sprintCard">
+          <div class="sec-h"><i class="ti ti-run"></i>🏃 Sprint Pipeline · MVP 闭环流水线</div>
+          <div id="sprintContent" style="font-size:12px;color:var(--tx2)">加载中...</div>
+        </div>
       </section>
 
       <!-- VIEW 3: 审批审计 -->
@@ -898,6 +904,13 @@ async function loadProjectView() {
   ]);
   state.data.tasks = tasks;
   state.data.workloads = workloads;
+
+  // Also fetch sprints
+  try {
+    state.data.sprints = await fetchJSON(API + '/sprint/list');
+  } catch (e) {
+    state.data.sprints = [];
+  }
   renderProject();
 }
 
@@ -1124,6 +1137,57 @@ async function renderApprovals() {
       <div style="flex:1"><div class="t">${l.action||l.event||'审计记录'}</div>
       <div class="d">${d.toLocaleString()} · ${l.agent||l.scope||''}</div></div></div>`;
   }).join('') : '<div style="color:var(--tx3);text-align:center;padding:24px">暂无审计记录</div>';
+  renderSprintCard();
+}
+
+/* Sprint Pipeline Card */
+function renderSprintCard() {
+  const sprints = state.data.sprints || [];
+  const c = $('#sprintContent');
+  if (!c) return;
+
+  if (!sprints.length) {
+    c.innerHTML = `<div style="text-align:center;padding:18px;color:var(--tx3)">
+      <i class="ti ti-run" style="font-size:24px"></i>
+      <div style="margin-top:6px">暂无 Sprint · <span style="color:var(--teal);cursor:pointer" onclick="alert('CLI: apex sprint create <goal>')">创建第一个</span></div>
+    </div>`;
+    return;
+  }
+
+  let html = '';
+  sprints.forEach(s => {
+    const barW = 24;
+    const filled = Math.round(s.progress_pct / 100 * barW);
+    const bar = '<span style="color:var(--teal)">' + '█'.repeat(filled) + '</span>' + '<span style="color:var(--line2)">' + '░'.repeat(barW - filled) + '</span>';
+
+    const phaseIcons = {'done':'✅','active':'🔄','pending':'⏳','rejected':'❌'};
+    const phasesHTML = (s.phases||[]).map(p => {
+      const icon = phaseIcons[p.status] || '?';
+      const gIcon = p.gate === 'manual' ? '👤' : '🤖';
+      return `<span title="${p.display||p.name}: ${p.status} · ${p.gate_name}" style="margin-right:4px">${icon}</span>`;
+    }).join('');
+
+    const gateInfo = s.current_gate
+      ? `<span style="color:var(--amber);font-weight:600">🚦 等待: 👤 ${s.current_gate.gate_name}</span>`
+      : (s.status === 'completed' ? '<span style="color:var(--green)">✅ 已完成</span>' : '<span style="color:var(--tx3)">🤖 自动推进中</span>');
+
+    html += `<div style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-s);padding:12px 14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+        <span style="font-weight:600;font-size:14px">🏃 ${s.goal}</span>
+        <span style="font-size:11px;color:var(--tx3)">V${s.iteration} · ${s.mode} · ${s.total_hours.toFixed(1)}h</span>
+      </div>
+      <div style="margin-bottom:4px;font-family:monospace;font-size:13px">${bar} ${s.progress_pct}%</div>
+      <div style="margin-bottom:6px">${phasesHTML}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px">
+        <span>${gateInfo}</span>
+        ${s.current_gate ? `<span>
+          <button class="btn sm primary" onclick="fetch('${API}/sprint/${s.id}/approve',{method:'POST'}).then(r=>r.json()).then(d=>{if(d.success){loadProjectView()}else{alert(d.message)}})" style="font-size:10px;padding:3px 8px">批准</button>
+        </span>` : ''}
+      </div>
+    </div>`;
+  });
+
+  c.innerHTML = html;
 }
 
 /* =================================================================

@@ -23,70 +23,59 @@ console = Console()
 
 DEV_SQUAD = {
     "frontend-dev": {
-        "emoji": "💻",
+        "badge": "≪/≫", "emoji": "💻",
         "title": "Frontend Developer",
-        "skill": "React/TypeScript/UI",
-        "color": "green",
+        "group": "DEV", "color": "#3b82f6", "rich_color": "blue",
     },
     "backend-dev": {
-        "emoji": "⚙️",
+        "badge": "{⚙}", "emoji": "⚙️",
         "title": "Backend Developer",
-        "skill": "Python/FastAPI/DB",
-        "color": "blue",
+        "group": "DEV", "color": "#3b82f6", "rich_color": "blue",
     },
     "fullstack-dev": {
-        "emoji": "👨‍💻",
+        "badge": "⟡", "emoji": "👨‍💻",
         "title": "Fullstack Developer",
-        "skill": "FE+BE+Deploy",
-        "color": "cyan",
+        "group": "DEV", "color": "#3b82f6", "rich_color": "cyan",
     },
     "architect": {
-        "emoji": "🏛️",
+        "badge": "⊞", "emoji": "🏛️",
         "title": "System Architect",
-        "skill": "Architecture/Design",
-        "color": "yellow",
+        "group": "ARCH", "color": "#8b5cf6", "rich_color": "magenta",
     },
     "devops": {
-        "emoji": "🔧",
+        "badge": "✓", "emoji": "🔧",
         "title": "DevOps Engineer",
-        "skill": "CI-CD/Infra/Cloud",
-        "color": "magenta",
+        "group": "OPS", "color": "#06b6d4", "rich_color": "cyan",
     },
     "vulnerability-scanner": {
-        "emoji": "🛡️",
+        "badge": "✕", "emoji": "🛡️",
         "title": "Vulnerability Scanner",
-        "skill": "SAST/SCA/SecretScan",
-        "color": "red",
+        "group": "SEC", "color": "#ef4444", "rich_color": "red",
     },
     "penetration-tester": {
-        "emoji": "🕵️",
+        "badge": "◎", "emoji": "🕵️",
         "title": "Penetration Tester",
-        "skill": "Web/API/Logic Pentest",
-        "color": "red",
+        "group": "SEC", "color": "#ef4444", "rich_color": "red",
     },
     "security-by-design": {
-        "emoji": "🔐",
+        "badge": "▣", "emoji": "🔐",
         "title": "Security by Design",
-        "skill": "Threat Model/Secure Arch",
-        "color": "bright_red",
+        "group": "SEC", "color": "#ef4444", "rich_color": "bright_red",
     },
     "project-manager": {
-        "emoji": "📊",
+        "badge": "☐", "emoji": "📊",
         "title": "Project Manager",
-        "skill": "Planning/Risk/Tracking",
-        "color": "bright_blue",
+        "group": "PM", "color": "#f59e0b", "rich_color": "bright_yellow",
     },
     "qa-engineer": {
-        "emoji": "🧪",
+        "badge": "✓", "emoji": "🧪",
         "title": "QA Engineer",
-        "skill": "Test Strategy/Automation",
-        "color": "green",
+        "group": "QA", "color": "#22c55e", "rich_color": "green",
     },
     "requirements-analyst": {
-        "emoji": "🎯",
+        "badge": "◉", "emoji": "🎯",
         "title": "Requirements Analyst",
-        "skill": "Multi-Perspective/GStack",
-        "color": "bright_yellow",
+        "group": "ANAL", "color": "#eab308", "rich_color": "bright_yellow",
     },
 }
 
@@ -124,13 +113,12 @@ def status_cmd():
     )
     table.add_column("", width=4)
     table.add_column("Agent", min_width=22, max_width=22, no_wrap=True)
-    table.add_column("Role", min_width=18, max_width=18, no_wrap=True)
+    table.add_column("Group", width=5, justify="center")
     table.add_column("State", width=10, justify="center")
     table.add_column("PID", width=6, justify="right")
     table.add_column("Skills", width=6, justify="center")
     table.add_column("Lvl", width=4, justify="center")
     table.add_column("Done", width=4, justify="right")
-    table.add_column("Command", min_width=15, max_width=18, no_wrap=True)
 
     for agent_name, info in DEV_SQUAD.items():
         agent = snapshot.agents.get(agent_name)
@@ -155,31 +143,16 @@ def status_cmd():
         skill_str = f"{agent.skill_count}" if agent and agent.skill_count else "[dim]0[/]"
         lvl_str = agent.highest_skill_level if agent else "[dim]—[/]"
         done_str = str(agent.work_stats.total_completed) if agent and agent.work_stats.total_completed else "0"
-        cmd_short = {
-            "frontend-dev": "fe-dev",
-            "backend-dev": "be-dev",
-            "fullstack-dev": "fs-dev",
-            "architect": "arch",
-            "devops": "devops",
-            "vulnerability-scanner": "vuln-scan",
-            "penetration-tester": "pentest",
-            "security-by-design": "sec-design",
-            "project-manager": "pm",
-            "qa-engineer": "qa",
-            "requirements-analyst": "req-analyst",
-        }.get(agent_name, agent_name[:12])
-        cmd_str = f"[dim]{cmd_short} chat[/]" if not running else f"[green]{cmd_short} chat[/]"
 
         table.add_row(
-            info["emoji"],
-            f"[{info['color']}]{agent_name}[/]",
-            f"[white]{info['title']}[/]",
+            f"[{info['rich_color']}]{info['badge']}[/]",
+            f"[{info['rich_color']}]{agent_name}[/]",
+            f"[dim]{info['group']}[/]",
             state_str,
             pid_str,
             skill_str,
             lvl_str,
             done_str,
-            cmd_str,
         )
 
     console.print(table)
@@ -207,7 +180,7 @@ def status_cmd():
         else:
             checks.append("⚪ Fresh")
 
-        console.print(f"  {info['emoji']} [bold]{agent_name}[/] — {' | '.join(checks)}")
+        console.print(f"  [{info['rich_color']}]{info['badge']}[/] [{info['rich_color']}]{agent_name}[/] — {' | '.join(checks)}")
 
     console.print()
     console.print("[dim]💡 Start squad: apex squad start | Attach agent: <agent-name> chat[/]")
@@ -277,13 +250,14 @@ def attach_cmd(agent_name: str):
         pass
 
     console.print(Panel(
-        f"[bold]{info['emoji']} {agent_name} — {info['title']}[/]\n"
-        f"Status: {'🟢 Online' if running else '⚪ Offline'}\n"
-        f"{'PID: ' + pid if pid else ''}\n"
-        f"Launch: [cyan]{agent_name} chat[/]\n"
-        f"Profile: [dim]{wrapper_path}[/]",
-        title="🤖 Agent Details",
-        border_style=info["color"],
+        f"[bold]{info['badge']}[/] [{info['rich_color']}]{agent_name}[/] — [white]{info['title']}[/]\n"
+        f"Group: [dim]{info['group']}[/]"
+        f"  | Status: {'🟢 Online' if running else '⚪ Offline'}\n"
+        f"  {'PID: ' + pid if pid else ''}\n"
+        f"  Launch: [cyan]{agent_name} chat[/]\n"
+        f"  Profile: [dim]{wrapper_path}[/]",
+        title=f"{info['badge']} Agent Details",
+        border_style=info["rich_color"],
     ))
 
     # Show SOUL.md status
