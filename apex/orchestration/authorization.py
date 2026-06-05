@@ -19,7 +19,7 @@ Scope 命名空间:
 
 委派模型:
   Origin → apex-pm:     [project:apex:*]           (Apex 项目内全权)
-  Origin → yuji-pm:     [project:badminton:*]       (羽球宝项目内全权)
+  Origin → badminton-pm:     [project:badminton:*]       (羽球宝项目内全权)
   Origin → content-marketing: [project:shenzhen:*]  (深圳地图内全权)
   Origin → audit-guardian:    [audit:read:*]        (审计分身 — 只读)
 
@@ -73,7 +73,7 @@ PROJECTS = {
     "badminton": {
         "name": "羽球宝AI搭子",
         "emoji": "🏸",
-        "pm_agent": "yuji-pm",
+        "pm_agent": "badminton-pm",
         "path": "~/Desktop/2026AIAPP/workspace/badminton-coach-ai",
     },
     "shenzhen": {
@@ -100,7 +100,7 @@ DELEGATIONS: dict[str, dict] = {
         ],
         "description": "Apex 平台项目总管 — 可管理 Apex 项目内所有资源和 AutoDL 关停",
     },
-    "yuji-pm": {
+    "badminton-pm": {
         "delegated_by": ORIGIN_AGENT,
         "scopes": [
             "project:badminton:*",

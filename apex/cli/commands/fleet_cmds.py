@@ -510,3 +510,207 @@ def refresh_cmd():
 def history_cmd(limit: int = 10):
     """Show fleet snapshot history."""
     render_fleet_history(limit=limit)
+
+
+def inspect_cmd(project: str = "", pm: str = ""):
+    """全舰队巡检 — 项目进度 + Agent任务状态。
+
+    每个项目的PM自动作为巡检Agent:
+      🏸 羽球宝AI → badminton-pm
+      🦅 Apex      → apex-pm
+      💰 FinOps AI → finops-pm
+    
+    用法:
+      apex fleet inspect              # 全项目巡检
+      apex fleet inspect -p finopsai  # 单项目巡检
+      apex fleet inspect -p badminton-coach-ai -pm badminton-pm  # 指定PM巡检
+    """
+    import subprocess
+    
+    cmd = ["python3", os.path.expanduser("~/.hermes/scripts/fleet_inspector.py")]
+    if project:
+        cmd.extend(["--project", project])
+    if pm:
+        cmd.extend(["--pm", pm])
+    
+    console.print(f"\n[bold cyan]⚓ 舰队巡检中...[/]")
+    if project:
+        from apex.orchestration.pipeline import PROJECT_AGENT_MAP
+        proj_name = {"badminton-coach-ai": "🏸 羽球宝AI", "apex": "🦅 Apex", 
+                     "finopsai": "💰 FinOps AI", "shenzhen-badminton": "🗺️ 深圳地图"}.get(project, project)
+        pm_default = {"badminton-coach-ai": "badminton-pm", "apex": "apex-pm",
+                      "finopsai": "finops-pm"}.get(project, "default")
+        console.print(f"[dim]项目: {proj_name} | 巡检官: {pm or pm_default}[/]\n")
+    
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+    if result.stdout.strip():
+        console.print(result.stdout)
+    else:
+        console.print("[dim]所有项目无活动，舰队平稳 ⚓[/]")
+
+
+# ════════════════════════════════════════════════════════════════
+# 一体化舰队命令 — apex fleet deploy
+# ════════════════════════════════════════════════════════════════
+
+
+def deploy_cmd(
+    requirement: str,
+    project: str = "default",
+    template: str = "webapp",
+    auto_mode: bool = True,
+    mode: str = "pipeline",
+):
+    """一键部署开发舰队：建队 → 拆解需求 → 分派任务 → 显示状态。
+
+    Flow:
+      1. 从模板创建团队（如尚不存在）
+      2. AI 拆解需求
+      3. 创建 Task + 自动分派
+      4. 舰队启动提示
+      5. 状态总览
+    """
+    from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
+
+    console.print(Panel.fit(
+        "[bold cyan]⚓ 舰队部署 — 一体化开发舰队[/]\n"
+        f"[dim]项目: {project} | 模板: {template} | 模式: {mode}[/]",
+        border_style="cyan",
+    ))
+    console.print()
+
+    progress = Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(bar_width=30),
+        console=console,
+        transient=True,
+    )
+
+    with progress:
+        # Step 1: 检查团队 — 从模板创建
+        t1 = progress.add_task("[cyan]1/4 检查团队状态...", total=100)
+        import subprocess as sp
+        r = sp.run(
+            [sys.executable, "-m", "apex", "team", "template", template],
+            capture_output=True, text=True, timeout=30,
+        )
+        if r.returncode == 0:
+            progress.update(t1, completed=60, description="[green]✅ 团队已创建[/]")
+        else:
+            progress.update(t1, completed=60, description="[yellow]⚠️ 团队创建跳过 (可能已存在)[/]")
+        time.sleep(0.3)
+        progress.update(t1, completed=100)
+
+        # Step 2: 分析拆解需求
+        t2 = progress.add_task("[cyan]2/4 AI 分析拆解需求...", total=100)
+        from apex.orchestration.task_decomposer import decompose_requirement, dispatch_tasks
+        from apex.orchestration.task_manager import get_task_manager
+
+        tm = get_task_manager()
+        result = decompose_requirement(requirement, project)
+        progress.update(t2, completed=60, description=f"[green]📋 {result.epic_title}[/]")
+        time.sleep(0.2)
+        progress.update(t2, completed=100)
+
+        # Step 3: 创建任务并分派
+        t3 = progress.add_task("[cyan]3/4 创建任务并分派...", total=100)
+        dispatch_result = dispatch_tasks(result, tm)
+        task_count = dispatch_result.get("dispatched", 0)
+        progress.update(t3, completed=80, description=f"[green]✅ {task_count} 个任务已创建并分派[/]")
+        time.sleep(0.2)
+        progress.update(t3, completed=100)
+
+        # Step 4: 舰队启动就绪
+        t4 = progress.add_task("[cyan]4/4 舰队就绪检查...", total=100)
+        # Check squad agents
+        squad_profiles = ["frontend-dev", "backend-dev", "fullstack-dev", "architect", "devops"]
+        squad_dir = Path(os.environ.get("HERMES_HOME", os.path.expanduser("~/.hermes"))) / "profiles"
+        existing = [p for p in squad_profiles if (squad_dir / p).exists()]
+        progress.update(t4, completed=80, description=f"[green]✅ {len(existing)}/{len(squad_profiles)} 开发Agent就绪[/]")
+        time.sleep(0.2)
+        progress.update(t4, completed=100)
+
+    console.print()
+
+    # ── 结果展示 ──
+    from rich.table import Table
+
+    # 分解结果表
+    table = Table(title=f"📋 任务清单 — {result.epic_title}", box=box.ROUNDED, border_style="cyan")
+    table.add_column("#", style="dim", width=3)
+    table.add_column("任务", width=38)
+    table.add_column("分派至", width=18)
+    table.add_column("工时", width=6, justify="right")
+    table.add_column("优先级", width=8, justify="center")
+
+    prio_icons = {0: "🔴 阻塞", 1: "🟠 高", 2: "🟡 中", 3: "🟢 低"}
+    for i, t in enumerate(result.tasks, 1):
+        table.add_row(
+            str(i),
+            t.title[:36],
+            t.assignee or "[dim]待分配[/]",
+            f"{t.estimated_hours:.0f}h",
+            prio_icons.get(t.priority, "⚪"),
+        )
+    console.print(table)
+
+    # 舰队状况
+    from apex.interface.agent_monitor import get_monitor
+    monitor = get_monitor()
+    snapshot = monitor.snapshot()
+
+    fleet_table = Table(title="🤖 舰队状况", box=box.ROUNDED, border_style="cyan")
+    fleet_table.add_column("", width=4, justify="center")
+    fleet_table.add_column("Agent", width=22)
+    fleet_table.add_column("状态", width=12)
+    fleet_table.add_column("技能", width=6, justify="center")
+    fleet_table.add_column("级别", width=4, justify="center")
+    fleet_table.add_column("已完任务", width=10, justify="center")
+
+    from apex.cli.commands.squad_cmds import DEV_SQUAD
+    for name, info in DEV_SQUAD.items():
+        agent = snapshot.agents.get(name)
+        if agent:
+            state_str = f"[green]● 在线[/]" if agent.state.value == "working" else (
+                f"[yellow]● 待命[/]" if agent.state.value == "idle" else
+                f"[dim]○ 离线[/]"
+            )
+            skill_count = len(getattr(agent, 'skills', [])) or (info.get('skill_count', 8))
+            level = getattr(agent, 'level', 'L2')
+        else:
+            state_str = "[dim]○ 未启动[/]"
+            skill_count = info.get('skill_count', 8)
+            level = "L2"
+
+        badge = info.get("badge", "●")
+        fleet_table.add_row(
+            badge,
+            name,
+            state_str,
+            str(skill_count),
+            level,
+            str(info.get('completed', 0)),
+        )
+
+    console.print(fleet_table)
+
+    # 执行建议
+    console.print(Panel(
+        "[bold]🚀 立即执行[/]\n\n"
+        f"[cyan]apex dispatch[/]      — 自动分派等待任务\n"
+        f"[cyan]apex task epic[/]     — 查看史诗任务树\n"
+        f"[cyan]apex schedule view[/] — 甘特图排期\n"
+        f"[cyan]apex squad start[/]   — 启动开发Agent终端\n"
+        f"[cyan]apex chain run[/] \"{result.epic_title}\" -p dev  — 序列链开发\n\n"
+        f"[dim]授权: 关键节点需PM/Origin审批 — 半自动模式已启用[/]",
+        title="⚓ Fleet Deploy Complete",
+        border_style="green",
+    ))
+
+    return {
+        "epic_title": result.epic_title,
+        "task_count": task_count,
+        "tasks": result.tasks,
+        "dispatch": dispatch_result,
+    }

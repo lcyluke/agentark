@@ -68,6 +68,7 @@ def list_hermes_profiles() -> list[dict]:
                 except:
                     pass
             
+            disabled = (pdir / ".disabled").exists()
             profiles.append({
                 "name": name,
                 "is_default": False,
@@ -75,6 +76,7 @@ def list_hermes_profiles() -> list[dict]:
                 "path": str(pdir),
                 "has_soul": soul_file.exists(),
                 "has_config": config_file.exists(),
+                "disabled": disabled,
             })
     
     return profiles
@@ -223,6 +225,55 @@ def delete_profile(name: str) -> dict:
     shutil.move(str(pdir), str(archive_dir))
     
     return {"ok": True, "profile": name, "archived_to": str(archive_dir)}
+
+
+def toggle_profile(name: str) -> dict:
+    """Enable or disable a Hermes profile via .disabled marker file"""
+    if name == "default":
+        return {"error": "Cannot disable default profile"}
+    
+    pdir = PROFILES_DIR / name
+    if not pdir.exists():
+        return {"error": f"Profile '{name}' not found"}
+    
+    disabled_file = pdir / ".disabled"
+    if disabled_file.exists():
+        disabled_file.unlink()
+        return {"ok": True, "profile": name, "action": "enabled"}
+    else:
+        disabled_file.write_text(datetime.now().isoformat())
+        return {"ok": True, "profile": name, "action": "disabled"}
+
+
+def copy_profile(name: str, new_name: str) -> dict:
+    """Duplicate a Hermes profile to a new name"""
+    if name == "default":
+        return {"error": "Cannot copy default profile (use hermes profile create)"}
+    
+    src = PROFILES_DIR / name
+    if not src.exists():
+        return {"error": f"Profile '{name}' not found"}
+    
+    dst = PROFILES_DIR / new_name
+    if dst.exists():
+        return {"error": f"Profile '{new_name}' already exists"}
+    
+    import shutil
+    shutil.copytree(str(src), str(dst))
+    
+    # Update SOUL.md to reference new name (if exists)
+    soul_file = dst / "SOUL.md"
+    if soul_file.exists():
+        content = soul_file.read_text()
+        content = content.replace(name, new_name)
+        soul_file.write_text(content)
+    
+    # Remove .disabled if present on copy (copied profiles start enabled)
+    disabled_file = dst / ".disabled"
+    if disabled_file.exists():
+        disabled_file.unlink()
+    
+    return {"ok": True, "profile": new_name, "copied_from": name}
 
 
 # ══════════════════════════════════════════

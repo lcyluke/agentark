@@ -4,6 +4,7 @@ from __future__ import annotations
 import sys
 import os
 from pathlib import Path
+from typing import Optional
 
 import click
 from rich.console import Console
@@ -26,8 +27,10 @@ from .commands import ops as ops_cmds
 from .commands import task_mgmt as task_cmds
 from .commands import skill_mgmt as skill_cmds
 from .commands import fleet_cmds
+from .commands import schedule_cmds
 from .commands import squad_cmds
 from .commands import sprint as sprint_cmds
+from .commands import chat_cmds
 
 # New mode CLIs
 from apex.orchestration import (
@@ -356,6 +359,87 @@ def fleet_refresh():
 def fleet_history(limit: int):
     """Show fleet snapshot history"""
     fleet_cmds.history_cmd(limit=limit)
+
+@fleet.command(name="inspect")
+@click.option("--project", "-p", default="", help="单项目巡检 (badminton-coach-ai/apex/finopsai)")
+@click.option("--pm", default="", help="指定巡检PM (默认用项目自身PM)")
+def fleet_inspect(project: str, pm: str):
+    """⚓ 舰队巡检 — 项目进度 + Agent任务状态"""
+    fleet_cmds.inspect_cmd(project=project, pm=pm)
+
+@fleet.command(name="monitors")
+def fleet_monitors():
+    """📊 列出所有项目的巡检Agent"""
+    from apex.core.project_template import list_all_monitors, get_all_monitor_count
+    from rich.console import Console
+    from rich.table import Table
+    from rich import box
+
+    console = Console()
+    data = list_all_monitors()
+    total = get_all_monitor_count()
+
+    console.print(f"\n[bold cyan]⚓ 全舰队巡检Agent — 共 {total} 个[/]\n")
+
+    table = Table(title="项目巡检Agent矩阵", box=box.SIMPLE)
+    table.add_column("项目", width=16)
+    table.add_column("PM巡检官", width=16)
+    table.add_column("巡检Agent", width=28)
+    table.add_column("频率", width=14)
+
+    for key, info in data.items():
+        monitors_str = "\n".join(
+            f"{m['emoji']} {m['role']}" for m in info["monitors"]
+        )
+        schedules_str = "\n".join(
+            m["schedule"] for m in info["monitors"]
+        )
+        table.add_row(
+            info["project"],
+            info["pm"],
+            monitors_str,
+            schedules_str,
+        )
+
+    console.print(table)
+
+
+# ─── fleet deploy — 一体化舰队命令 ───
+@fleet.command(name="deploy")
+@click.argument("requirement")
+@click.option("--project", "-p", default="default", help="Project key")
+@click.option("--template", "-t", default="webapp", help="Team template (webapp/content/data/startup/research)")
+@click.option("--auto/--manual", default=True, help="Auto mode (skip confirmations)")
+@click.option("--mode", "-m", default="pipeline", help="Collaboration mode: pipeline/chain/supervisor")
+def fleet_deploy(requirement: str, project: str, template: str, auto: bool, mode: str):
+    """🚢 一键部署开发舰队: 建队→拆解→分派→状态总览"""
+    fleet_cmds.deploy_cmd(
+        requirement=requirement,
+        project=project,
+        template=template,
+        auto_mode=auto,
+        mode=mode,
+    )
+
+
+# ─── schedule commands — 任务排期甘特图 ───
+@cli.group()
+def schedule():
+    """📊 Task Schedule — Gantt chart timeline view"""
+    pass
+
+@schedule.command(name="view")
+@click.argument("task_id", required=False)
+@click.option("--project", "-p", default=None, help="Filter by project")
+def schedule_view(task_id: Optional[str], project: Optional[str]):
+    """Show Gantt chart for tasks"""
+    schedule_cmds.view_cmd(task_id=task_id, project=project)
+
+@schedule.command(name="list")
+@click.option("--project", "-p", default=None, help="Filter by project")
+def schedule_list(project: str):
+    """List all schedules/epics"""
+    schedule_cmds.list_cmd(project=project)
 
 
 # ─── squad commands ───
@@ -887,6 +971,53 @@ def dispatch():
     task_cmds.dispatch_cmd()
 
 @cli.command()
+@click.argument("requirement")
+@click.option("--project", "-p", default="finopsai", help="Project key (finopsai/badminton-coach-ai/apex)")
+def dispatch_smart(requirement: str, project: str):
+    """🧠 智能分派: 需求文本 → AI拆解 → 创建Task → 自动分配Agent
+
+    REQUIREMENT: 需求描述文本（自然语言）
+    """
+    task_cmds.dispatch_smart_cmd(requirement, project)
+
+# ── Pipeline commands ──
+from apex.cli.commands import pipeline_cmds
+
+@cli.group()
+def pipeline():
+    """🔀 任务管线 — 正常流程 + 专项直达"""
+    pass
+
+@pipeline.command()
+@click.argument("requirement")
+@click.option("--project", "-p", default="finopsai", help="Project key")
+@click.option("--confirm/--no-confirm", default=True, help="跳过人工确认")
+def normal(requirement: str, project: str, confirm: bool):
+    """📋 正常流程: 需求→AI拆解→分派→监控"""
+    pipeline_cmds.pipeline_normal_cmd(requirement, project, confirm)
+
+@pipeline.command()
+@click.argument("task")
+@click.option("--agent", "-a", required=True, help="目标Agent (如 finops-backend)")
+@click.option("--project", "-p", default="finopsai", help="Project key")
+@click.option("--priority", "-pr", type=int, default=1, help="优先级 0-3")
+def direct(task: str, agent: str, project: str, priority: int):
+    """⚡ 专项直达: 指令→指定Agent→立即执行"""
+    pipeline_cmds.pipeline_direct_cmd(task, agent, project, priority)
+
+@pipeline.command()
+@click.argument("pipeline_id")
+def status(pipeline_id: str):
+    """📊 查看管线状态"""
+    pipeline_cmds.pipeline_status_cmd(pipeline_id)
+
+@pipeline.command()
+@click.argument("pipeline_id")
+def confirm(pipeline_id: str):
+    """✅ 人工确认管线继续"""
+    pipeline_cmds.pipeline_confirm_cmd(pipeline_id)
+
+@cli.command()
 @click.argument("agent")
 @click.argument("title")
 @click.option("--description", "-d", default="", help="Description of help needed")
@@ -955,6 +1086,37 @@ def hermes_profiles():
             "✅" if p["has_wrapper"] else "❌",
         )
     console.print(table)
+
+
+# ─── chat commands ───
+@cli.group(invoke_without_command=True)
+@click.argument("agent_name", required=False)
+@click.option("--context", "-c", default="", help="Extra project context")
+@click.option("--query", "-q", default="", help="Initial message")
+@click.option("--list", "-l", "list_mode", is_flag=True, help="List all agents")
+@click.pass_context
+def chat(ctx, agent_name: str, context: str, query: str, list_mode: bool):
+    """💬 Chat with an Apex agent.
+
+    \b
+    Examples:
+      apex chat product-manager        Launch PM agent
+      apex chat backend-dev            Launch backend dev agent
+      apex chat frontend-dev -c "..."   With custom context
+      apex chat --list                 List all agents
+    """
+    # If no subcommand and no agent, check if --list
+    if ctx.invoked_subcommand is None:
+        if list_mode or not agent_name:
+            chat_cmds.chat_list_cmd()
+            return
+        chat_cmds.chat_launch_cmd(agent_name, context, query)
+
+
+@chat.command(name="list")
+def chat_list():
+    """📋 List all available agents"""
+    chat_cmds.chat_list_cmd()
 
 
 # ─── team template commands ───
@@ -1101,3 +1263,266 @@ def sprint_complete(sprint_id: str, hours: float, output: str):
 def sprint_list():
     """List all sprints"""
     sprint_cmds.cmd_list()
+
+
+# ─── project commands ───
+
+@cli.group()
+def project():
+    """📦 智能项目管理 — 按类型和规模自动配齐Agent舰队"""
+
+
+@project.command(name="create")
+@click.argument("project_key")
+@click.option("--name", "-n", required=True, help="项目显示名")
+@click.option("--type", "-t", default="auto",
+              type=click.Choice(["auto", "webapp", "ai-ml", "mobile", "data", "content", "infra"]),
+              help="项目类型 (auto=自动检测)")
+@click.option("--size", "-s", default="auto",
+              type=click.Choice(["auto", "small", "medium", "large"]),
+              help="项目规模 (auto=自动检测)")
+@click.option("--path", "-p", default="", help="项目目录")
+@click.option("--description", "-d", default="", help="项目描述")
+@click.option("--dry-run", is_flag=True, help="仅预览不创建")
+def project_create(project_key: str, name: str, type: str, size: str, path: str, description: str, dry_run: bool):
+    """🚀 智能创建项目组 — 自动检测类型和规模，智能分配Agent舰队
+
+    \b
+    示例:
+      apex project create my-ai-app --name "AI教练" --type auto
+      apex project create dashboard --name "控制台" --type webapp --size large
+      apex project create blog --name "博客" --dry-run
+    """
+    from apex.core.project_template import (
+        build_smart_template, summarize_template,
+        ProjectType, ProjectSize,
+    )
+    from apex.interface.hermes_sync import sync_profile_to_hermes, ROLE_SOULS
+    from apex.interface.skill_registry import sync_skill_md
+
+    console = Console()
+
+    # 1. 构建智能模板
+    console.print("\n[bold cyan]🔍 分析项目...[/]")
+    tmpl = build_smart_template(
+        project_key=project_key,
+        project_name=name,
+        project_type=type,
+        project_size=size,
+        project_path=path,
+        description=description,
+    )
+
+    # 2. 显示摘要
+    summary = summarize_template(tmpl)
+    size_colors = {"small": "green", "medium": "yellow", "large": "red"}
+    sc = size_colors.get(tmpl.size.value, "white")
+
+    console.print(Panel(
+        f"[bold]{summary['name']}[/]\n"
+        f"类型: [cyan]{summary['type']}[/]  规模: [{sc}]{summary['size']}[/]\n"
+        f"PM: [green]{summary['pm']}[/]\n"
+        f"助手: {summary['assistant']}\n"
+        f"核心团队: [yellow]{summary['core_count']}人[/] {', '.join(summary['core_agents']) or '—'}\n"
+        f"巡检Agent: [magenta]{summary['monitor_count']}个[/]",
+        title="📋 智能分析结果", border_style="cyan"
+    ))
+
+    if summary["monitors"]:
+        mt = Table(title="巡检Agent清单", box=None)
+        mt.add_column("角色", style="magenta")
+        mt.add_column("频率", style="yellow")
+        for m in tmpl.monitors:
+            mt.add_row(f"{m.emoji} {m.role}", m.cron_schedule)
+        console.print(mt)
+
+    if dry_run:
+        console.print("\n[dim](dry-run — 未创建任何Agent)[/]")
+        return
+
+    # 3. 确认
+    if not click.confirm(f"\n🚀 创建 {summary['total_agents']} 个Agent?",
+                         default=True):
+        console.print("[dim]已取消[/]")
+        return
+
+    # 4. 创建PM Profile
+    created = []
+    console.print(f"\n[bold]👤 创建 PM: {tmpl.pm_agent}...[/]")
+
+    try:
+        result = sync_profile_to_hermes(
+            tmpl.pm_agent,
+            hermes_display_name=f"{name} PM",
+            overrides={
+                "expertise": [f"{name}项目管理", "路线图规划", "Sprint管理"],
+                "personality": f"你是 {name} 的项目经理，负责全局协调和进度追踪。",
+            }
+        )
+        created.append(result)
+        try:
+            sync_skill_md(tmpl.pm_agent)
+        except Exception:
+            pass
+    except Exception as e:
+        console.print(f"[yellow]PM创建跳过: {e}[/]")
+
+    # 5. 创建智能助手 (如果需要)
+    if tmpl.has_assistant:
+        assistant_name = f"{project_key}-assistant"
+        console.print(f"[bold]🧠 创建智能助手: {assistant_name}...[/]")
+        try:
+            # 先确保 project-assistant SOUL 已注册
+            if "project-assistant" not in ROLE_SOULS:
+                from apex.core.project_template import PROJECT_ASSISTANT_SOUL
+                ROLE_SOULS["project-assistant"] = PROJECT_ASSISTANT_SOUL
+
+            result = sync_profile_to_hermes(
+                "project-assistant",
+                hermes_profile_name=assistant_name,
+                hermes_display_name=f"{name} 智能助手",
+                overrides={
+                    "expertise": [
+                        f"{name}任务看板", "里程碑追踪", "风险预警",
+                        "资源分析", "周报生成", "进度通知"
+                    ],
+                }
+            )
+            created.append(result)
+            try:
+                sync_skill_md(assistant_name)
+            except Exception:
+                pass
+        except Exception as e:
+            console.print(f"[yellow]助手创建跳过: {e}[/]")
+
+    # 6. 创建核心Agent
+    for agent in tmpl.core_agents:
+        console.print(f"[bold]{agent.emoji} 创建 {agent.role}: {agent.profile_name}...[/]")
+        try:
+            result = sync_profile_to_hermes(
+                agent.profile_name,
+                hermes_display_name=agent.role,
+            )
+            created.append(result)
+            try:
+                sync_skill_md(agent.profile_name)
+            except Exception:
+                pass
+        except Exception as e:
+            console.print(f"[yellow]{agent.profile_name} 创建跳过: {e}[/]")
+
+    # 7. 注册Cron巡检
+    cron_created = 0
+    for monitor in tmpl.monitors:
+        try:
+            import subprocess
+            # 构建 cron create 命令
+            profile_flag = f" --profile {monitor.profile}" if hasattr(monitor, 'profile') and monitor.profile else ""
+            cmd = (
+                f'hermes cronjob create '
+                f'--name "{monitor.cron_name}" '
+                f'--schedule "{monitor.cron_schedule}" '
+                f'--prompt "{monitor.prompt}" '
+                f'--deliver weixin'
+                f'{profile_flag}'
+            )
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
+            if result.returncode == 0:
+                cron_created += 1
+            else:
+                console.print(f"[dim]  Cron跳过: {monitor.cron_name} (已存在或失败)[/]")
+        except Exception as e:
+            console.print(f"[dim]  Cron失败: {monitor.cron_name}: {e}[/]")
+
+    # 8. 完成报告
+    console.print(Panel(
+        f"[bold green]✅ 项目组创建完成[/]\n\n"
+        f"项目: {summary['name']}\n"
+        f"规模: {summary['size']}\n"
+        f"Agent: {len(created)} 个已创建\n"
+        f"Cron:  {cron_created} 个已注册\n\n"
+        f"[dim]PM启动: hermes -p {tmpl.pm_agent}[/]"
+        + (f"\n助手启动: hermes -p {project_key}-assistant" if tmpl.has_assistant else ""),
+        title="🚀 舰队就绪", border_style="green"
+    ))
+
+
+@project.command(name="analyze")
+@click.argument("project_key")
+@click.option("--name", "-n", default="", help="项目显示名")
+def project_analyze(project_key: str, name: str):
+    """🔍 分析项目类型和规模，给出建议"""
+    from apex.core.project_template import (
+        detect_project_type, detect_project_size,
+        ProjectType, ProjectSize
+    )
+
+    console = Console()
+
+    project_type = detect_project_type(project_key, name or project_key)
+    project_size = detect_project_size()
+
+    type_emoji = {
+        ProjectType.WEBAPP: "🌐", ProjectType.AI_ML: "🤖",
+        ProjectType.MOBILE: "📱", ProjectType.DATA: "📊",
+        ProjectType.CONTENT: "✍️", ProjectType.INFRA: "🔧",
+    }
+    size_label = {
+        ProjectSize.SMALL: "🟢 小型(萌芽期)",
+        ProjectSize.MEDIUM: "🟡 中型(成长期)",
+        ProjectSize.LARGE: "🔴 大型(成熟期)",
+    }
+
+    console.print(Panel(
+        f"类型: {type_emoji.get(project_type, '📦')} {project_type.value}\n"
+        f"规模: {size_label.get(project_size, project_size.value)}",
+        title=f"🔍 {project_key} 分析",
+        border_style="cyan"
+    ))
+
+    # 给出建议
+    if project_size == ProjectSize.SMALL:
+        console.print("[dim]建议: PM兼任巡检，1-2核心Agent即可[/]")
+    elif project_size == ProjectSize.MEDIUM:
+        console.print("[dim]建议: PM + 智能助手 + 3-4核心Agent[/]")
+    else:
+        console.print("[dim]建议: PM + 智能助手 + 5+核心Agent + 专项监控[/]")
+
+
+@project.command(name="list")
+def project_list():
+    """📋 列出所有已注册的项目模板"""
+    from apex.core.project_template import LEGACY_TEMPLATES, summarize_template
+    from rich.console import Console
+    from rich.table import Table
+
+    console = Console()
+    templates = LEGACY_TEMPLATES
+
+    if not templates:
+        console.print("[dim]暂无项目模板。用 'apex project create' 创建第一个。[/]")
+        return
+
+    table = Table(title="📋 已注册项目", box=None)
+    table.add_column("项目", style="cyan")
+    table.add_column("类型", style="white")
+    table.add_column("规模", style="yellow")
+    table.add_column("PM", style="green")
+    table.add_column("核心Agent", style="white")
+
+    for key, pt in templates.items():
+        summary = summarize_template(pt)
+        table.add_row(
+            summary['name'],
+            summary['type'],
+            summary['size'],
+            summary['pm'] or '—',
+            str(summary['core_count']),
+        )
+
+    console.print(table)
+
+
+if __name__ == "__main__":
+    cli()

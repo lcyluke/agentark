@@ -57,7 +57,7 @@ PROJECTS: dict[str, Project] = {
             "rtmpose", "st-gcn", "gbdt", "dtw", "videomae",
             "球友匹配", "matching", "coach", "injury",
         ],
-        profiles=["yuji-pm", "architect", "ai-algorithm", "ai-vision",
+        profiles=["badminton-pm", "architect", "ai-algorithm", "ai-vision",
                    "frontend-dev", "content-marketing"],
         categories=["development", "architecture", "pm", "testing", "content", "biz"],
     ),
@@ -93,6 +93,22 @@ PROJECTS: dict[str, Project] = {
         profiles=["content-marketing", "fundraising-pitch"],
         categories=["content", "biz"],
     ),
+    "finopsai": Project(
+        key="finopsai",
+        name="FinOps AI",
+        emoji="💰",
+        path="~/Desktop/2026AIAPP/finopsai",
+        keywords=[
+            "finops", "finopsai", "云成本", "成本管理", "SaaS", "多租户",
+            "tenant", "billing", "计费", "账单", "cloud cost",
+            "AWS cost", "Azure cost", "GCP cost", "阿里云费用",
+            "成本优化", "right-sizing", "预算", "budget",
+            "dashboard 成本", "成本大屏", "异常检测 cost",
+        ],
+        profiles=["finops-pm", "finops-architect", "finops-backend",
+                   "finops-frontend", "finops-devops"],
+        categories=["development", "architecture", "pm", "devops", "biz"],
+    ),
 }
 
 
@@ -105,7 +121,7 @@ PROJECTS: dict[str, Project] = {
 
 CATEGORY_PATTERNS: list[tuple[str, str, list[str]]] = [
     # (category, agent_profile, keywords)
-    ("pm", "yuji-pm", [
+    ("pm", "badminton-pm", [
         "sprint", "kanban", "任务看板", "PRD", "需求",
         "路线图", "roadmap", "里程碑", "milestone",
         "迭代", "iteration", "优先级", "priority",
@@ -209,7 +225,7 @@ CATEGORY_EMOJI = {
 }
 
 AGENT_EMOJI = {
-    "yuji-pm": "🎯", "architect": "🏛️", "ai-algorithm": "🧠",
+    "badminton-pm": "🎯", "architect": "🏛️", "ai-algorithm": "🧠",
     "ai-vision": "👁️", "frontend-dev": "🎨", "ops-engineer": "🔧",
     "content-marketing": "✍️", "fundraising-pitch": "💰",
     "security-compliance": "🔒", "default": "⚓",
@@ -217,7 +233,7 @@ AGENT_EMOJI = {
 }
 
 AGENT_ROLE = {
-    "yuji-pm": "PM·羽迹",
+    "badminton-pm": "PM·羽迹",
     "architect": "架构师",
     "ai-algorithm": "算法专家",
     "ai-vision": "视觉专家",

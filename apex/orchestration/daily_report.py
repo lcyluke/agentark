@@ -40,7 +40,7 @@ PROJECTS = {
         "emoji": "🏸",
         "path": os.path.expanduser("~/Desktop/2026AIAPP/workspace/badminton-coach-ai"),
         "color": "#f97316",
-        "profiles": ["yuji-pm", "architect", "ai-algorithm", "ai-vision", "frontend-dev", "content-marketing"],
+        "profiles": ["badminton-pm", "architect", "ai-algorithm", "ai-vision", "frontend-dev", "content-marketing"],
         "services": ["http://127.0.0.1:8000/docs"],
         "order": 1,
     },
@@ -325,7 +325,7 @@ def _collect_auth_stats(project_key: str) -> dict:
 
     # Map project to likely agents
     agent_map = {
-        "badminton-coach-ai": ["yuji-pm", "architect", "ai-algorithm", "ai-vision", "frontend-dev"],
+        "badminton-coach-ai": ["badminton-pm", "architect", "ai-algorithm", "ai-vision", "frontend-dev"],
         "apex": ["default", "ops-engineer", "security-compliance", "apex-pm"],
         "shenzhen-badminton": ["content-marketing", "fundraising-pitch"],
     }

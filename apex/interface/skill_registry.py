@@ -699,7 +699,7 @@ AGENT_BASELINE_SKILLS: dict[str, dict[str, str]] = {
         "machine-learning": "L2",
         "experiment-design": "L1",
     },
-    "yuji-pm": {
+    "badminton-pm": {
         "roadmap-planning": "L2",
         "data-analysis": "L2",
         "user-research": "L2",

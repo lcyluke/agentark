@@ -126,7 +126,7 @@ AGENT_SKILLS = {
     "ai-vision": ["computer-vision", "image-processing", "mediapipe", "opencv", "pose-estimation"],
     # ── PM线 ──
     "apex-pm": ["apex", "orchestration", "authorization", "dashboard", "kanban"],
-    "yuji-pm": ["project-management", "prd", "sprint-planning", "stakeholder", "badminton"],
+    "badminton-pm": ["project-management", "prd", "sprint-planning", "stakeholder", "badminton"],
     "product-manager": ["product-strategy", "user-research", "roadmap", "mvp"],
     "project-manager": ["project-management", "kanban", "sprint", "coordination"],
     "requirements-analyst": ["requirements", "user-stories", "specification", "analysis"],

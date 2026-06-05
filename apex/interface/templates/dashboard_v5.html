@@ -353,6 +353,21 @@ body{
 .fleet-status-dot.config{background:var(--green);box-shadow:0 0 6px rgba(34,197,94,0.4)}
 .fleet-status-dot.missing{background:var(--red);box-shadow:0 0 6px rgba(239,68,68,0.4)}
 
+/* DISABLED PROFILE */
+.profile-card.disabled{opacity:0.5;border-color:var(--red-bg);background:rgba(239,68,68,0.04)}
+.profile-card.disabled:hover{opacity:0.7}
+/* ACTION BUTTON GROUP */
+.profile-actions{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.profile-actions .fleet-btn{padding:3px 8px;font-size:10px;border-radius:4px}
+.fleet-btn.toggle-on{background:var(--green-bg);color:var(--green);border-color:var(--green)}
+.fleet-btn.toggle-on:hover{background:var(--green);color:#fff}
+.fleet-btn.toggle-off{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+.fleet-btn.toggle-off:hover{background:var(--red);color:#fff}
+.fleet-btn.copy-btn{background:var(--cyan-bg);color:var(--cyan);border-color:var(--cyan)}
+.fleet-btn.copy-btn:hover{background:var(--cyan);color:#000}
+.fleet-btn.edit-btn{background:var(--accent-glow);color:var(--accent-light);border-color:var(--accent)}
+.fleet-btn.edit-btn:hover{background:var(--accent);color:#fff}
+
 /* RESPONSIVE */
 @media(max-width:768px){
   .navbar{padding:0 14px;gap:12px;overflow-x:auto}
@@ -1565,24 +1580,40 @@ async function renderTab8(){
   }else{
     fps.forEach(p=>{
       const hasConfig=p.has_config||p.has_soul;
+      const isDisabled=p.disabled||false;
       const dotClass=hasConfig?'config':'missing';
       const dotTitle=hasConfig?'Configured':'Missing config';
-      const card=el('div',{class:'profile-card',style:'cursor:pointer'},[
+      const cardClass='profile-card'+(isDisabled?' disabled':'');
+      const card=el('div',{class:cardClass,style:'cursor:pointer'},[
         el('div',{class:'profile-card-top'},[
-          el('div',{class:'profile-icon '+(hasConfig?'green':'red')},'⚓'),
+          el('div',{class:'profile-icon '+(hasConfig&&!isDisabled?'green':'red')},isDisabled?'⏸':'⚓'),
           el('div',{style:'flex:1;min-width:0'},[
-            el('div',{class:'profile-name'},p.name),
+            el('div',{class:'profile-name'},p.name+(isDisabled?' (disabled)':'')),
             el('div',{style:'font-size:10px;color:var(--text-muted)'},p.is_default?'Default':'Custom'),
           ]),
           el('span',{class:'fleet-status-dot '+dotClass,title:dotTitle}),
         ]),
         el('div',{style:'display:flex;align-items:center;gap:6px;margin-top:4px'},[
           el('span',{class:'profile-model'},p.model||'--'),
-          el('button',{class:'fleet-btn danger sm',style:'margin-left:auto',onclick:function(e){
+        ]),
+        el('div',{class:'profile-actions'},[
+          p.is_default?'':el('button',{class:'fleet-btn '+(isDisabled?'toggle-off':'toggle-on'),onclick:function(e){
+            e.stopPropagation();
+            toggleFleetProfile(p.name);
+          }},isDisabled?'▶ Enable':'⏸ Disable'),
+          el('button',{class:'fleet-btn edit-btn',onclick:function(e){
+            e.stopPropagation();
+            showFleetProfileDetail(p.name);
+          }},'✏ Edit'),
+          p.is_default?'':el('button',{class:'fleet-btn copy-btn',onclick:function(e){
+            e.stopPropagation();
+            copyFleetProfile(p.name);
+          }},'📋 Copy'),
+          p.is_default?'':el('button',{class:'fleet-btn danger sm',style:'margin-left:auto',onclick:function(e){
             e.stopPropagation();
             if(confirm('Delete profile '+p.name+'?')) deleteFleetProfile(p.name);
-          }},'Del'),
-        ]),
+          }},'🗑 Del'),
+        ].filter(Boolean)),
       ]);
       card.addEventListener('click',()=>showFleetProfileDetail(p.name));
       pGrid.appendChild(card);
@@ -1600,7 +1631,23 @@ async function renderTab8(){
     teamEntries.forEach(([name,team])=>{
       const memberCount=(team.members||[]).length;
       const card=el('div',{class:'fleet-team-card'},[
-        el('div',{class:'ftc-name'},'👥 '+escapeHtml(name)),
+        el('div',{style:'display:flex;align-items:center;justify-content:space-between'},[
+          el('div',{class:'ftc-name'},'👥 '+escapeHtml(name)),
+          el('div',{style:'display:flex;gap:4px'},[
+            el('button',{class:'fleet-btn edit-btn sm',onclick:function(e){
+              e.stopPropagation();
+              showFleetTeamDetail(name,team);
+            }},'✏'),
+            el('button',{class:'fleet-btn copy-btn sm',onclick:function(e){
+              e.stopPropagation();
+              copyFleetTeam(name);
+            }},'📋'),
+            el('button',{class:'fleet-btn danger sm',onclick:function(e){
+              e.stopPropagation();
+              if(confirm('Delete team '+name+'?')) deleteFleetTeam(name);
+            }},'🗑'),
+          ]),
+        ]),
         el('div',{class:'ftc-meta'},[
           el('span',{},'📁 '+escapeHtml(team.project||'--')),
           el('span',{},'👤 '+memberCount+' agents'),
@@ -1737,6 +1784,39 @@ async function deleteFleetProfile(name){
   }
 }
 
+async function toggleFleetProfile(name){
+  try{
+    const r=await fetch('/api/fleet/profiles/'+encodeURIComponent(name)+'/toggle',{method:'POST'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    addLog('success','Fleet profile '+name+' '+data.action);
+    loadAll();
+  }catch(e){
+    addLog('error','Failed to toggle profile: '+e.message);
+    alert('Failed to toggle: '+e.message);
+  }
+}
+
+async function copyFleetProfile(name){
+  const newName=prompt('Copy profile "'+name+'" to new name:',name+'-copy');
+  if(!newName||!newName.trim())return;
+  try{
+    const r=await fetch('/api/fleet/profiles/'+encodeURIComponent(name)+'/copy',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({new_name:newName.trim()}),
+    });
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=await r.json();
+    addLog('success','Copied profile '+name+' → '+data.profile);
+    alert('Profile copied to: '+data.profile);
+    loadAll();
+  }catch(e){
+    addLog('error','Failed to copy profile: '+e.message);
+    alert('Failed to copy: '+e.message);
+  }
+}
+
 // --- Team Detail ---
 async function showFleetTeamDetail(name,team){
   fleetSelectedTeam=name;
@@ -1865,6 +1945,43 @@ async function deleteFleetTeam(name){
   }catch(e){
     addLog('error','Failed to delete team: '+e.message);
     alert('Failed to delete: '+e.message);
+  }
+}
+
+async function copyFleetTeam(name){
+  const newName=prompt('Copy team "'+name+'" to new name:',name+'-copy');
+  if(!newName||!newName.trim())return;
+  try{
+    // Fetch team data first
+    const gr=await fetch('/api/fleet/teams/'+encodeURIComponent(name));
+    if(!gr.ok)throw new Error('HTTP '+gr.status);
+    const teamData=await gr.json();
+    // Create new team with same config
+    const cr=await fetch('/api/fleet/teams/create',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        name:newName.trim(),
+        description:teamData.description||'',
+        project:teamData.project||'',
+      }),
+    });
+    if(!cr.ok)throw new Error('HTTP '+cr.status);
+    // Copy members
+    const members=teamData.members||[];
+    for(const m of members){
+      await fetch('/api/fleet/teams/'+encodeURIComponent(newName.trim()),{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({add_member:{agent_id:m.agent_id,role:m.role||'agent',profile_type:m.profile_type||'hermes'}}),
+      });
+    }
+    addLog('success','Copied team '+name+' → '+newName.trim());
+    alert('Team copied to: '+newName.trim());
+    loadAll();
+  }catch(e){
+    addLog('error','Failed to copy team: '+e.message);
+    alert('Failed to copy: '+e.message);
   }
 }
 

@@ -580,7 +580,7 @@ def create_app():
     @request_logger
     def api_gpu_status():
         try:
-            from apex.interface.hermes_bridge import get_gpu_status
+            from apex.interface.gpu_manager import get_gpu_status
             return jsonify(get_gpu_status())
         except Exception as e:
             return jsonify({"error": str(e), "status": "error"}), 500
@@ -1279,6 +1279,28 @@ def create_app():
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
+    @app.route("/api/fleet/profiles/<name>/toggle", methods=["POST"])
+    def api_fleet_profile_toggle(name: str):
+        """Enable or disable a Hermes profile"""
+        try:
+            from apex.interface.fleet_manager import toggle_profile
+            return jsonify(toggle_profile(name))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/fleet/profiles/<name>/copy", methods=["POST"])
+    def api_fleet_profile_copy(name: str):
+        """Duplicate a Hermes profile"""
+        try:
+            from apex.interface.fleet_manager import copy_profile
+            data = request.get_json(force=True) or {}
+            new_name = data.get("new_name", "")
+            if not new_name:
+                return jsonify({"error": "new_name is required"}), 400
+            return jsonify(copy_profile(name, new_name))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
     @app.route("/api/fleet/profiles/create", methods=["POST"])
     def api_fleet_create_profile():
         """Create a new Hermes profile"""
@@ -1329,6 +1351,57 @@ def create_app():
                 return jsonify(update_team(name, data))
             elif request.method == "DELETE":
                 return jsonify(delete_team(name))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    # ══════════════════════════════════════════════════════════
+    # SECTION 15.5: GPU Resource Center API (projects & shutdown)
+    # ══════════════════════════════════════════════════════════
+
+    @app.route("/api/gpu/projects")
+    def api_gpu_projects():
+        """Get project-GPU bindings"""
+        try:
+            from apex.interface.gpu_manager import get_gpu_projects
+            return jsonify(get_gpu_projects())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/gpu/projects/bind", methods=["POST"])
+    def api_gpu_bind_project():
+        """Bind a project to a GPU instance"""
+        try:
+            from apex.interface.gpu_manager import bind_project
+            data = request.get_json(force=True) or {}
+            project = data.get("project", "")
+            instance = data.get("instance", "")
+            if not project or not instance:
+                return jsonify({"error": "project and instance required"}), 400
+            return jsonify(bind_project(project, instance))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/gpu/shutdown/request", methods=["POST"])
+    def api_gpu_shutdown_request():
+        """Request GPU shutdown → generate auth code"""
+        try:
+            from apex.interface.gpu_manager import request_shutdown
+            data = request.get_json(force=True) or {}
+            project = data.get("project", "")
+            return jsonify(request_shutdown(project))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/gpu/shutdown/confirm", methods=["POST"])
+    def api_gpu_shutdown_confirm():
+        """Confirm GPU shutdown with auth code"""
+        try:
+            from apex.interface.gpu_manager import confirm_shutdown
+            data = request.get_json(force=True) or {}
+            code = data.get("code", "")
+            if not code:
+                return jsonify({"error": "auth code required"}), 400
+            return jsonify(confirm_shutdown(code))
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
@@ -1451,6 +1524,132 @@ def create_app():
             actions = tm.auto_dispatch(max_per_cycle=max_per.get("max", 3))
             push_event("dispatch", {"actions": len(actions)})
             return jsonify({"dispatched": len(actions), "actions": actions})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/dispatch/smart", methods=["POST"])
+    @request_logger
+    def api_dispatch_smart():
+        """智能分派: 需求文本 → 拆解 → 创建Task → 自动分配Agent"""
+        try:
+            data = request.get_json(force=True) or {}
+            requirement = data.get("requirement", "").strip()
+            project = data.get("project", "finopsai")
+
+            if not requirement:
+                return jsonify({"error": "requirement is required"}), 400
+
+            from apex.orchestration.task_decomposer import (
+                decompose_requirement, dispatch_tasks,
+            )
+            # 1. 拆解
+            result = decompose_requirement(requirement, project)
+
+            # 2. 创建+分派
+            from apex.orchestration.task_manager import get_task_manager
+            tm = get_task_manager()
+            dispatch_result = dispatch_tasks(result, tm)
+
+            push_event("dispatch", {
+                "action": "smart_dispatch",
+                "project": project,
+                "tasks": len(result.tasks),
+                "dispatched": dispatch_result["dispatched"],
+            })
+
+            return jsonify({
+                "requirement": requirement,
+                "project": project,
+                "epic_title": result.epic_title,
+                "analysis": result.analysis,
+                "tasks": [
+                    {
+                        "title": t.title,
+                        "assignee": t.assignee,
+                        "hours": t.estimated_hours,
+                        "priority": t.priority,
+                    }
+                    for t in result.tasks
+                ],
+                "dispatch": dispatch_result,
+            })
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/pipeline/normal", methods=["POST"])
+    @request_logger
+    def api_pipeline_normal():
+        """📋 正常流程管线: 需求→拆解→分派"""
+        try:
+            data = request.get_json(force=True) or {}
+            requirement = data.get("requirement", "").strip()
+            project = data.get("project", "finopsai")
+            auto_confirm = data.get("auto_confirm", True)
+
+            if not requirement:
+                return jsonify({"error": "requirement is required"}), 400
+
+            from apex.orchestration.pipeline import run_normal_pipeline
+            from apex.orchestration.task_manager import get_task_manager
+
+            run = run_normal_pipeline(
+                requirement=requirement,
+                project=project,
+                auto_confirm=auto_confirm,
+                task_manager=get_task_manager(),
+            )
+
+            push_event("pipeline", {"action": "normal", "id": run.id, "tasks": run.task_count})
+            return jsonify(run.to_dict())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/pipeline/direct", methods=["POST"])
+    @request_logger
+    def api_pipeline_direct():
+        """⚡ 专项直达管线: 指令→Agent→立即执行"""
+        try:
+            data = request.get_json(force=True) or {}
+            task = data.get("task", "").strip()
+            project = data.get("project", "finopsai")
+            agent = data.get("agent", "").strip()
+            priority = data.get("priority", 1)
+
+            if not task or not agent:
+                return jsonify({"error": "task and agent are required"}), 400
+
+            from apex.orchestration.pipeline import run_direct_pipeline, resolve_agent
+            from apex.orchestration.task_manager import get_task_manager
+
+            resolved = resolve_agent(agent, project)
+            run = run_direct_pipeline(
+                task=task, project=project, agent=resolved,
+                priority=priority, task_manager=get_task_manager(),
+            )
+
+            push_event("pipeline", {"action": "direct", "id": run.id, "agent": resolved})
+            return jsonify(run.to_dict())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/pipeline/smart", methods=["POST"])
+    @request_logger
+    def api_pipeline_smart():
+        """🧠 智能路由: 自动识别意图→选择流程"""
+        try:
+            data = request.get_json(force=True) or {}
+            message = data.get("message", "").strip()
+            project = data.get("project", "finopsai")
+
+            if not message:
+                return jsonify({"error": "message is required"}), 400
+
+            from apex.orchestration.pipeline import smart_route
+            from apex.orchestration.task_manager import get_task_manager
+
+            result = smart_route(message, project, task_manager=get_task_manager())
+            push_event("pipeline", {"action": "smart_route", "mode": result["mode"]})
+            return jsonify(result)
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
@@ -1669,6 +1868,311 @@ def create_app():
             return jsonify({"success": True, "sprint": sprint.to_dict()})
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
+
+    # ══════════════════════════════════════════════════════════
+    # SECTION 17: 🏸 羽球宝AI — 球场预约 API
+    # ══════════════════════════════════════════════════════════
+
+    # ── 内存存储 & 种子数据 ──────────────────────────────────
+    _courts = [
+        {
+            "id": "court-001",
+            "name": "深圳体育馆羽毛球馆",
+            "address": "深圳市福田区笋岗西路2006号",
+            "district": "福田区",
+            "price_per_hour": 80,
+            "rating": 4.5,
+            "image_url": "/static/courts/sztyg.jpg",
+        },
+        {
+            "id": "court-002",
+            "name": "南山文体中心羽毛球馆",
+            "address": "深圳市南山区南山大道2100号",
+            "district": "南山区",
+            "price_per_hour": 100,
+            "rating": 4.7,
+            "image_url": "/static/courts/nswt.jpg",
+        },
+        {
+            "id": "court-003",
+            "name": "宝安体育馆羽毛球馆",
+            "address": "深圳市宝安区新湖路2112号",
+            "district": "宝安区",
+            "price_per_hour": 60,
+            "rating": 4.3,
+            "image_url": "/static/courts/baty.jpg",
+        },
+    ]
+    _bookings = []  # {booking_id, court_id, user_name, phone, date, time_slot, duration_hours, total_price, status}
+    _next_booking_id = 1
+
+    from datetime import datetime as dt
+    import re
+
+    def _gen_schedule(court_id):
+        """Generate a default hourly schedule for a court."""
+        hours = []
+        for h in range(8, 22):  # 08:00 - 22:00
+            start = f"{h:02d}:00"
+            end = f"{h+1:02d}:00"
+            # Check if any booking occupies this slot
+            occupied = any(
+                b["court_id"] == court_id
+                and b["status"] != "cancelled"
+                and b["date"] == dt.now().strftime("%Y-%m-%d")
+                for b in _bookings
+            )
+            hours.append({
+                "time": f"{start}-{end}",
+                "available": not occupied,
+            })
+        return hours
+
+    # ── GET /api/courts ───────────────────────────────────────
+    @app.route("/api/courts")
+    @request_logger
+    def api_courts():
+        return jsonify({"courts": _courts})
+
+    # ── GET /api/courts/<court_id> ────────────────────────────
+    @app.route("/api/courts/<court_id>")
+    @request_logger
+    def api_court_detail(court_id: str):
+        court = next((c for c in _courts if c["id"] == court_id), None)
+        if not court:
+            return jsonify({"error": f"Court '{court_id}' not found"}), 404
+        return jsonify({
+            "court": {
+                **court,
+                "schedule": _gen_schedule(court_id),
+            }
+        })
+
+    # ── POST /api/bookings ────────────────────────────────────
+    @app.route("/api/bookings", methods=["POST"])
+    @request_logger
+    def api_bookings_create():
+        nonlocal _next_booking_id
+
+        data = request.get_json(silent=True) or {}
+        court_id = data.get("court_id", "")
+        user_name = (data.get("user_name") or "").strip()
+        phone = (data.get("phone") or "").strip()
+        date = (data.get("date") or "").strip()
+        time_slot = (data.get("time_slot") or "").strip()
+        duration_hours = data.get("duration_hours", 1)
+
+        # ── 参数校验 ──
+        errors = []
+        if not court_id:
+            errors.append("court_id is required")
+        if not user_name:
+            errors.append("user_name is required")
+        if not phone:
+            errors.append("phone is required")
+        if not date:
+            errors.append("date is required")
+        if not time_slot:
+            errors.append("time_slot is required")
+
+        # 校验 date 格式 YYYY-MM-DD
+        if date and not re.match(r"^\d{4}-\d{2}-\d{2}$", date):
+            errors.append("date must be YYYY-MM-DD format")
+
+        # 校验 time_slot 格式 HH:MM
+        if time_slot and not re.match(r"^\d{2}:\d{2}$", time_slot):
+            errors.append("time_slot must be HH:MM format (e.g. 14:00)")
+
+        if errors:
+            return jsonify({"error": "; ".join(errors)}), 400
+
+        # 校验 court_id 必须存在
+        court = next((c for c in _courts if c["id"] == court_id), None)
+        if not court:
+            return jsonify({"error": f"Court '{court_id}' not found"}), 404
+
+        # 校验 duration_hours
+        try:
+            duration_hours = int(duration_hours)
+        except (ValueError, TypeError):
+            duration_hours = 1
+        if duration_hours < 1:
+            duration_hours = 1
+        if duration_hours > 8:
+            return jsonify({"error": "duration_hours must be between 1 and 8"}), 400
+
+        # ── 时间段冲突检测 ──
+        try:
+            slot_hour = int(time_slot.split(":")[0])
+            slot_minute = int(time_slot.split(":")[1])
+        except (ValueError, IndexError):
+            return jsonify({"error": "time_slot must be HH:MM format"}), 400
+
+        # Check if this time slot conflicts with any existing booking for this court+date
+        for b in _bookings:
+            if b["court_id"] != court_id or b["date"] != date or b["status"] == "cancelled":
+                continue
+            try:
+                b_hour = int(b["time_slot"].split(":")[0])
+                b_minute = int(b["time_slot"].split(":")[1])
+            except (ValueError, IndexError):
+                continue
+            b_start = b_hour * 60 + b_minute
+            b_end = b_start + b["duration_hours"] * 60
+            req_start = slot_hour * 60 + slot_minute
+            req_end = req_start + duration_hours * 60
+            # Overlap: !(req_end <= b_start or req_start >= b_end)
+            if not (req_end <= b_start or req_start >= b_end):
+                return jsonify({
+                    "error": f"Time slot conflict: {time_slot} for {duration_hours}h overlaps with existing booking (booking_id={b['booking_id']}, {b['time_slot']} for {b['duration_hours']}h)"
+                }), 409
+
+        # ── 创建预订 ──
+        total_price = court["price_per_hour"] * duration_hours
+        booking = {
+            "booking_id": f"bk-{_next_booking_id:04d}",
+            "court_id": court_id,
+            "court_name": court["name"],
+            "user_name": user_name,
+            "phone": phone,
+            "date": date,
+            "time_slot": time_slot,
+            "duration_hours": duration_hours,
+            "total_price": total_price,
+            "status": "confirmed",
+        }
+        _bookings.append(booking)
+        _next_booking_id += 1
+
+        push_event("booking", {"action": "created", "booking_id": booking["booking_id"],
+                   "court": court["name"], "user": user_name})
+        log_event("info", f"Booking created: {booking['booking_id']} by {user_name} at {court['name']}")
+
+        return jsonify({
+            "booking_id": booking["booking_id"],
+            "status": "confirmed",
+            "total_price": total_price,
+        }), 201
+
+    # ── GET /api/bookings ─────────────────────────────────────
+    @app.route("/api/bookings")
+    @request_logger
+    def api_bookings_list():
+        user_name = (request.args.get("user_name") or "").strip()
+        if user_name:
+            filtered = [b for b in _bookings if b["user_name"] == user_name]
+        else:
+            filtered = list(_bookings)
+        return jsonify({
+            "bookings": [
+                {
+                    "booking_id": b["booking_id"],
+                    "court_id": b["court_id"],
+                    "court_name": b["court_name"],
+                    "date": b["date"],
+                    "time_slot": b["time_slot"],
+                    "status": b["status"],
+                }
+                for b in filtered
+            ]
+        })
+
+    # ══════════════════════════════════════════
+    # Project Registry — 立项审批 + 模块架构 + Agent档案
+    # ══════════════════════════════════════════
+
+    @app.route("/api/projects/approved")
+    def api_projects_approved():
+        """List approved projects (only 始祖Agent审批过的)"""
+        try:
+            from apex.interface.project_registry import list_approved_projects
+            return jsonify(list_approved_projects())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/projects/<name>")
+    def api_project_detail(name: str):
+        """Project detail: goal + modules + sub-functions + agent assignments"""
+        try:
+            from apex.interface.project_registry import get_project_detail
+            return jsonify(get_project_detail(name))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/projects/propose", methods=["POST"])
+    def api_project_propose():
+        """Propose a new project"""
+        try:
+            from apex.interface.project_registry import propose_project
+            data = request.get_json(force=True) or {}
+            return jsonify(propose_project(
+                name=data.get("name", ""),
+                goal=data.get("goal", ""),
+                modules=data.get("modules", None),
+            ))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/projects/approve", methods=["POST"])
+    def api_project_approve():
+        """Approve a project (始祖Agent)"""
+        try:
+            from apex.interface.project_registry import approve_project
+            data = request.get_json(force=True) or {}
+            return jsonify(approve_project(
+                name=data.get("name", ""),
+                approver=data.get("approver", "始祖Agent·小卢"),
+            ))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/projects/module", methods=["POST"])
+    def api_project_add_module():
+        """Add a module to a project"""
+        try:
+            from apex.interface.project_registry import add_project_module
+            data = request.get_json(force=True) or {}
+            return jsonify(add_project_module(
+                project=data.get("project", ""),
+                module_name=data.get("module_name", ""),
+                description=data.get("description", ""),
+            ))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/projects/subfunction", methods=["POST"])
+    def api_project_add_subfunction():
+        """Add a sub-function to a module"""
+        try:
+            from apex.interface.project_registry import add_sub_function
+            data = request.get_json(force=True) or {}
+            return jsonify(add_sub_function(
+                project=data.get("project", ""),
+                module_name=data.get("module_name", ""),
+                func_name=data.get("func_name", ""),
+                description=data.get("description", ""),
+                assigned_agent=data.get("assigned_agent", ""),
+            ))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/agents/<agent_id>")
+    def api_agent_profile(agent_id: str):
+        """Agent capability profile: skills, projects, model comparison"""
+        try:
+            from apex.interface.project_registry import get_agent_profile
+            return jsonify(get_agent_profile(agent_id))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/agents")
+    def api_agents_summary():
+        """All agent summaries"""
+        try:
+            from apex.interface.project_registry import get_all_agent_summaries
+            return jsonify(get_all_agent_summaries())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
     return app
 

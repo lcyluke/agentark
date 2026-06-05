@@ -205,6 +205,50 @@ def dispatch_cmd():
         console.print(f"  ✅ {action['title'][:50]} → {action['agent']} ({action['action']})")
 
 
+def dispatch_smart_cmd(requirement: str, project: str = "finopsai"):
+    """智能分派：需求文本 → AI拆解 → 创建Task → 自动分配Agent"""
+    from apex.orchestration.task_decomposer import decompose_requirement, dispatch_tasks
+
+    console.print(f"\n[bold cyan]🔍 分析需求:[/] {requirement[:60]}...")
+    console.print(f"[bold cyan]📦 项目:[/] {project}")
+
+    # 1. 拆解
+    with console.status("[bold green]拆解需求中..."):
+        result = decompose_requirement(requirement, project)
+
+    console.print(f"\n[bold]📋 {result.epic_title}[/]")
+    console.print(f"[dim]{result.analysis}[/]\n")
+
+    # 显示任务
+    table = Table(title="拆解结果", box=box.SIMPLE)
+    table.add_column("#", style="dim")
+    table.add_column("任务")
+    table.add_column("分配")
+    table.add_column("工时")
+    table.add_column("优先级")
+
+    for i, t in enumerate(result.tasks, 1):
+        priority_icon = {0: "🔴", 1: "🟠", 2: "🟡", 3: "🟢"}.get(t.priority, "⚪")
+        table.add_row(
+            str(i), t.title, t.assignee or "(待分配)",
+            f"{t.estimated_hours}h", priority_icon,
+        )
+
+    console.print(table)
+
+    # 2. 确认后创建
+    console.print("\n[bold yellow]创建以上任务并分派? [y/N][/] ", end="")
+    # (CLI模式下自动确认)
+    tm = get_task_manager()
+    dispatch_result = dispatch_tasks(result, tm)
+
+    console.print(f"\n[bold green]✅ 已创建 {dispatch_result['dispatched']} 个任务[/]")
+    if dispatch_result.get("epic_id"):
+        console.print(f"   Epic: {dispatch_result['epic_id']}")
+    for tid in dispatch_result.get("task_ids", []):
+        console.print(f"   Task: {tid}")
+
+
 def help_request_cmd(agent: str, title: str, description: str = "", task: str = ""):
     """Request help from PM for another agent."""
     tm = get_task_manager()

@@ -180,6 +180,60 @@ def get_project_dashboard(project: str) -> dict:
             ORDER BY priority ASC LIMIT 10
         """, (project_filter,)).fetchall()
 
+        # === TASK PIPELINE: all tasks with full details for pipeline view ===
+        all_tasks = conn.execute("""
+            SELECT id, title, assignee, status, priority, depends_on, parent_id,
+                   created_at, completed_at, cost
+            FROM tasks WHERE title LIKE ?
+            ORDER BY priority ASC, created_at ASC
+        """, (project_filter,)).fetchall()
+
+        task_list = []
+        for t in all_tasks:
+            title = t["title"] or ""
+            # Detect handoff: "(接班 xxx)"
+            handoff_from = None
+            handoff_to = None
+            if "接班" in title:
+                idx = title.find("接班")
+                end = title.find(")", idx) if ")" in title[idx:] else len(title)
+                handoff_from = title[idx+2:end].strip().rstrip(")")
+            # Who's next? Look for tasks that reference this assignee as handoff_from
+            next_assignee = None
+            for t2 in all_tasks:
+                t2title = t2["title"] or ""
+                if f"接班{t['assignee']}" in t2title and t2["id"] != t["id"]:
+                    next_assignee = t2["assignee"]
+                    break
+
+            task_list.append({
+                "id": t["id"][:16],
+                "title": title[:80],
+                "assignee": t["assignee"] or "unassigned",
+                "status": t["status"] or "todo",
+                "priority": t["priority"] or 2,
+                "depends_on": t["depends_on"],
+                "parent_id": t["parent_id"],
+                "handoff_from": handoff_from,
+                "handoff_to": next_assignee,
+                "created_at": t["created_at"],
+                "completed_at": t["completed_at"],
+                "cost": t["cost"] or 0,
+            })
+
+        # Build pipeline stages (grouped by status for kanban)
+        pipeline_stages = defaultdict(list)
+        handoff_chain = []
+        for t in task_list:
+            pipeline_stages[t["status"]].append(t)
+            if t.get("handoff_from") or t.get("handoff_to"):
+                handoff_chain.append({
+                    "from": t.get("handoff_from"),
+                    "to": t.get("assignee"),
+                    "task": t["title"][:50],
+                    "status": t["status"],
+                })
+
         # Project health score
         total = sum(r["count"] for r in status_counts)
         done = sum(r["count"] for r in status_counts if r["status"] == "done")
@@ -194,6 +248,9 @@ def get_project_dashboard(project: str) -> dict:
             "health_status": "healthy" if health > 70 else "warning" if health > 40 else "critical",
             "agents": agents,
             "agent_count": len(agents),
+            "tasks": task_list,
+            "pipeline_stages": {k: v for k, v in pipeline_stages.items()},
+            "handoff_chain": handoff_chain,
             "blockers": [
                 {"agent": b["assignee"], "task": b["title"][:80], "priority": b["priority"]}
                 for b in blockers
