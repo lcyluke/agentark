@@ -2174,6 +2174,69 @@ def create_app():
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
+    # ══════════════════════════════════════════
+    # Project Factory — 模块库 + SKILL进化 + Pipeline
+    # ══════════════════════════════════════════
+
+    @app.route("/api/modules")
+    def api_modules():
+        """Module library — categories and templates"""
+        try:
+            from apex.interface.project_factory import get_module_library, search_modules
+            q = request.args.get("q", "")
+            cat = request.args.get("category", "")
+            if q:
+                return jsonify(search_modules(q))
+            if cat:
+                from apex.interface.project_factory import get_module_templates
+                return jsonify(get_module_templates(cat))
+            return jsonify(get_module_library())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/skills/<agent_id>")
+    def api_skills_agent(agent_id: str):
+        """Agent skill evolution profile"""
+        try:
+            from apex.interface.project_factory import get_agent_skills
+            return jsonify(get_agent_skills(agent_id))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/skills/award", methods=["POST"])
+    def api_skills_award():
+        """Award XP to an agent"""
+        try:
+            from apex.interface.project_factory import award_xp
+            data = request.get_json(force=True) or {}
+            return jsonify(award_xp(
+                agent_id=data.get("agent_id", ""),
+                action=data.get("action", "done"),
+                detail=data.get("detail", ""),
+            ))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/skills/leaderboard")
+    def api_skills_leaderboard():
+        """Agent XP leaderboard"""
+        try:
+            from apex.interface.project_factory import get_skill_leaderboard
+            return jsonify(get_skill_leaderboard())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/pipeline/<project>")
+    def api_pipeline(project: str):
+        """Project pipeline: dev→test→deploy→evaluate"""
+        try:
+            from apex.interface.project_factory import get_project_pipeline, get_project_evaluation
+            pipeline = get_project_pipeline(project)
+            evaluation = get_project_evaluation(project)
+            return jsonify({**pipeline, "evaluation": evaluation})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
     return app
 
 

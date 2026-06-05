@@ -186,9 +186,20 @@ def status_cmd():
     console.print("[dim]💡 Start squad: apex squad start | Attach agent: <agent-name> chat[/]")
 
 
-def start_cmd():
-    """Launch all 5 dev agents in terminal windows."""
+def start_cmd(input_lines: int = 3, model: str = "", token_limit: int = 0):
+    """Launch all 5 dev agents in terminal windows.
+
+    Each terminal shows the agent badge+name in the title bar
+    and a 3-line input composer by default.
+
+    Args:
+        input_lines: Lines in Hermes TUI composer (default: 3)
+        model: Override default model for all agents
+        token_limit: Max tokens per turn
+    """
     console.print("[bold]🚀 Launching Dev Squad...[/]")
+    if model:
+        console.print(f"[dim]Using model: {model} | Input lines: {input_lines}[/]")
 
     results = []
     for agent_name in DEV_SQUAD:
@@ -197,15 +208,25 @@ def start_cmd():
             console.print(f"  [red]✗ {agent_name}: wrapper not found. Run 'apex team sync {agent_name}' first[/]")
             continue
 
-        # Open a new Terminal window
+        # Write per-run env vars for this agent
+        _write_agent_env(agent_name, input_lines, model, token_limit)
+
+        # Open a new Terminal window — title shows agent badge + name
+        badge = DEV_SQUAD[agent_name].get("badge", "●")
         try:
-            script = f'tell application "Terminal" to do script "{wrapper} chat"'
+            script = (
+                f'tell application "Terminal" to do script '
+                f'"export HERMES_COMPOSER_LINES={input_lines}'
+                f'{" HERMES_DEFAULT_MODEL=" + model if model else ""}'
+                f' && echo -ne \\"\\\\033]0;{badge} {agent_name} \\u2694 Apex\\\\007\\"'
+                f' && {wrapper} chat"'
+            )
             subprocess.run(
                 ["osascript", "-e", script],
                 capture_output=True, timeout=5,
             )
             results.append((agent_name, "launched"))
-            console.print(f"  ✅ {agent_name} — new Terminal window opened")
+            console.print(f"  ✅ {badge} {agent_name} — new Terminal window ({input_lines}-line input)")
             time.sleep(0.5)
         except Exception as e:
             results.append((agent_name, f"error: {e}"))
@@ -216,10 +237,41 @@ def start_cmd():
     console.print()
     console.print(Panel(
         f"[bold green]✅ Squad launch: {launched}/{len(DEV_SQUAD)} agents[/]\n"
-        f"Each agent opens in its own Terminal window with Superpowers methodology loaded.",
+        f"Each agent opens in its own Terminal window.\n"
+        f"Input: {input_lines} lines  |  Model: {model or 'default'}  |  Token limit: {token_limit or 'default'}",
         title="🚢 Dev Squad Deployed",
         border_style="green",
     ))
+
+
+def _write_agent_env(agent_name: str, input_lines: int, model: str, token_limit: int):
+    """Write per-agent env config to Hermes profile."""
+    profile_dir = Path(os.environ.get("HERMES_HOME", os.path.expanduser("~/.hermes"))) / "profiles" / agent_name
+    if not profile_dir.exists():
+        return
+    import yaml
+    # Update config for input lines
+    config_file = profile_dir / "config.yaml"
+    if config_file.exists():
+        try:
+            with open(config_file) as f:
+                cfg = yaml.safe_load(f) or {}
+            if "display" not in cfg:
+                cfg["display"] = {}
+            cfg["display"]["composer_lines"] = input_lines
+            cfg["display"]["multi_line_composer"] = True
+            if model:
+                if "model" not in cfg:
+                    cfg["model"] = {}
+                cfg["model"]["default"] = model
+            if token_limit > 0:
+                if "agent" not in cfg:
+                    cfg["agent"] = {}
+                cfg["agent"]["max_tokens_per_turn"] = token_limit
+            with open(config_file, "w") as f:
+                yaml.dump(cfg, f, default_flow_style=False, allow_unicode=True)
+        except:
+            pass
 
     console.print(f"\n[dim]Methodology chain active in all agents: "
                   f"{' → '.join(f'{e}{n}' for e, n in zip(METHODOLOGY_CHAIN_EMOJI, METHODOLOGY_CHAIN_NAMES))}[/]")

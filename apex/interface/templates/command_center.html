@@ -307,11 +307,14 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
     <div class="nav on" data-view="dashboard" onclick="go('dashboard')"><i class="ti ti-dashboard"></i>指挥中心</div>
     <div class="nav" data-view="project" onclick="go('project')"><i class="ti ti-target-arrow"></i>项目作战室</div>
     <div class="nav" data-view="approvals" onclick="go('approvals')"><i class="ti ti-gavel"></i>审批审计<span class="badge" id="navAppr">0</span></div>
+    <div class="nav" data-view="pipeline" onclick="go('pipeline')"><i class="ti ti-timeline"></i>Pipeline</div>
     <div class="nav-lbl">智能</div>
     <div class="nav" data-view="fleet" onclick="go('fleet')"><i class="ti ti-robot"></i>AI舰队</div>
     <div class="nav" data-view="autonomy" onclick="go('autonomy')"><i class="ti ti-adjustments-bolt"></i>自治引擎</div>
     <div class="nav" data-view="knowledge" onclick="go('knowledge')"><i class="ti ti-brain"></i>知识图谱</div>
     <div class="nav" data-view="flow" onclick="go('flow')"><i class="ti ti-timeline-event"></i>数据流时序</div>
+    <div class="nav" data-view="modules" onclick="go('modules')"><i class="ti ti-package"></i>模块市场</div>
+    <div class="nav" data-view="skills" onclick="go('skills')"><i class="ti ti-trending-up"></i>SKILL进化</div>
     <div class="nav-lbl">资源</div>
     <div class="nav" data-view="cost" onclick="go('cost')"><i class="ti ti-coins"></i>成本中心</div>
     <div class="nav" data-view="system" onclick="go('system')"><i class="ti ti-server"></i>系统状态</div>
@@ -377,7 +380,7 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
         <div style="height:18px"></div>
         <!-- Sprint Pipeline -->
         <div class="card" id="sprintCard">
-          <div class="sec-h"><i class="ti ti-run"></i>🏃 Sprint Pipeline · MVP 闭环流水线</div>
+          <div class="sec-h"><i class="ti ti-run"></i>Sprint Pipeline · MVP 闭环流水线</div>
           <div id="sprintContent" style="font-size:12px;color:var(--tx2)">加载中...</div>
         </div>
       </section>
@@ -492,6 +495,61 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
         <div class="note"><b>读图:</b>真人只在两端出现——开头下达目标、中途批闸门;中间的拆解、派活、执行、回传全部由 agent 自组织完成。Apex 实现的就是这种「组织化心智」。</div>
       </section>
 
+      <!-- VIEW: Pipeline -->
+      <section class="view" id="v-pipeline">
+        <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px">
+          <div style="font-family:var(--disp);font-size:18px;font-weight:600"><i class="ti ti-timeline" style="color:var(--teal);margin-right:8px"></i>Pipeline · 交付流水线</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <select id="ppProjSwitch" onchange="loadPipeline()" style="background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px 11px;font-family:var(--body);font-size:13px">
+              <option value="">-- 选择项目 --</option>
+            </select>
+          </div>
+        </div>
+        <div style="height:18px"></div>
+        <div class="card" id="pipelineProgressCard" style="display:none">
+          <div class="sec-h"><i class="ti ti-progress"></i>整体进度</div>
+          <div class="bar" style="height:12px"><i id="ppBar" style="width:0%;background:var(--teal)"></i></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tx3);margin-top:6px">
+            <span id="ppPct">0%</span><span id="ppTasks">0 / 0 任务</span>
+          </div>
+        </div>
+        <div style="height:18px"></div>
+        <div id="pipelineStages"></div>
+        <div style="height:18px"></div>
+        <div class="card" id="pipelineEvalCard" style="display:none">
+          <div class="sec-h"><i class="ti ti-chart-radar"></i>交付评测</div>
+          <div id="pipelineEval"></div>
+        </div>
+      </section>
+
+      <!-- VIEW: 模块市场 -->
+      <section class="view" id="v-modules">
+        <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px">
+          <div style="font-family:var(--disp);font-size:18px;font-weight:600"><i class="ti ti-package" style="color:var(--teal);margin-right:8px"></i>模块市场</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="modSearch" placeholder="搜索模块..." onkeyup="renderModules(event)" style="background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px 11px;font-family:var(--body);font-size:13px;width:220px">
+          </div>
+        </div>
+        <div style="height:18px"></div>
+        <div id="modCategories" style="font-size:12px;color:var(--tx2)">加载中...</div>
+        <div style="height:18px"></div>
+        <div id="modTemplates"></div>
+      </section>
+
+      <!-- VIEW: SKILL进化 -->
+      <section class="view" id="v-skills">
+        <div class="card" style="text-align:center;padding:24px">
+          <div style="font-family:var(--disp);font-size:18px;font-weight:600"><i class="ti ti-trending-up" style="color:var(--teal);margin-right:8px"></i>SKILL进化 · Agent XP 排行榜</div>
+        </div>
+        <div style="height:18px"></div>
+        <div id="skillsPodium"></div>
+        <div style="height:18px"></div>
+        <div class="card">
+          <div class="sec-h"><i class="ti ti-list-numbers"></i>完整排行榜</div>
+          <div style="max-height:600px;overflow-y:auto"><table class="tbl" id="skillsTable"><thead><tr><th>#</th><th>Agent</th><th>等级</th><th>XP</th><th>项目</th><th>模块</th></tr></thead><tbody id="skillsTbody"></tbody></table></div>
+        </div>
+      </section>
+
       <!-- GPU 资源中心 -->
       <section class="view" id="v-gpu">
         <div class="sec-h"><i class="ti ti-server-cog"></i>GPU 资源中心 · 实时监控与调度</div>
@@ -514,10 +572,10 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
         <div class="card" style="padding:14px;margin-top:10px">
           <h4 style="margin:0 0 6px"><i class="ti ti-clock" style="color:var(--tx3)"></i> 闲置检测规则</h4>
           <div style="font-size:12px;color:var(--tx2);line-height:1.8">
-            <div>⏱ GPU 利用率 < 5% 且无推理连接 → 开始计时</div>
-            <div>⚠️ 闲置 5 分钟 → Dashboard 黄色警告</div>
-            <div>🛑 闲置 15 分钟 → Dashboard 红色强提醒</div>
-            <div>🔐 关机操作 → 需授权确认码（双重确认）</div>
+            <div><i class="ti ti-clock"></i> GPU 利用率 < 5% 且无推理连接 → 开始计时</div>
+            <div><i class="ti ti-alert-triangle"></i> 闲置 5 分钟 → Dashboard 黄色警告</div>
+            <div><i class="ti ti-hand-stop"></i> 闲置 15 分钟 → Dashboard 红色强提醒</div>
+            <div><i class="ti ti-key"></i> 关机操作 → 需授权确认码（双重确认）</div>
           </div>
         </div>
       </section>
@@ -540,10 +598,10 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
     <div class="msg ai"><div class="ic" style="background:var(--violet-d);color:var(--violet)"><i class="ti ti-sparkles"></i></div><div class="bub">你好!我是 AI 指挥官,自然语言下达目标——我会拆解、派活、盯进度。高风险动作会留给你审批。</div></div>
   </div>
   <div class="suggest" id="chatSuggest">
-    <button onclick="quickChat('分析各项目成本,砍掉浪费')">💰 分析成本,砍掉浪费</button>
-    <button onclick="quickChat('给代码审查agent补上安全扫描')">🔒 增强代码安全扫描</button>
-    <button onclick="quickChat('客服响应时间压到5分钟以内')">🎧 客服提速</button>
-    <button onclick="quickChat('本周自动更新知识库并归档')">📚 知识库自动更新</button>
+    <button onclick="quickChat('分析各项目成本,砍掉浪费')"><i class="ti ti-coins"></i> 分析成本,砍掉浪费</button>
+    <button onclick="quickChat('给代码审查agent补上安全扫描')"><i class="ti ti-lock"></i> 增强代码安全扫描</button>
+    <button onclick="quickChat('客服响应时间压到5分钟以内')"><i class="ti ti-headphones"></i> 客服提速</button>
+    <button onclick="quickChat('本周自动更新知识库并归档')"><i class="ti ti-books"></i> 知识库自动更新</button>
   </div>
   <div class="chat-in">
     <textarea id="chatIn" rows="2" placeholder="下达一个目标,例如「这周把Q3增长的自然流量提升20%」" style="min-height:42px;width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:var(--r-s);color:var(--tx);padding:9px 11px;font-family:var(--body);font-size:13px;resize:none"></textarea>
@@ -640,7 +698,10 @@ const VIEW_TITLES = {
   flow: ['数据流时序', 'Orchestration Flow'],
   cost: ['成本中心', 'Cost Center'],
   system: ['系统状态', 'System'],
-  gpu: ['GPU 资源中心', 'GPU Resource Center']
+  gpu: ['GPU 资源中心', 'GPU Resource Center'],
+  pipeline: ['Pipeline', 'Pipeline'],
+  modules: ['模块市场', 'Module Store'],
+  skills: ['SKILL进化', 'Skill Evolution']
 };
 
 /* ========== API ========== */
@@ -699,6 +760,9 @@ function renderActiveView() {
     case 'cost': renderCost(); break;
     case 'system': renderSystem(); break;
     case 'gpu': renderGPU(); break;
+    case 'pipeline': loadPipeline(); break;
+    case 'modules': renderModules(); break;
+    case 'skills': renderSkills(); break;
   }
 }
 
@@ -793,7 +857,7 @@ function renderCrew() {
 /* ========== Toast ========== */
 let toastT;
 function toast(t) {
-  $('#toastTxt').textContent = t;
+  $('#toastTxt').innerHTML = t;
   $('#toast').classList.add('on');
   clearTimeout(toastT);
   toastT = setTimeout(() => $('#toast').classList.remove('on'), 2600);
@@ -973,7 +1037,7 @@ function renderProject() {
         <span class="tag teal" style="font-size:11px">已批准</span>
       </div>
       <div style="font-size:14px;color:var(--tx);background:var(--bg3);border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:var(--r-s);padding:14px 18px;margin:10px 0;line-height:1.7;font-weight:400">
-        <span style="color:var(--teal);font-weight:600">🎯 项目目标</span><br>${goal || '（无目标描述）'}
+        <span style="color:var(--teal);font-weight:600"><i class="ti ti-target"></i> 项目目标</span><br>${goal || '（无目标描述）'}
       </div>
       <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:8px">
         <span style="font-size:12px;color:var(--tx2)"><i class="ti ti-box" style="color:var(--teal)"></i> ${totalModules} 模块</span>
@@ -1208,20 +1272,20 @@ function renderSprintCard() {
     const filled = Math.round(s.progress_pct / 100 * barW);
     const bar = '<span style="color:var(--teal)">' + '█'.repeat(filled) + '</span>' + '<span style="color:var(--line2)">' + '░'.repeat(barW - filled) + '</span>';
 
-    const phaseIcons = {'done':'✅','active':'🔄','pending':'⏳','rejected':'❌'};
+    const phaseIcons = {'done':'<i class="ti ti-circle-check" style="color:var(--green)"></i>','active':'<i class="ti ti-refresh" style="color:var(--blue)"></i>','pending':'<i class="ti ti-clock" style="color:var(--tx3)"></i>','rejected':'<i class="ti ti-x" style="color:var(--red)"></i>'};
     const phasesHTML = (s.phases||[]).map(p => {
       const icon = phaseIcons[p.status] || '?';
-      const gIcon = p.gate === 'manual' ? '👤' : '🤖';
+      const gIcon = p.gate === 'manual' ? '<i class="ti ti-user"></i>' : '<i class="ti ti-robot"></i>';
       return `<span title="${p.display||p.name}: ${p.status} · ${p.gate_name}" style="margin-right:4px">${icon}</span>`;
     }).join('');
 
     const gateInfo = s.current_gate
-      ? `<span style="color:var(--amber);font-weight:600">🚦 等待: 👤 ${s.current_gate.gate_name}</span>`
-      : (s.status === 'completed' ? '<span style="color:var(--green)">✅ 已完成</span>' : '<span style="color:var(--tx3)">🤖 自动推进中</span>');
+      ? `<span style="color:var(--amber);font-weight:600"><i class="ti ti-traffic-lights"></i> 等待: <i class="ti ti-user"></i> ${s.current_gate.gate_name}</span>`
+      : (s.status === 'completed' ? '<span style="color:var(--green)"><i class="ti ti-circle-check"></i> 已完成</span>' : '<span style="color:var(--tx3)"><i class="ti ti-robot"></i> 自动推进中</span>');
 
     html += `<div style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--r-s);padding:12px 14px;margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px">
-        <span style="font-weight:600;font-size:14px">🏃 ${s.goal}</span>
+        <span style="font-weight:600;font-size:14px"><i class="ti ti-run"></i> ${s.goal}</span>
         <span style="font-size:11px;color:var(--tx3)">V${s.iteration} · ${s.mode} · ${s.total_hours.toFixed(1)}h</span>
       </div>
       <div style="margin-bottom:4px;font-family:monospace;font-size:13px">${bar} ${s.progress_pct}%</div>
@@ -1345,12 +1409,12 @@ async function renderFleet() {
           ${a.tasksRunning>0?`<div class="dt"><span class="dtag" style="background:var(--blue-d);color:var(--blue)">⟳${a.tasksRunning}</span>进行中</div>`:''}
           ${a.tasksPending>0?`<div class="dt"><span class="dtag" style="background:var(--bg4);color:var(--tx2)">○${a.tasksPending}</span>待办</div>`:''}
           ${a.tasksBlocked>0?`<div class="dt"><span class="dtag" style="background:var(--red-d);color:var(--red)">⊘${a.tasksBlocked}</span>阻塞</div>`:''}
-          ${a.tasksDone>0?`<div class="dt"><span class="dtag" style="background:var(--green-d);color:var(--green)">✓${a.tasksDone}</span>完成</div>`:''}
+          ${a.tasksDone>0?`<div class="dt"><span class="dtag" style="background:var(--green-d);color:var(--green)"><i class="ti ti-check"></i>${a.tasksDone}</span>完成</div>`:''}
           ${a.tasksTotal===0?'<div class="dt" style="color:var(--tx3)">无任务</div>':''}
         </div>`;
       } else if (a.type === 'hermes-session') {
         tasksHTML = `<div class="ftasks">
-          <div class="dt"><span class="dtag" style="background:var(--violet-d);color:var(--violet)">🔥${a.tokens.toLocaleString()}</span>tokens</div>
+          <div class="dt"><span class="dtag" style="background:var(--violet-d);color:var(--violet)"><i class="ti ti-flame"></i>${a.tokens.toLocaleString()}</span>tokens</div>
           <div class="dt" style="color:var(--tx3);font-size:10px">运行 ${a.runtime}m · $${a.cost.toFixed(3)}</div>
         </div>`;
       }
@@ -1507,7 +1571,7 @@ function renderAutonomy() {
     { n: 'L3', h: '全自治', p: 'agent 在预算与护栏内完全自动运转,只在触发熔断(超支/连错/违规)时报警。适合成熟、信任分高的流程。' }
   ];
   $('#ladder').innerHTML = LADDER.map(l => `<div class="lvl ${l.rec?'on':''}">
-    <div class="ln">${l.n}</div><h4>${l.h}</h4><p>${l.p}</p>${l.rec?'<span class="rec">★ 推荐</span>':''}</div>`).join('');
+    <div class="ln">${l.n}</div><h4>${l.h}</h4><p>${l.p}</p>${l.rec?'<span class="rec"><i class="ti ti-star-filled"></i> 推荐</span>':''}</div>`).join('');
 
   // Cron jobs
   if (cron.length) {
@@ -1712,6 +1776,359 @@ function renderFlow() {
   $('#seqWrap').innerHTML = svg;
 }
 
+/* =================================================================
+   VIEW 10: PIPELINE
+   ================================================================= */
+async function loadPipeline() {
+  const sel = $('#ppProjSwitch');
+  // Populate project dropdown
+  const projects = await fetchJSON(API + '/projects/approved');
+  if (projects && Array.isArray(projects) && sel) {
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="">-- 选择项目 --</option>' +
+      projects.map(p => `<option value="${p.name}" ${p.name === currentVal ? 'selected' : ''}>${p.name} (${p.task_count||0} 任务 · ${p.module_count||0} 模块)</option>`).join('');
+    if (!currentVal && projects.length > 0) {
+      sel.value = projects[0].name;
+    }
+  }
+
+  const pjName = sel ? sel.value : '';
+  if (!pjName) {
+    $('#pipelineStages').innerHTML = '<div class="card" style="text-align:center;padding:40px;color:var(--tx3)"><i class="ti ti-timeline" style="font-size:32px"></i><div style="margin-top:10px">请选择一个项目查看 Pipeline</div></div>';
+    $('#pipelineProgressCard').style.display = 'none';
+    $('#pipelineEvalCard').style.display = 'none';
+    return;
+  }
+
+  const pjData = await fetchJSON(API + '/pipeline/' + encodeURIComponent(pjName));
+  if (!pjData || pjData.error) {
+    $('#pipelineStages').innerHTML = '<div class="card" style="text-align:center;padding:40px;color:var(--tx3)"><i class="ti ti-alert-circle" style="font-size:32px;color:var(--amber)"></i><div style="margin-top:10px">暂无 Pipeline 数据</div></div>';
+    $('#pipelineProgressCard').style.display = 'none';
+    $('#pipelineEvalCard').style.display = 'none';
+    return;
+  }
+
+  const stages = pjData.stages || [];
+  const tasks = pjData.tasks || [];
+  const evaluation = pjData.evaluation || {};
+
+  // Progress bar
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter(t => t.status === 'done' || t.status === 'completed').length;
+  const pct = totalTasks > 0 ? Math.round(completedTasks / totalTasks * 100) : 0;
+  $('#pipelineProgressCard').style.display = 'block';
+  $('#ppBar').style.width = pct + '%';
+  $('#ppPct').textContent = pct + '%';
+  $('#ppTasks').textContent = completedTasks + ' / ' + totalTasks + ' 任务完成';
+
+  // 7-stage pipeline view
+  const STAGE_ICONS = {
+    'planning': 'ti-map-pin', 'design': 'ti-palette', 'development': 'ti-code',
+    'testing': 'ti-bug', 'review': 'ti-eye-check', 'deployment': 'ti-rocket', 'monitoring': 'ti-activity'
+  };
+  const STAGE_NAMES = {
+    'planning': '规划', 'design': '设计', 'development': '开发',
+    'testing': '测试', 'review': '审查', 'deployment': '部署', 'monitoring': '监控'
+  };
+  const STAGE_COLORS = ['var(--violet)', 'var(--blue)', 'var(--teal)', 'var(--amber)', 'var(--violet)', 'var(--green)', 'var(--tx3)'];
+
+  let stagesHTML = '<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">';
+  stages.forEach((stage, i) => {
+    const stageId = stage.id || stage.name || '';
+    const stageName = STAGE_NAMES[stageId] || stage.name || stageId;
+    const stageIcon = STAGE_ICONS[stageId] || 'ti-circle';
+    const stageTasks = (stage.tasks || []).concat(tasks.filter(t => (t.stage || t.status) === stageId));
+    const taskCount = stageTasks.length;
+    const doneCount = stageTasks.filter(t => t.status === 'done' || t.status === 'completed').length;
+    const color = STAGE_COLORS[i] || 'var(--tx3)';
+
+    stagesHTML += `<div class="card" style="padding:14px;border-top:3px solid ${color}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <i class="ti ${stageIcon}" style="color:${color};font-size:18px"></i>
+        <span style="font-family:var(--disp);font-size:13px;font-weight:600">${stageName}</span>
+        <span class="tag" style="margin-left:auto;background:${color}20;color:${color};font-size:10px">${taskCount}</span>
+      </div>`;
+
+    if (taskCount > 0) {
+      stageTasks.slice(0, 5).forEach(t => {
+        const priorityColor = t.priority === 1 || t.priority === 'critical' ? 'var(--red)' :
+          t.priority === 2 || t.priority === 'high' ? 'var(--amber)' : 'var(--tx3)';
+        const priorityLabel = t.priority === 1 || t.priority === 'critical' ? '紧急' :
+          t.priority === 2 || t.priority === 'high' ? '高' : '--';
+        stagesHTML += `<div class="li" style="padding:6px 0">
+          <div style="flex:1;font-size:11px;font-weight:500;color:var(--tx2)">${t.title || t.task || t.name || '任务'}</div>
+          <span class="tag" style="font-size:9px;background:${priorityColor}20;color:${priorityColor}">${priorityLabel}</span>
+        </div>`;
+      });
+      if (taskCount > 5) stagesHTML += `<div style="font-size:10px;color:var(--tx3);text-align:center;padding:4px">+ ${taskCount - 5} 更多...</div>`;
+    } else {
+      stagesHTML += '<div style="font-size:11px;color:var(--tx3);text-align:center;padding:12px">暂无任务</div>';
+    }
+
+    stagesHTML += `</div>`;
+  });
+  stagesHTML += '</div>';
+  $('#pipelineStages').innerHTML = stagesHTML;
+
+  // Evaluation section
+  if (evaluation && Object.keys(evaluation).length > 0) {
+    $('#pipelineEvalCard').style.display = 'block';
+    const metrics = ['quality', 'ux', 'performance', 'security', 'reusability'];
+    const metricLabels = ['质量', 'UX', '性能', '安全', '复用性'];
+    const metricColors = ['var(--teal)', 'var(--violet)', 'var(--blue)', 'var(--amber)', 'var(--green)'];
+    const avgRating = evaluation.avg_rating || evaluation.rating || 0;
+    const starsHTML = Array.from({length: 5}, (_, i) =>
+      `<i class="ti ti-star${i < Math.round(avgRating) ? '-filled' : ''}" style="color:${i < Math.round(avgRating) ? 'var(--amber)' : 'var(--tx3)'};font-size:20px"></i>`
+    ).join('');
+
+    let evalHTML = `<div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:28px;font-weight:700;font-family:var(--disp);color:var(--amber)">${Number(avgRating).toFixed(1)}</div>
+      <div>${starsHTML}</div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:4px">综合评分</div>
+    </div>`;
+
+    metrics.forEach((m, i) => {
+      const score = evaluation[m] || 0;
+      const pctVal = Math.min(100, Math.round((score / 100) * 100));
+      evalHTML += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:11px;color:var(--tx2);min-width:48px;text-align:right">${metricLabels[i]}</span>
+        <div class="bar" style="flex:1;height:8px"><i style="width:${pctVal}%;background:${metricColors[i]}"></i></div>
+        <span style="font-size:11px;color:var(--tx3);font-family:var(--mono);min-width:30px">${score}</span>
+      </div>`;
+    });
+
+    $('#pipelineEval').innerHTML = evalHTML;
+  } else {
+    $('#pipelineEvalCard').style.display = 'none';
+  }
+}
+
+/* =================================================================
+   VIEW 11: 模块市场
+   ================================================================= */
+async function renderModules(e) {
+  // Allow event-based search clearing
+  const q = document.getElementById('modSearch');
+  const query = q ? q.value.trim() : '';
+
+  if (!query) {
+    // Load categories
+    const data = await fetchJSON(API + '/modules');
+    const modules = (data && data.modules) || (Array.isArray(data) ? data : []);
+
+    if (!modules.length) {
+      $('#modCategories').innerHTML = '<div style="text-align:center;padding:40px;color:var(--tx3)"><i class="ti ti-package" style="font-size:32px"></i><div style="margin-top:10px">暂无模块数据</div></div>';
+      $('#modTemplates').innerHTML = '';
+      return;
+    }
+
+    // Group by category
+    const categories = {};
+    modules.forEach(m => {
+      const cat = m.category || '未分类';
+      if (!categories[cat]) categories[cat] = [];
+      categories[cat].push(m);
+    });
+
+    const catIcons = {
+      '小程序': 'ti-apps', 'SAAS': 'ti-cloud', 'Android': 'ti-brand-android',
+      'AI Chat': 'ti-message-chatbot', '后端': 'ti-server', '未分类': 'ti-folder'
+    };
+    const catColors = {
+      '小程序': 'var(--green)', 'SAAS': 'var(--blue)', 'Android': 'var(--teal)',
+      'AI Chat': 'var(--violet)', '后端': 'var(--amber)', '未分类': 'var(--tx3)'
+    };
+
+    let catHTML = '<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">';
+    Object.entries(categories).forEach(([cat, items]) => {
+      const icon = catIcons[cat] || 'ti-folder';
+      const color = catColors[cat] || 'var(--tx3)';
+      catHTML += `<div class="card" style="padding:14px;cursor:pointer;transition:.15s" onclick="showCategoryModules('${cat.replace(/'/g, "\\'")}')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:40px;height:40px;border-radius:10px;background:var(--bg3);display:grid;place-items:center;font-size:20px;color:${color}"><i class="ti ${icon}"></i></div>
+          <div><div style="font-weight:600;font-size:14px">${cat}</div><div style="font-size:11px;color:var(--tx3);font-family:var(--mono)">${items.length} 个模板</div></div>
+        </div>
+      </div>`;
+    });
+    catHTML += '</div>';
+    $('#modCategories').innerHTML = catHTML;
+
+    // Store modules for category click
+    window._modData = modules;
+    $('#modTemplates').innerHTML = '';
+  } else {
+    // Search
+    const data = await fetchJSON(API + '/modules?q=' + encodeURIComponent(query));
+    const results = (data && data.modules) || (Array.isArray(data) ? data : []);
+    window._modData = results;
+    $('#modCategories').innerHTML = '<div style="font-size:12px;color:var(--tx2);margin-bottom:8px">搜索「' + query + '」结果: ' + results.length + ' 个</div>';
+    showModuleCards(results);
+  }
+}
+
+function showCategoryModules(cat) {
+  const modules = (window._modData || []).filter(m => m.category === cat);
+  $('#modTemplates').innerHTML = '<div style="font-size:12px;color:var(--tx2);margin-bottom:8px"><i class="ti ti-folder"></i> ' + cat + ' · ' + modules.length + ' 个模板</div>';
+  showModuleCards(modules);
+}
+
+function showModuleCards(modules) {
+  if (!modules.length) {
+    $('#modTemplates').innerHTML += '<div style="text-align:center;padding:30px;color:var(--tx3)">暂无模板</div>';
+    return;
+  }
+
+  let html = '<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:10px">';
+  modules.forEach(m => {
+    const complexity = m.complexity || 1;
+    const starsHTML = Array.from({length: 5}, (_, i) =>
+      `<i class="ti ti-star${i < complexity ? '-filled' : ''}" style="color:${i < complexity ? 'var(--amber)' : 'var(--tx3)'};font-size:10px"></i>`
+    ).join('');
+    const files = m.files || [];
+    const agents = m.agents || [];
+    const reuse = m.reuse_count || m.usage_count || 0;
+
+    html += `<div class="card" style="padding:15px;border-left:3px solid var(--teal)">
+      <div style="font-family:var(--disp);font-size:14px;font-weight:600;margin-bottom:6px">${m.name || '未命名模板'}</div>
+      <div style="font-size:12px;color:var(--tx2);margin-bottom:10px;line-height:1.5">${m.description || '暂无描述'}</div>
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--tx3)">
+        ${files.length > 0 ? `<span><i class="ti ti-file"></i> ${files.length} 文件</span>` : ''}
+        ${agents.length > 0 ? `<span><i class="ti ti-robot"></i> ${agents.length} Agent</span>` : ''}
+        <span>复杂度 ${starsHTML}</span>
+        <span style="margin-left:auto"><i class="ti ti-reload"></i> 复用 ${reuse}x</span>
+      </div>
+      ${files.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">${files.slice(0,5).map(f => `<span class="chip" style="font-size:10px;padding:2px 6px">${typeof f === 'string' ? f : f.name || f}</span>`).join('')}${files.length > 5 ? `<span class="chip" style="font-size:10px">+${files.length-5}</span>` : ''}</div>` : ''}
+      ${agents.length > 0 ? `<div style="display:flex;gap:4px;margin-top:6px">${agents.slice(0,4).map(a => `<span class="av" style="width:22px;height:22px;font-size:10px;background:var(--teal-d);color:var(--teal)">${(typeof a === 'string' ? a : a.name || a)[0].toUpperCase()}</span>`).join('')}</div>` : ''}
+    </div>`;
+  });
+  html += '</div>';
+  $('#modTemplates').innerHTML += html;
+}
+
+/* =================================================================
+   VIEW 12: SKILL进化
+   ================================================================= */
+async function renderSkills() {
+  const data = await fetchJSON(API + '/skills/leaderboard');
+  const leaderboard = (data && data.leaderboard) || (Array.isArray(data) ? data : []);
+
+  if (!leaderboard.length) {
+    $('#skillsPodium').innerHTML = '<div class="card" style="text-align:center;padding:40px;color:var(--tx3)"><i class="ti ti-trending-up" style="font-size:32px"></i><div style="margin-top:10px">暂无排行榜数据</div></div>';
+    $('#skillsTbody').innerHTML = '';
+    return;
+  }
+
+  // Podium: top 3
+  const top3 = leaderboard.slice(0, 3);
+  const podiumColors = ['var(--amber)', 'var(--tx3)', 'var(--amber)'];
+  const podiumHeights = ['160px', '130px', '110px'];
+  const podiumRanks = ['<i class="ti ti-medal" style="color:#ffd700"></i>', '<i class="ti ti-medal" style="color:#c0c0c0"></i>', '<i class="ti ti-medal" style="color:#cd7f32"></i>'];
+  // Reorder for display: 2nd, 1st, 3rd
+  const ordered = top3.length >= 3 ? [top3[1], top3[0], top3[2]] : top3;
+
+  let podiumHTML = '<div style="display:flex;justify-content:center;align-items:flex-end;gap:16px;padding:20px 0">';
+  ordered.forEach((a, i) => {
+    const rank = top3.indexOf(a) + 1;
+    const xp = a.xp || a.total_xp || 0;
+    const maxXP = top3[0] ? (top3[0].xp || top3[0].total_xp || 1) : 1;
+    const xpBarPct = Math.min(100, Math.round(xp / maxXP * 100));
+    const avatarColor = rank === 1 ? 'var(--amber)' : rank === 2 ? 'var(--tx3)' : 'var(--amber)';
+    const avatarBg = rank === 1 ? 'var(--amber-d)' : rank === 2 ? 'var(--bg4)' : 'var(--amber-d)';
+    const level = a.level || 1;
+
+    podiumHTML += `<div style="text-align:center;flex:1;max-width:180px">
+      <div style="font-size:32px;margin-bottom:4px">${podiumRanks[rank-1]}</div>
+      <div class="av" style="width:48px;height:48px;font-size:16px;margin:0 auto 8px;background:${avatarBg};color:${avatarColor}">${(a.name || a.agent || '?')[0].toUpperCase()}</div>
+      <div style="font-weight:600;font-size:13px;margin-bottom:2px">${a.name || a.agent || 'Agent'}</div>
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:6px">Lv.${level} · ${xp.toLocaleString()} XP</div>
+      <div class="bar" style="height:8px;margin:0 10px"><i style="width:${xpBarPct}%;background:${avatarColor}"></i></div>
+    </div>`;
+  });
+  podiumHTML += '</div>';
+  $('#skillsPodium').innerHTML = podiumHTML;
+
+  // Full table
+  let tbodyHTML = '';
+  leaderboard.forEach((a, i) => {
+    const rank = i + 1;
+    const level = a.level || 1;
+    const xp = a.xp || a.total_xp || 0;
+    const maxXP = leaderboard[0] ? (leaderboard[0].xp || leaderboard[0].total_xp || 1) : 1;
+    const xpBarPct = Math.min(100, Math.round(xp / maxXP * 100));
+    const projects = a.projects_done || a.projects || 0;
+    const modules = a.modules_created || a.modules || 0;
+    const levelColor = level >= 10 ? 'var(--amber)' : level >= 5 ? 'var(--teal)' : level >= 3 ? 'var(--blue)' : 'var(--tx3)';
+    const levelBg = level >= 10 ? 'var(--amber-d)' : level >= 5 ? 'var(--teal-d)' : level >= 3 ? 'var(--blue-d)' : 'var(--bg4)';
+
+    tbodyHTML += `<tr style="cursor:pointer" onclick="openSkillAgent('${encodeURIComponent(a.name || a.agent || '')}')">
+      <td style="font-family:var(--mono);font-weight:600">#${rank}</td>
+      <td><span style="font-weight:500">${a.name || a.agent || 'Agent'}</span></td>
+      <td><span class="tag" style="background:${levelBg};color:${levelColor}">Lv.${level}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="bar" style="flex:1;height:6px"><i style="width:${xpBarPct}%;background:var(--teal)"></i></div>
+          <span style="font-size:11px;color:var(--tx3);font-family:var(--mono)">${xp.toLocaleString()}</span>
+        </div>
+      </td>
+      <td style="font-family:var(--mono);font-size:12px">${projects}</td>
+      <td style="font-family:var(--mono);font-size:12px">${modules}</td>
+    </tr>`;
+  });
+  $('#skillsTbody').innerHTML = tbodyHTML || '<tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:24px">暂无数据</td></tr>';
+}
+
+async function openSkillAgent(agentName) {
+  if (!agentName) return;
+  const data = await fetchJSON(API + '/skills/' + agentName);
+  if (!data || data.error) {
+    toast('无法加载 Agent 详情');
+    return;
+  }
+
+  const name = data.name || data.agent || agentName;
+  const xp = data.xp || data.total_xp || 0;
+  const level = data.level || 1;
+  const skills = data.skills || [];
+  const projects = data.projects || data.projects_done || [];
+  const modules = data.modules || data.modules_created || [];
+  const evolution = data.evolution || data.evolution_history || [];
+
+  const starsHTML = Array.from({length: Math.min(level, 5)}, () =>
+    '<i class="ti ti-star-filled" style="color:var(--amber);font-size:14px"></i>'
+  ).join('') + Array.from({length: Math.max(0, 5 - Math.min(level, 5))}, () =>
+    '<i class="ti ti-star" style="color:var(--tx3);font-size:14px"></i>'
+  ).join('');
+
+  const skillsHTML = skills.length > 0
+    ? skills.map(s => `<span class="chip" style="background:var(--teal-d);color:var(--teal)">${typeof s === 'string' ? s : s.name || JSON.stringify(s)}</span>`).join('')
+    : '<span class="chip">无记录</span>';
+
+  const evolutionHTML = evolution.length > 0
+    ? evolution.map(e => `<div class="kv"><span class="k">${e.date || e.timestamp || ''}</span><span class="vv">+${e.xp_gained || e.xp || 0} XP · ${e.reason || e.event || ''}</span></div>`).join('')
+    : '<div style="color:var(--tx3);font-size:12px;padding:8px">暂无进化记录</div>';
+
+  openDrawer(
+    name + ' · 技能详情',
+    'Lv.' + level + ' · ' + xp.toLocaleString() + ' XP',
+    '<i class="ti ti-trending-up" style="font-size:22px;color:var(--teal)"></i>',
+    `<div class="card" style="padding:14px;margin-bottom:14px;background:var(--bg3);text-align:center">
+      <div style="font-family:var(--disp);font-size:16px;font-weight:600;margin-bottom:4px">${name}</div>
+      <div style="font-size:12px;color:var(--tx2);margin-bottom:6px">Lv.${level} · ${xp.toLocaleString()} XP</div>
+      <div>${starsHTML}</div>
+    </div>
+    <div class="fld"><label>技能标签</label><div class="chips">${skillsHTML}</div></div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+      <div class="card" style="padding:12px"><div class="sec-h" style="margin-bottom:6px"><i class="ti ti-check" style="color:var(--green)"></i>完成项目</div>
+        ${Array.isArray(projects) && projects.length > 0 ? projects.slice(0,5).map(p => `<div style="font-size:12px;padding:4px 0;color:var(--tx2)">${typeof p === 'string' ? p : p.name || JSON.stringify(p)}</div>`).join('') : '<div style="color:var(--tx3);font-size:12px">暂无</div>'}
+      </div>
+      <div class="card" style="padding:12px"><div class="sec-h" style="margin-bottom:6px"><i class="ti ti-package" style="color:var(--violet)"></i>创建模块</div>
+        ${Array.isArray(modules) && modules.length > 0 ? modules.slice(0,5).map(m => `<div style="font-size:12px;padding:4px 0;color:var(--tx2)">${typeof m === 'string' ? m : m.name || JSON.stringify(m)}</div>`).join('') : '<div style="color:var(--tx3);font-size:12px">暂无</div>'}
+      </div>
+    </div>
+    <div class="fld" style="margin-top:10px"><label>进化历史</label>${evolutionHTML}</div>`
+  );
+}
+
 /* ========== AGENT DETAIL DRAWER (NEW V2) ========== */
 let agentDetailTarget = null;
 
@@ -1881,7 +2298,7 @@ function renderAgentDrawerLegacy(a) {
   $('#adSub').textContent = 'agent://' + (id || 'unknown') + ' · ' + role;
   const trustTone = (a.trust || 90) >= 95 ? 'green' : (a.trust || 90) >= 85 ? 'blue' : 'amber';
   const tools = a.tools || a.skills || [];
-  const statusEmoji = status === 'running' || status === 'online' ? '🟢 运行中' : status === 'gate' ? '🟡 等待审批' : '⚪ 待命';
+  const statusEmoji = status === 'running' || status === 'online' ? '<span class="st run"></span> 运行中' : status === 'gate' ? '<span class="st gate"></span> 等待审批' : '<span class="st idle"></span> 待命';
   const statusClass = status === 'running' || status === 'online' ? 'green' : status === 'gate' ? 'amber' : 'gray';
 
   const traces = [];
@@ -2034,7 +2451,7 @@ function renderReclamation() {
 
   let suggestionsHTML = '';
   if (idleAgents.length > 0) {
-    suggestionsHTML += `<div style="font-size:12px;color:var(--amber);margin-bottom:10px"><b>⚠ ${idleAgents.length}</b> 个 agent 负载低于 10%，建议回收</div>`;
+    suggestionsHTML += `<div style="font-size:12px;color:var(--amber);margin-bottom:10px"><b><i class="ti ti-alert-triangle"></i> ${idleAgents.length}</b> 个 agent 负载低于 10%，建议回收</div>`;
     suggestionsHTML += idleAgents.slice(0, 5).map(w => `<div class="reclaim-card" style="margin-bottom:6px">
       <span class="gdot" style="background:var(--amber)"></span>
       <div style="flex:1"><div style="font-weight:500;font-size:12px">${w.name || w.agent || w.id || 'Agent'}</div>
@@ -2240,9 +2657,9 @@ async function renderGPU() {
   const idleColor = idleMin >= 15 ? 'var(--red)' : idleMin >= 5 ? 'var(--amber)' : 'var(--green)';
 
   $('#gpuKpis').innerHTML =
-    kpiHTML('ti-server-cog', 'GPU 状态', online ? '🟢 在线' : '🔴 离线', gpu.gpu_name||'--', '') +
+    kpiHTML('ti-server-cog', 'GPU 状态', online ? '<span class="st run"></span> 在线' : '<span class="st idle"></span> 离线', gpu.gpu_name||'--', '') +
     kpiHTML('ti-chart-bar', '利用率', util + '%', '推理: '+(gpu.inference_busy?'活跃':'空闲'), '') +
-    kpiHTML('ti-clock', '闲置时长', idleMin + ' 分钟', alertLevel==='critical'?'🛑 强提醒':alertLevel==='warn'?'⚠️ 警告':'✅ 正常', alertLevel!=='normal'?'warn':'') +
+    kpiHTML('ti-clock', '闲置时长', idleMin + ' 分钟', alertLevel==='critical'?'<i class="ti ti-hand-stop"></i> 强提醒':alertLevel==='warn'?'<i class="ti ti-alert-triangle"></i> 警告':'<i class="ti ti-circle-check"></i> 正常', alertLevel!=='normal'?'warn':'') +
     kpiHTML('ti-temperature', '温度/功耗', (gpu.temperature_c||'--')+'°C', (gpu.power_w||'--')+'W', '');
 
   if (gpu.online) {
@@ -2258,7 +2675,7 @@ async function renderGPU() {
       '<div class="kv"><span class="k">闲置周期</span><span class="vv" style="color:'+idleColor+'">'+idleMin+' 分钟 ('+(gpu.idle_cycles||0)+' 个周期)</span></div>' +
       '<div class="kv"><span class="k">最后检查</span><span class="vv" style="font-size:10px">'+(gpu.last_check||'--')+'</span></div>';
   } else {
-    $('#gpuLive').innerHTML = '<div style="color:var(--red);padding:12px;text-align:center">🔴 GPU 离线 — 服务器可能已关机</div>';
+    $('#gpuLive').innerHTML = '<div style="color:var(--red);padding:12px;text-align:center"><span class="st idle"></span> GPU 离线 — 服务器可能已关机</div>';
   }
 
   const projects = gpuProjects ? (gpuProjects.projects||{}) : {};
@@ -2274,33 +2691,33 @@ async function renderGPU() {
   if (gpu.online) {
     ctrlHTML += '<button class="btn" onclick="refreshGPU()"><i class="ti ti-refresh"></i>刷新状态</button>';
     if (gpu.auth_pending) {
-      ctrlHTML += ' <span style="color:var(--amber);font-family:var(--mono);font-size:13px">⏳ 等待授权... 码: <b>'+(gpu.auth_code||'--')+'</b></span>';
+      ctrlHTML += ' <span style="color:var(--amber);font-family:var(--mono);font-size:13px"><i class="ti ti-clock"></i> 等待授权... 码: <b>'+(gpu.auth_code||'--')+'</b></span>';
       ctrlHTML += ' <button class="btn primary" onclick="confirmGPUShutdown()"><i class="ti ti-check"></i>确认关机</button>';
     } else {
       ctrlHTML += ' <button class="btn warn" onclick="requestGPUShutdown()"><i class="ti ti-power"></i>请求关机</button>';
     }
     if (idleMin >= 15) {
-      $('#gpuAuthMsg').show().css({background:'var(--red-d)',color:'var(--red)'}).html('🛑 <b>GPU 已闲置 '+idleMin+' 分钟！</b> 建议立即关机节省成本。');
+      $('#gpuAuthMsg').show().css({background:'var(--red-d)',color:'var(--red)'}).html('<i class="ti ti-hand-stop"></i> <b>GPU 已闲置 '+idleMin+' 分钟！</b> 建议立即关机节省成本。');
     } else if (idleMin >= 5) {
-      $('#gpuAuthMsg').show().css({background:'var(--amber-d)',color:'var(--amber)'}).html('⚠️ GPU 已闲置 '+idleMin+' 分钟，如不再使用建议关机。');
+      $('#gpuAuthMsg').show().css({background:'var(--amber-d)',color:'var(--amber)'}).html('<i class="ti ti-alert-triangle"></i> GPU 已闲置 '+idleMin+' 分钟，如不再使用建议关机。');
     }
   } else {
     ctrlHTML += '<span style="color:var(--tx3)">GPU 离线，无需操作</span>';
   }
   $('#gpuControls').innerHTML = ctrlHTML;
 
-  const badge = idleMin >= 5 ? (idleMin >= 15 ? '🛑' : '⚠️') : '';
-  const navBadge = $('#navGpu'); if (navBadge) navBadge.textContent = badge;
+  const badge = idleMin >= 5 ? (idleMin >= 15 ? '<i class="ti ti-hand-stop"></i>' : '<i class="ti ti-alert-triangle"></i>') : '';
+  const navBadge = $('#navGpu'); if (navBadge) navBadge.innerHTML = badge;
 }
 
-async function refreshGPU() { toast('刷新中...'); await renderGPU(); toast('✅ GPU 状态已刷新'); }
+async function refreshGPU() { toast('刷新中...'); await renderGPU(); toast('<i class="ti ti-circle-check"></i> GPU 状态已刷新'); }
 
 async function requestGPUShutdown() {
   const r = await fetch(API + '/gpu/shutdown/request', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({project:''}) });
   const data = await r.json();
   if (data.code) {
     $('#gpuAuthMsg').show().css({background:'var(--violet-d)',color:'var(--violet)'}).html(
-      '🔐 <b>关机需授权</b><br>授权码: <b style="font-size:20px;font-family:var(--mono)">'+data.code+'</b><br>'+
+      '<i class="ti ti-key"></i> <b>关机需授权</b><br>授权码: <b style="font-size:20px;font-family:var(--mono)">'+data.code+'</b><br>'+
       '<small>有效 30 分钟 · 输入码完成确认</small>'+
       '<div style="margin-top:8px"><input id="gpuAuthInput" placeholder="输入授权码" style="background:var(--bg3);color:var(--tx);border:1px solid var(--line);border-radius:var(--r-s);padding:6px 10px;font-family:var(--mono);font-size:14px;width:140px">'+
       ' <button class="btn primary sm" onclick="confirmGPUShutdown()"><i class="ti ti-check"></i>确认关机</button></div>'
@@ -2317,7 +2734,7 @@ async function confirmGPUShutdown() {
   const data = await r.json();
   if (data.ok) {
     toast('🛑 ' + data.message);
-    $('#gpuAuthMsg').show().css({background:'var(--green-d)',color:'var(--green)'}).html('✅ 关机指令已发送！GPU 将在 30 秒后关闭');
+    $('#gpuAuthMsg').show().css({background:'var(--green-d)',color:'var(--green)'}).html('<i class="ti ti-circle-check"></i> 关机指令已发送！GPU 将在 30 秒后关闭');
     setTimeout(renderGPU, 5000);
   } else {
     toast('❌ ' + (data.error||'关机失败'));

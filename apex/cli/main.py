@@ -4,6 +4,7 @@ Designed with 7±2 group principle for intuitive command discovery.
 
 Hierarchy:
   ⚓ apex
+  ├── setup         🚀 First-time setup wizard
   ├── init          🚀 Initialize workspace/project
   ├── run           ▶️  Execute a task
   ├── chat          💬 Chat with an agent
@@ -47,6 +48,7 @@ from .commands import evolution as evolution_cmds
 from .commands.company import CompanyBuilder, list_companies
 from .commands import bridge as bridge_cmds
 from .commands import origin as origin_cmds
+from .commands import setup_cmds
 from apex.orchestration.crew import crew as crew_group
 from .commands import autonomous as autonomous_cmds
 from .commands import ops as ops_cmds
@@ -76,14 +78,54 @@ console = Console()
 # ROOT CLI
 # ════════════════════════════════════════════════════════════════
 
+
 @click.group()
 @click.version_option(version="0.1.0", message="Apex v0.1.0 — One person, infinite capacity.")
 def cli():
     """⚓ Apex — One person, infinite capacity.
 
     Manage agents, run tasks, and orchestrate your AI fleet.
+
+    Quick start:  apex setup --quick
+    Help:         apex <command> --help
+    Version:      apex --version
     """
+    # If --help is called, intercept to append quickstart
     pass
+
+
+# ════════════════════════════════════════════════════════════════
+# SETUP — 🚀 安装配置
+# ════════════════════════════════════════════════════════════════
+
+@cli.command()
+@click.option("--quick", is_flag=True, help="Quick setup with defaults")
+@click.option("--check", "check_mode", is_flag=True, help="Check installation status")
+@click.option("--model", default=None, help="Default model (e.g. deepseek-v4-pro)")
+@click.option("--token-limit", type=int, default=None, help="Token limit per session")
+@click.option("--token-budget", type=int, default=None, help="Total token budget")
+@click.option("--input-lines", type=int, default=None, help="Hermes TUI input lines (default: 3)")
+def setup(quick: bool, check_mode: bool, model: Optional[str],
+          token_limit: Optional[int], token_budget: Optional[int],
+          input_lines: Optional[int]):
+    """🚀 First-time setup: install, configure, launch your AI fleet
+
+    Examples:
+
+      apex setup --quick            Quick setup (all defaults)
+
+      apex setup --model deepseek-v4-pro --token-limit 8000 --input-lines 3
+
+      apex setup --check            Check installation status
+    """
+    if check_mode:
+        setup_cmds.check_cmd()
+        return
+    setup_cmds.setup_cmd(
+        quick=quick, model=model,
+        token_limit=token_limit, token_budget=token_budget,
+        input_lines=input_lines,
+    )
 
 
 # ════════════════════════════════════════════════════════════════
@@ -101,11 +143,20 @@ def init(name: str, dir: str):
 @cli.command()
 @click.argument("task")
 @click.option("--profile", "-p", default="default", help="Agent profile to use")
-@click.option("--model", "-m", help="Override model name")
+@click.option("--model", "-m", help="Override model (e.g. deepseek-v4-pro)")
+@click.option("--token-limit", type=int, default=0, help="Max tokens per turn")
 @click.option("--swarm", "-s", is_flag=True, help="Use Swarm mode")
 @click.option("--workers", "-w", default=3, help="Number of parallel Swarm workers")
-def run(task: str, profile: str, model: str, swarm: bool, workers: int):
-    """▶️  Execute a task"""
+def run(task: str, profile: str, model: str, token_limit: int, swarm: bool, workers: int):
+    """▶️  Execute a task
+
+    Examples:
+
+      apex run 'Add login page' --profile frontend-dev
+
+      apex run 'Test API' --profile backend-dev --model deepseek-v4-pro --token-limit 5000
+    """
+    _configure_token_limit(profile, token_limit)
     run_task(task, profile, model, swarm, workers, console)
 
 
@@ -264,9 +315,22 @@ def team_show(name: str):
 
 
 @team.command(name="start")
-def team_start():
-    """🚀 Launch all 5 dev agents in new Terminal windows"""
-    squad_cmds.start_cmd()
+@click.option("--input-lines", type=int, default=3, help="Hermes input lines")
+@click.option("--model", "-m", default=None, help="Override default model")
+@click.option("--token-limit", type=int, default=0, help="Max tokens per turn")
+def team_start(input_lines: int, model: Optional[str], token_limit: int):
+    """🚀 Launch all 5 dev agents in new Terminal windows
+
+    Each window shows the agent name (e.g. frontend-dev ⚓ Apex)
+    and a 3-line input composer by default.
+
+    Examples:
+
+      apex team start
+
+      apex team start --input-lines 5 --model deepseek-v4-pro
+    """
+    squad_cmds.start_cmd(input_lines=input_lines, model=model, token_limit=token_limit)
 
 
 @team.command(name="status")
@@ -365,8 +429,26 @@ def team_sync_all():
 @team.command(name="hermes")
 @click.argument("profile_name")
 @click.option("--query", "-q", default="", help="Initial query (non-interactive)")
-def team_hermes(profile_name: str, query: str):
-    """Launch Hermes with a specific agent profile"""
+@click.option("--input-lines", type=int, default=3, help="Hermes input lines")
+@click.option("--model", "-m", default=None, help="Override default model")
+@click.option("--token-limit", type=int, default=0, help="Max tokens per turn")
+def team_hermes(profile_name: str, query: str, input_lines: int,
+                model: Optional[str], token_limit: int):
+    """Launch Hermes with a specific agent profile
+
+    Opens a new Hermes chat session showing the agent's badge and name
+    in the terminal title, with multi-line input (default: 3 lines).
+
+    Examples:
+
+      apex team hermes frontend-dev
+
+      apex team hermes architect --query "Review this design" --input-lines 5
+    """
+    _configure_token_limit(profile_name, token_limit)
+    _configure_profile_model(profile_name, model)
+    _configure_input_lines(profile_name, input_lines)
+
     from apex.interface.hermes_sync import start_hermes_profile
     start_hermes_profile(profile_name, query)
 
@@ -577,7 +659,6 @@ def project_create(project_key: str, name: str, type: str, size: str,
     if not click.confirm(f"\n🚀 创建 {summary['total_agents']} 个Agent?", default=True):
         console.print("[dim]已取消[/]")
         return
-    # ... project creation logic
     from apex.core.project_template import create_project
     create_project(tmpl, console)
 
@@ -1094,14 +1175,32 @@ def integrate_company_list():
 @click.argument("agent_name", required=False)
 @click.option("--context", "-c", default="", help="Extra project context")
 @click.option("--query", "-q", default="", help="Initial message")
+@click.option("--model", "-m", default=None, help="Override default model")
+@click.option("--token-limit", type=int, default=0, help="Max tokens per turn")
+@click.option("--input-lines", type=int, default=3, help="Input height in TUI")
 @click.option("--list", "-l", "list_mode", is_flag=True, help="List all agents")
 @click.pass_context
-def chat(ctx, agent_name: str, context: str, query: str, list_mode: bool):
-    """💬 Chat with an Apex agent. Usage: apex chat <agent-name>"""
+def chat(ctx, agent_name: str, context: str, query: str,
+         model: Optional[str], token_limit: int, input_lines: int, list_mode: bool):
+    """💬 Chat with an Apex agent.
+
+    Opens a Hermes chat session showing the agent's name in the terminal title
+    with multi-line input (default: 3 lines).
+
+    \b
+    Examples:
+      apex chat frontend-dev                   Talk to frontend dev
+      apex chat architect -q "Review this"     Initial query
+      apex chat backend-dev --model deepseek-v4-pro --token-limit 5000
+      apex chat --list                         List all agents
+    """
     if ctx.invoked_subcommand is None:
         if list_mode or not agent_name:
             chat_cmds.chat_list_cmd()
             return
+        _configure_token_limit(agent_name, token_limit)
+        _configure_profile_model(agent_name, model)
+        _configure_input_lines(agent_name, input_lines)
         chat_cmds.chat_launch_cmd(agent_name, context, query)
 
 
@@ -1112,10 +1211,86 @@ def chat_list():
 
 
 # ════════════════════════════════════════════════════════════════
+# HELPER: per-command token/model/input config
+# ════════════════════════════════════════════════════════════════
+
+
+def _configure_token_limit(profile_name: str, token_limit: int):
+    """Set per-profile token limit if specified."""
+    if token_limit <= 0:
+        return
+    profile_dir = HERMES_HOME / "profiles" / profile_name
+    if not profile_dir.exists():
+        return
+    config_file = profile_dir / "config.yaml"
+    if not config_file.exists():
+        return
+    try:
+        import yaml
+        with open(config_file) as f:
+            cfg = yaml.safe_load(f) or {}
+        if "agent" not in cfg:
+            cfg["agent"] = {}
+        cfg["agent"]["max_tokens_per_turn"] = token_limit
+        with open(config_file, "w") as f:
+            yaml.dump(cfg, f, default_flow_style=False, allow_unicode=True)
+    except:
+        pass
+
+
+def _configure_profile_model(profile_name: str, model: Optional[str]):
+    """Set per-profile model if specified."""
+    if not model:
+        return
+    profile_dir = HERMES_HOME / "profiles" / profile_name
+    if not profile_dir.exists():
+        return
+    config_file = profile_dir / "config.yaml"
+    if not config_file.exists():
+        return
+    try:
+        import yaml
+        with open(config_file) as f:
+            cfg = yaml.safe_load(f) or {}
+        if "model" not in cfg:
+            cfg["model"] = {}
+        cfg["model"]["default"] = model
+        with open(config_file, "w") as f:
+            yaml.dump(cfg, f, default_flow_style=False, allow_unicode=True)
+    except:
+        pass
+
+
+def _configure_input_lines(profile_name: str, input_lines: int):
+    """Set per-profile input line height."""
+    if input_lines < 1:
+        input_lines = 3
+    profile_dir = HERMES_HOME / "profiles" / profile_name
+    if not profile_dir.exists():
+        return
+    config_file = profile_dir / "config.yaml"
+    if not config_file.exists():
+        return
+    try:
+        import yaml
+        with open(config_file) as f:
+            cfg = yaml.safe_load(f) or {}
+        if "display" not in cfg:
+            cfg["display"] = {}
+        cfg["display"]["composer_lines"] = input_lines
+        cfg["display"]["multi_line_composer"] = True
+        with open(config_file, "w") as f:
+            yaml.dump(cfg, f, default_flow_style=False, allow_unicode=True)
+    except:
+        pass
+
+
+HERMES_HOME = Path(os.environ.get("HERMES_HOME", os.path.expanduser("~/.hermes")))
+
+
+# ════════════════════════════════════════════════════════════════
 # BACKWARD COMPATIBILITY — deprecated flat aliases
 # ════════════════════════════════════════════════════════════════
-# Kept as hidden aliases so existing scripts/workflows don't break.
-# These show deprecation notices pointing to the new command paths.
 
 @cli.command(hidden=True)
 @click.argument("topic")
@@ -1150,3 +1325,39 @@ cli.add_command(crew_group)
 
 if __name__ == "__main__":
     cli()
+
+
+# ════════════════════════════════════════════════════════════════
+# QUICKSTART — 🚀 快速上手引导
+# ════════════════════════════════════════════════════════════════
+
+@cli.command(name="quickstart")
+def quickstart():
+    """🚀 Show quick start guide — essential commands for beginners"""
+    from rich.panel import Panel
+    panel = Panel.fit(
+        "[bold cyan]🚀 Apex Quick Start Guide[/]\n\n"
+        "[bold]FIRST-TIME SETUP[/]\n"
+        "  [green]apex setup --quick[/]         Quick setup with defaults\n"
+        "  [green]apex setup --check[/]         Check installation status\n\n"
+        "[bold]CREATE YOUR AI TEAM[/]\n"
+        "  [green]apex team template webapp[/]  Create 4-agent dev team\n"
+        "  [green]apex team start[/]            Launch agent terminals\n\n"
+        "[bold]YOUR FIRST TASK[/]\n"
+        "  [green]apex task dispatch-smart \"需求\"[/]  AI decomposes\n"
+        "  [green]apex task schedule[/]               Gantt chart timeline\n"
+        "  [green]apex fleet status[/]                Check agent status\n"
+        "  [green]apex chat <agent>[/]                Talk to your agent\n\n"
+        "[bold]COLLABORATION MODES[/]\n"
+        "  [green]apex mode chain \"goal\" -p dev[/]    Sequential chain\n"
+        "  [green]apex mode supervise \"goal\" -w 3[/] Manager + workers\n\n"
+        "[bold]SYSTEM & INTEGRATION[/]\n"
+        "  [green]apex system skill list[/]          View agent skills\n"
+        "  [green]apex integrate hermes profiles[/]  List Hermes profiles\n"
+        "  [green]apex origin overview[/]            Fleet-wide status\n\n"
+        "[dim]TIP: --token-limit N  |  --input-lines N  |  --model NAME[/]",
+        border_style="cyan",
+        title="⚓ Apex Fleet — Quick Start",
+    )
+    console.print(panel)
+    console.print("\n[dim]Full help: apex --help  |  Command help: apex <command> --help[/]")
