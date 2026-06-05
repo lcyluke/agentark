@@ -273,9 +273,6 @@ def _write_agent_env(agent_name: str, input_lines: int, model: str, token_limit:
         except:
             pass
 
-    console.print(f"\n[dim]Methodology chain active in all agents: "
-                  f"{' → '.join(f'{e}{n}' for e, n in zip(METHODOLOGY_CHAIN_EMOJI, METHODOLOGY_CHAIN_NAMES))}[/]")
-
 
 def attach_cmd(agent_name: str):
     """Show connection info for a specific squad member."""
