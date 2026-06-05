@@ -32,6 +32,11 @@ import time
 from pathlib import Path
 from typing import Optional
 
+# 🛑 Suppress macOS malloc stack logging noise in subprocesses
+for _v in ("MallocStackLogging", "MallocStackLoggingNoCompact"):
+    if _v in os.environ:
+        del os.environ[_v]
+
 import click
 from rich.console import Console
 from rich.panel import Panel

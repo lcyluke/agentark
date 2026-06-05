@@ -2237,6 +2237,61 @@ def create_app():
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
+    # ══════════════════════════════════════════
+    # Agent Chat & Session History
+    # ══════════════════════════════════════════
+
+    @app.route("/api/agent/<agent_id>/sessions")
+    def api_agent_sessions(agent_id: str):
+        """Get recent sessions for an agent"""
+        import sqlite3, os
+        db = Path(os.environ.get("HERMES_HOME", os.path.expanduser("~/.hermes"))) / "state.db"
+        if not db.exists(): return jsonify({"error":"db not found"}), 500
+        conn = sqlite3.connect(str(db))
+        conn.row_factory = sqlite3.Row
+        try:
+            rows = conn.execute(
+                "SELECT id,source,model,message_count,input_tokens,output_tokens,estimated_cost_usd,started_at "
+                "FROM sessions WHERE source='cli' ORDER BY started_at DESC LIMIT 20"
+            ).fetchall()
+            return jsonify([{
+                "id":r["id"],"source":r["source"],"model":r["model"],"messages":r["message_count"],
+                "tokens":(r["input_tokens"] or 0)+(r["output_tokens"] or 0),
+                "cost":round(r["estimated_cost_usd"] or 0,4),
+                "started":r["started_at"]
+            } for r in rows])
+        finally: conn.close()
+
+    @app.route("/api/session/<session_id>/messages")
+    def api_session_messages(session_id: str):
+        """Get messages for a session"""
+        import sqlite3, os
+        db = Path(os.environ.get("HERMES_HOME", os.path.expanduser("~/.hermes"))) / "state.db"
+        if not db.exists(): return jsonify({"error":"db not found"}), 500
+        conn = sqlite3.connect(str(db))
+        conn.row_factory = sqlite3.Row
+        try:
+            rows = conn.execute(
+                "SELECT id,role,substr(content,1,2000) as content,tool_name,timestamp "
+                "FROM messages WHERE session_id=? ORDER BY id LIMIT 100",
+                (session_id,)
+            ).fetchall()
+            msgs = []
+            for r in rows:
+                msg = {"role":r["role"],"time":r["timestamp"]}
+                if r["content"]:
+                    try:
+                        import json
+                        d = json.loads(r["content"])
+                        msg["preview"] = str(d.get("output",d))[:300]
+                    except:
+                        msg["preview"] = r["content"][:300]
+                elif r["tool_name"]:
+                    msg["tool"] = r["tool_name"]
+                msgs.append(msg)
+            return jsonify({"session_id":session_id,"messages":msgs,"total":len(msgs)})
+        finally: conn.close()
+
     return app
 
 

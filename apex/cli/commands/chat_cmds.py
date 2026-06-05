@@ -24,7 +24,25 @@ from rich.table import Table
 
 console = Console()
 
+def _get_profiles_root() -> Path:
+    """Find the real Hermes profiles directory.
+    
+    If HERMES_HOME is a nested profile dir (e.g. ~/.hermes/profiles/frontend-dev),
+    walk up to find the actual profiles root (~/.hermes/profiles/).
+    """
+    raw_home = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes"))
+    
+    # If we're already inside a profile directory (parent is named 'profiles'),
+    # the real profiles root is the parent
+    if raw_home.parent.name == "profiles":
+        return raw_home.parent
+    
+    # Otherwise use the standard location
+    return raw_home / "profiles"
+
+
 HERMES_HOME = Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes"))
+HERMES_PROFILES_DIR = _get_profiles_root()
 PROJECT_CONTEXT_FILE = Path(".apex/project_context.md")
 AGENTS_MD = Path("AGENTS.md")
 
@@ -38,7 +56,7 @@ def list_all_agents() -> list[dict]:
     agents = {}
 
     # 1. Hermes profiles (already synced)
-    hermes_profiles_dir = HERMES_HOME / "profiles"
+    hermes_profiles_dir = HERMES_PROFILES_DIR
     if hermes_profiles_dir.exists():
         for pdir in sorted(hermes_profiles_dir.iterdir()):
             if not pdir.is_dir():
@@ -58,21 +76,21 @@ def list_all_agents() -> list[dict]:
                 "has_soul": soul_file.exists() if soul_file else False,
             }
 
-    # 2. Apex profiles (not yet synced)
+    # 2. Apex profiles (not yet synced, or already synced — Apex-managed)
     try:
         from apex.core.profile import ProfileManager
         pm = ProfileManager()
         for name in pm.list():
-            if name not in agents:
-                try:
-                    p = pm.load(name)
-                    agents[name] = {
-                        "name": name,
-                        "role": p.soul.role if p.soul else name,
-                        "source": "apex",
-                        "has_soul": True,
-                    }
-                except Exception:
+            try:
+                p = pm.load(name)
+                agents[name] = {
+                    "name": name,
+                    "role": p.soul.role if p.soul else name,
+                    "source": "apex",  # Apex-managed takes priority
+                    "has_soul": True,
+                }
+            except Exception:
+                if name not in agents:
                     agents[name] = {
                         "name": name,
                         "role": name,
@@ -191,7 +209,7 @@ def inject_context_for_profile(profile_name: str, project_context: str):
     """Write project context into the Hermes profile's home directory
     so it's injected into the agent's system prompt automatically.
     """
-    profile_dir = HERMES_HOME / "profiles" / profile_name
+    profile_dir = HERMES_PROFILES_DIR / profile_name
     if not profile_dir.exists():
         profile_dir.mkdir(parents=True, exist_ok=True)
 
@@ -208,7 +226,7 @@ def inject_context_for_profile(profile_name: str, project_context: str):
 
 def sync_agent_to_hermes(agent_name: str) -> bool:
     """Ensure the agent has a Hermes profile. Auto-sync if needed."""
-    profile_dir = HERMES_HOME / "profiles" / agent_name
+    profile_dir = HERMES_PROFILES_DIR / agent_name
     if profile_dir.exists() and (profile_dir / "SOUL.md").exists() and (profile_dir / "config.yaml").exists():
         return True
 
@@ -264,22 +282,46 @@ def launch_hermes_chat(profile_name: str, extra_args: list = None):
 # ══════════════════════════════════════════
 
 def chat_list_cmd():
-    """List all available agents."""
+    """List all available agents — grouped by source: Apex / Hermes / Templates."""
     agents = list_all_agents()
 
-    table = Table(title="🤖 All Available Agents", box=None)
-    table.add_column("Name", style="cyan")
-    table.add_column("Role", style="white")
-    table.add_column("Source", style="dim")
-    table.add_column("Ready", style="green")
+    # Group by source
+    apex_agents = [a for a in agents if a["source"] == "apex"]
+    hermes_agents = [a for a in agents if a["source"] == "hermes"]
+    template_agents = [a for a in agents if a["source"] == "template"]
 
-    for a in sorted(agents, key=lambda x: x["name"]):
-        source_icon = {"hermes": "🔗", "apex": "📦", "template": "📋"}.get(a["source"], "❓")
-        ready = "✅" if a["has_soul"] else "⚠️"
-        table.add_row(a["name"], a["role"][:40], f"{source_icon} {a['source']}", ready)
+    # Column builder
+    def make_table(title, group, count_label):
+        t = Table(title=title, box=None)
+        t.add_column("Name", style="cyan", width=24)
+        t.add_column("Role", style="white", width=42)
+        t.add_column("Ready", style="green", width=6, justify="center")
+        for a in sorted(group, key=lambda x: x["name"]):
+            ready = "✅" if a["has_soul"] else "⚠️"
+            t.add_row(a["name"], a["role"][:40] or "—", ready)
+        t.caption = f"[dim]{len(group)} {count_label}[/]"
+        return t
 
-    console.print(table)
-    console.print("\n[dim]Usage: apex chat <agent_name>[/]")
+    if apex_agents:
+        console.print(make_table(
+            "📦 Apex Managed Agents · 由 apex team 创建,已同步到 Hermes",
+            apex_agents, "agents"
+        ))
+
+    if hermes_agents:
+        console.print(make_table(
+            "🔗 Hermes Native Agents · 通过 hermes profile 直接创建",
+            hermes_agents, "agents"
+        ))
+
+    if template_agents:
+        console.print(make_table(
+            "📋 Template Agents · 预置角色,首次启动时自动同步",
+            template_agents, "agents"
+        ))
+
+    total = len(agents)
+    console.print(f"\n[bold]共 {total} 个 Agent[/] · [dim]使用 apex chat <name> 启动对话[/]")
 
 
 def chat_launch_cmd(agent_name: str, context: str = "", query: str = ""):

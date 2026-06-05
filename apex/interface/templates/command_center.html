@@ -2156,6 +2156,7 @@ async function openAgentDetail(agentId) {
 }
 
 function renderAgentDrawerV2(a) {
+  agentDetailTarget = a;
   const agentId = a.agent_id || '';
   const role = a.role || 'general';
   const level = a.level || 1;
@@ -2273,7 +2274,11 @@ function renderAgentDrawerV2(a) {
       <div class="card" style="padding:12px"><div class="sec-h" style="margin-bottom:6px"><i class="ti ti-check" style="color:var(--green)"></i>已完成项目</div>${completedHTML}</div>
       <div class="card" style="padding:12px"><div class="sec-h" style="margin-bottom:6px"><i class="ti ti-loader" style="color:var(--blue)"></i>活跃项目</div>${activeHTML}</div>
     </div>
-    <div class="fld" style="margin-top:10px"><label>任务队列</label>${taskTableHTML}</div>`;
+    <div class="fld" style="margin-top:10px"><label>任务队列</label>${taskTableHTML}</div>
+    <div class="fld" style="margin-top:14px">
+      <label><i class="ti ti-history"></i> 聊天记录</label>
+      <div id="adSessions"><div style="color:var(--tx3);font-size:12px;padding:8px">加载中...</div></div>
+    </div>`;
 
   $('#adFooter').innerHTML = `
     <button class="btn sm ghost" onclick="closeAll()"><i class="ti ti-x"></i>关闭</button>
@@ -2281,6 +2286,103 @@ function renderAgentDrawerV2(a) {
 
   $('#scrim').classList.add('on');
   $('#agentDrawer').classList.add('on');
+
+  // Load sessions asynchronously
+  loadAgentSessions('${agentId}');
+}
+
+/* ========== CHAT HISTORY SESSIONS ========== */
+let agentSessionsView = null; // 'profile' | 'chat'
+let agentSessionsData = null; // cached agent data for back button
+
+async function loadAgentSessions(agentId) {
+  const el = document.getElementById('adSessions');
+  if (!el) return;
+  const sessions = await fetchJSON(API + '/agent/' + encodeURIComponent(agentId) + '/sessions');
+  if (!sessions || !sessions.length) {
+    el.innerHTML = '<div style="color:var(--tx3);font-size:12px;padding:8px">暂无聊天记录</div>';
+    return;
+  }
+  el.innerHTML = sessions.map(s => {
+    const model = s.model || 'default';
+    const msgCount = s.messages || 0;
+    const tokens = s.tokens || 0;
+    const cost = s.cost !== undefined ? '$' + parseFloat(s.cost).toFixed(4) : '--';
+    const started = s.started || '';
+    const timeStr = started ? new Date(started).toLocaleString('zh-CN', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+    const sid = s.id || '';
+    return `<div class="card" style="padding:10px 12px;margin-bottom:8px;cursor:pointer;background:var(--bg3);border:1px solid var(--line);border-radius:var(--r-s);transition:.15s"
+          onclick="viewSession('${sid}','${agentId}')"
+          onmouseenter="this.style.borderColor='var(--teal)'" onmouseleave="this.style.borderColor='var(--line)'">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span class="tag teal" style="font-size:10px">${model}</span>
+        ${timeStr ? `<span style="font-size:10px;color:var(--tx3);font-family:var(--mono)">${timeStr}</span>` : ''}
+        <span style="font-size:10px;color:var(--tx3);font-family:var(--mono);margin-left:auto">${msgCount} 条消息</span>
+      </div>
+      <div style="display:flex;gap:14px;font-size:10px;color:var(--tx2);font-family:var(--mono)">
+        <span><i class="ti ti-coins" style="font-size:11px"></i> ${tokens} tokens</span>
+        <span><i class="ti ti-currency-dollar" style="font-size:11px"></i> ${cost}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function viewSession(sessionId, agentId) {
+  agentSessionsView = 'chat';
+  const data = await fetchJSON(API + '/session/' + encodeURIComponent(sessionId) + '/messages');
+  if (!data || !data.messages) {
+    toast('无法加载会话记录');
+    return;
+  }
+  const messages = data.messages || [];
+  let chatHTML = '';
+
+  if (messages.length === 0) {
+    chatHTML = '<div style="color:var(--tx3);font-size:12px;padding:12px;text-align:center">此会话无消息记录</div>';
+  } else {
+    chatHTML = messages.map(m => {
+      const role = m.role || 'assistant';
+      const time = m.time || '';
+      const timeStr = time ? new Date(time).toLocaleString('zh-CN', {hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '';
+      const preview = m.preview || '';
+      const tool = m.tool || '';
+      const isUser = role === 'user';
+      const bg = isUser ? 'var(--teal-d)' : 'var(--bg3)';
+      const border = isUser ? 'rgba(45,212,191,.3)' : 'var(--line)';
+      const align = isUser ? 'flex-end' : 'flex-start';
+      return `<div style="display:flex;flex-direction:column;align-items:${align};margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;font-size:10px;color:var(--tx3)">
+          <span class="mono" style="font-weight:600;color:${isUser?'var(--teal)':'var(--violet)'}">${isUser?'你':(tool?'工具':'助手')}</span>
+          ${tool ? `<span class="tag blue" style="font-size:9px;padding:0 6px"><i class="ti ti-tool" style="font-size:9px"></i> ${tool}</span>` : ''}
+          ${timeStr ? `<span class="mono">${timeStr}</span>` : ''}
+        </div>
+        <div style="background:${bg};border:1px solid ${border};border-radius:var(--r-s);padding:10px 12px;font-size:13px;line-height:1.55;max-width:100%;word-break:break-word;color:var(--tx)">
+          ${preview || '(无内容)'}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  $('#adBody').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <button class="btn sm ghost" onclick="backToAgentProfile()"><i class="ti ti-arrow-left"></i> 返回档案</button>
+      <div style="font-family:var(--disp);font-size:14px;font-weight:600;color:var(--tx)">会话记录</div>
+      <div style="font-size:11px;color:var(--tx3);font-family:var(--mono);margin-left:auto">${messages.length} 条消息</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">${chatHTML}</div>`;
+
+  $('#adFooter').innerHTML = `
+    <button class="btn sm ghost" onclick="backToAgentProfile()"><i class="ti ti-arrow-left"></i> 返回档案</button>
+    <button class="btn sm ghost" style="margin-left:auto" onclick="closeAll()"><i class="ti ti-x"></i> 关闭</button>`;
+}
+
+function backToAgentProfile() {
+  agentSessionsView = 'profile';
+  if (agentDetailTarget) {
+    renderAgentDrawerV2(agentDetailTarget);
+  } else {
+    closeAll();
+  }
 }
 
 function renderAgentDrawerLegacy(a) {
@@ -2327,7 +2429,11 @@ function renderAgentDrawerLegacy(a) {
         ${traces.slice(0,5).map(t=>`<div style="display:flex;gap:10px;align-items:center;padding:10px 13px;border-bottom:1px solid var(--line);font-size:12px">
           <span class="tag ${t.tone||'green'}">${t.status||'成功'}</span><div style="flex:1;color:var(--tx2)">${t.detail||''}</div>
           <span class="mono" style="color:var(--tx3);font-size:11px">${t.latency||'--'} · ${t.cost||'$0.00'}</span></div>`).join('')}
-      </div></div>`;
+      </div></div>
+    <div class="fld" style="margin-top:14px">
+      <label><i class="ti ti-history"></i> 聊天记录</label>
+      <div id="adSessions"><div style="color:var(--tx3);font-size:12px;padding:8px">加载中...</div></div>
+    </div>`;
 
   $('#adFooter').innerHTML = `
     <button class="btn sm" id="adPause" onclick="toggleAgent()"><i class="ti ti-player-pause"></i>暂停</button>
@@ -2336,6 +2442,10 @@ function renderAgentDrawerLegacy(a) {
 
   $('#scrim').classList.add('on');
   $('#agentDrawer').classList.add('on');
+
+  // Load sessions if we have an agent ID
+  const sessionAgentId = id || a.agent_id || '';
+  if (sessionAgentId) loadAgentSessions(sessionAgentId);
 }
 
 async function refreshAgentDetail(agentId) {
