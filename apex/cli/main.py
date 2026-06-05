@@ -64,6 +64,7 @@ from .commands import chat_cmds
 from .commands import mode_cmds
 from .commands import system_cmds as sys_cmds
 from .commands import help_cmds
+from .commands import survey_cmds
 
 # New mode CLIs
 from apex.orchestration import (
@@ -143,15 +144,19 @@ def format_apex_help(self, ctx, formatter):
             first_line = help_text.split("\n")[0].strip()
             # Strip leading emoji for cleaner display
             display = first_line
-            if display and len(display) > 2 and (display[0] in '▶🎮📊💬📋👥🤖🔧📦⚙❓⚓🔗🚀🎯'):
-                parts = display.split(" ", 1)
-                if len(parts) > 1:
-                    display = parts[1].strip()
+            import unicodedata
+            if display and len(display) > 0:
+                # Check if starts with emoji (any emoji character)
+                stripped = display.strip()
+                if stripped and unicodedata.category(stripped[0]) == 'So':
+                    parts = stripped.split(" ", 1)
+                    if len(parts) > 1:
+                        display = parts[1].strip()
             cmd_data[name] = display
 
     groups = [
         ("SETUP & START", ["setup", "quickstart", "init", "demo"]),
-        ("DAILY USE", ["run", "chat", "status", "dashboard"]),
+        ("DAILY USE", ["run", "chat", "status", "survey", "dashboard"]),
         ("TASK MANAGEMENT", ["task"]),
         ("TEAM & AGENTS", ["team"]),
         ("FLEET & MONITORING", ["fleet"]),
@@ -210,6 +215,7 @@ def format_apex_help(self, ctx, formatter):
         ('apex mode supervise "build payment" -w 3', "Manager delegates to 3 workers"),
         ("apex system skill list", "View all agent skills and levels"),
         ("apex integrate hermes profiles", "List Hermes profiles"),
+        ('apex survey "AI FinOps"', "Competitive analysis — market research"),
         ("apex origin overview", "Cross-project fleet overview"),
     ]
     for cmd_example, desc in examples:
@@ -296,6 +302,43 @@ def run(task: str, profile: str, model: str, token_limit: int, swarm: bool, work
 def status():
     """📊 View current Apex status"""
     show_status(console)
+
+
+@cli.command()
+@click.argument("topic")
+@click.option("--github-only", is_flag=True, help="Only open-source GitHub projects")
+@click.option("--saas-only", is_flag=True, help="Only commercial/SaaS products")
+@click.option("--quick", is_flag=True, help="Quick overview (less depth)")
+@click.option("--output", "-o", default="rich", type=click.Choice(["rich", "markdown"]), help="Output format")
+@click.option("--workers", "-w", default=3, type=int, help="Parallel research workers")
+def survey(topic: str, github_only: bool, saas_only: bool, quick: bool, output: str, workers: int):
+    """🔍 Competitive survey & market research
+
+    \b
+    Researches open-source (GitHub) and commercial products for any topic,
+    comparing features, popularity, pricing, and community health.
+
+    \b
+    Examples:
+
+      apex survey "AI FinOps"                           Full competitive analysis
+
+      apex survey "multi-agent framework" --quick       Quick overview
+
+      apex survey "Kubernetes cost" --github-only       Only open-source
+
+      apex survey "project management" --saas-only      Only commercial
+
+      apex survey "LLM agent tools" --output markdown   Markdown output
+    """
+    survey_cmds.survey_cmd(
+        topic=topic,
+        github_only=github_only,
+        saas_only=saas_only,
+        quick=quick,
+        output=output,
+        workers=workers,
+    )
 
 
 @cli.command()
@@ -1479,7 +1522,8 @@ def quickstart():
         "  [green]apex task dispatch-smart \"需求\"[/]  AI decomposes\n"
         "  [green]apex task schedule[/]               Gantt chart timeline\n"
         "  [green]apex fleet status[/]                Check agent status\n"
-        "  [green]apex chat <agent>[/]                Talk to your agent\n\n"
+        "  [green]apex chat <agent>[/]                Talk to your agent\n"
+        "  [green]apex survey \"topic\"[/]             Competitive analysis\n\n"
         "[bold]COLLABORATION MODES[/]\n"
         "  [green]apex mode chain \"goal\" -p dev[/]    Sequential chain\n"
         "  [green]apex mode supervise \"goal\" -w 3[/] Manager + workers\n\n"
