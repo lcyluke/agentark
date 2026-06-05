@@ -94,6 +94,138 @@ def cli():
     pass
 
 
+# ═══════════════════════════════════════════════════════════════════════
+# Custom Help Formatter — Hermes-style output
+# ═══════════════════════════════════════════════════════════════════════
+
+import shutil
+from datetime import datetime
+
+
+def format_apex_help(self, ctx, formatter):
+    """Hermes-style help output with grouped commands, options, and examples.
+
+    Only applies to the root CLI group; sub-groups use standard Click format.
+    """
+    # Root CLI only — sub-groups (task, team, mode, etc.) use standard format
+    if getattr(self, "name", None) is not None and self.name not in (None, "cli"):
+        # Call original Click format for sub-groups
+        original_format_help(self, ctx, formatter)
+        return
+    
+    """Hermes-style help output with grouped commands, options, and examples.
+
+    Output uses raw write() calls to preserve column alignment,
+    matching the look and feel of Hermes CLI help.
+    """
+    terminal_width = shutil.get_terminal_size((80, 20)).columns
+    now_str = datetime.now().strftime("%a %b %d %H:%M:%S")
+    
+    # Pad right side with spaces so date aligns right
+    header = f"Apex --help{' ' * (terminal_width - 18 - len(now_str))}{now_str}\n"
+    formatter.write(header)
+    formatter.write("\n")
+    
+    # Usage
+    formatter.write("usage: apex [-h] [--version] {command} ...\n")
+    formatter.write("\n")
+    
+    # Description
+    formatter.write("Apex - multi-Agent operating system. One person, infinite capacity.\n")
+    formatter.write("\n")
+    
+    # ── Grouped Commands ──
+    cmd_data = {}
+    for name in self.list_commands(ctx):
+        cmd = self.get_command(ctx, name)
+        if cmd and not cmd.hidden:
+            help_text = cmd.help or cmd.short_help or ""
+            first_line = help_text.split("\n")[0].strip()
+            # Strip leading emoji for cleaner display
+            display = first_line
+            if display and len(display) > 2 and (display[0] in '▶🎮📊💬📋👥🤖🔧📦⚙❓⚓🔗🚀🎯'):
+                parts = display.split(" ", 1)
+                if len(parts) > 1:
+                    display = parts[1].strip()
+            cmd_data[name] = display
+
+    groups = [
+        ("SETUP & START", ["setup", "quickstart", "init", "demo"]),
+        ("DAILY USE", ["run", "chat", "status", "dashboard"]),
+        ("TASK MANAGEMENT", ["task"]),
+        ("TEAM & AGENTS", ["team"]),
+        ("FLEET & MONITORING", ["fleet"]),
+        ("COLLABORATION MODES", ["mode"]),
+        ("PROJECT MANAGEMENT", ["project"]),
+        ("SYSTEM", ["system"]),
+        ("HELP & INTEGRATION", ["help", "integrate"]),
+        ("GLOBAL COMMANDS", ["origin", "crew"]),
+    ]
+
+    for group_name, cmd_names in groups:
+        formatter.write(f"{group_name}:\n")
+        for name in cmd_names:
+            if name in cmd_data:
+                desc = cmd_data[name]
+                # Pad name to 28 chars for alignment
+                padded = name.ljust(28)
+                formatter.write(f"    {padded} {desc}\n")
+        formatter.write("\n")
+
+    # ── Options ──
+    formatter.write("options:\n")
+    opts = [
+        ("-h, --help", "show this help message and exit"),
+        ("--version, -V", "Show version and exit"),
+        ("", ""),
+        ("  Per-command overrides:", ""),
+        ("--model MODEL, -m MODEL", "Model override (e.g. deepseek-v4-pro). Applies to run/chat/team start"),
+        ("--token-limit N", "Per-session token cap (applies to run/chat/team start)"),
+        ("--input-lines N", "Hermes TUI composer height in lines (default: 3)"),
+        ("--profile PROFILE, -p PROFILE", "Agent profile to use (applies to run)"),
+        ("--swarm, -s", "Use Swarm mode for parallel execution (applies to run)"),
+        ("--workers N, -w N", "Number of parallel workers (applies to run, default: 3)"),
+    ]
+    for flag, desc in opts:
+        if flag == "" and desc == "":
+            formatter.write("\n")
+        elif desc == "":
+            formatter.write(f"  {flag}\n")
+        else:
+            formatter.write(f"    {flag:<45s} {desc}\n")
+    formatter.write("\n")
+
+    # ── Examples ──
+    formatter.write("Examples:\n")
+    examples = [
+        ("apex setup --quick", "First-time setup (quick, all defaults)"),
+        ("apex setup --check", "Check installation status"),
+        ("apex team template webapp", "Create a 4-agent development team"),
+        ("apex team start", "Launch all agent terminals"),
+        ('apex task dispatch-smart "build login page"', "AI decomposes requirement into tasks"),
+        ("apex task schedule", "View Gantt chart timeline of all tasks"),
+        ("apex fleet status", "Show agent fleet status dashboard"),
+        ("apex chat frontend-dev", "Chat with the frontend developer agent"),
+        ('apex mode chain "refactor auth" -p dev', "Run a sequential chain pipeline"),
+        ('apex mode supervise "build payment" -w 3', "Manager delegates to 3 workers"),
+        ("apex system skill list", "View all agent skills and levels"),
+        ("apex integrate hermes profiles", "List Hermes profiles"),
+        ("apex origin overview", "Cross-project fleet overview"),
+    ]
+    for cmd_example, desc in examples:
+        formatter.write(f"    {cmd_example:<55s} {desc}\n")
+    formatter.write("\n")
+    
+    formatter.write("For more help on a command:\n")
+    formatter.write("    apex <command> --help\n")
+    formatter.write("\n")
+
+
+# Patch the help formatter on click.Group
+# Save original before patching
+original_format_help = click.Group.format_help
+click.Group.format_help = format_apex_help
+
 # ════════════════════════════════════════════════════════════════
 # SETUP — 🚀 安装配置
 # ════════════════════════════════════════════════════════════════
