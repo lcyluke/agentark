@@ -94,7 +94,8 @@ def _check_environment(console: Console) -> dict:
     except:
         pass
     try:
-        webbrowser.open("about:blank")
+        import subprocess as sp
+        sp.run(["open", "about:blank"], capture_output=True, timeout=3)
         env["browser"] = True
     except:
         pass
@@ -171,7 +172,7 @@ def run_demo(
     if not no_browser and env["browser"]:
         console.print("[bold]Step 4/4[/bold] Opening Command Center...")
         try:
-            webbrowser.open(dashboard_url)
+            subprocess.run(["open", dashboard_url], capture_output=True, timeout=5)
             console.print(f"  [green]✓[/green] Browser opened → [cyan]{dashboard_url}[/cyan]")
         except:
             console.print(f"  [yellow]⚠[/yellow] Could not open browser. Visit: [cyan]{dashboard_url}[/cyan]")
