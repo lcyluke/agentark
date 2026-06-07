@@ -1,0 +1,41 @@
+{
+  "name": "apex-ops-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for APEX orchestration operations — spawn, status, blackboard, claims, stop, doctor",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "apex-ops-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "watch": "tsc --watch"
+  },
+  "files": [
+    "dist/",
+    "README.md"
+  ],
+  "mcp": {
+    "server": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "env": {}
+    }
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0",
+    "tsx": "^4.7.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["apex", "mcp", "orchestration", "agent-ops"],
+  "license": "MIT"
+}

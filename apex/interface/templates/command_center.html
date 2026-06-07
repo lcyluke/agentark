@@ -1144,11 +1144,12 @@ async function loadProjectView() {
           const by = p.approved_by ? ` · ${p.approved_by}` : '';
           return `<option value="${p.name}">${p.name} (${p.task_count||0} 任务 · ${p.module_count||0} 模块${by})</option>`;
         }).join('');
-      // Restore selection if possible
-      if (state.selectedProject) {
-        sel.value = state.selectedProject;
-      } else if (currentVal && currentVal !== 'all' && projects.some(p => p.name === currentVal)) {
+      // Restore: prioritize user's new selection over stored state
+      if (currentVal && currentVal !== '' && currentVal !== 'all' && projects.some(p => p.name === currentVal)) {
         sel.value = currentVal;
+        state.selectedProject = currentVal;
+      } else if (state.selectedProject && projects.some(p => p.name === state.selectedProject)) {
+        sel.value = state.selectedProject;
       }
     }
   } else {
@@ -1165,6 +1166,7 @@ async function loadProjectView() {
   // If a project is selected, fetch its detail from the new API
   const pjName = $('#pjSwitch') && $('#pjSwitch').value;
   state._pipeFetched = false;  // Reset pipeline cache on project switch
+  state._pipeData = null;       // Clear stale pipeline data
   if (pjName && pjName !== 'all' && pjName !== '') {
     const pjData = await fetchJSON(API + '/projects/' + encodeURIComponent(pjName));
     if (pjData && !pjData.error) {
