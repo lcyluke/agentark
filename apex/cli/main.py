@@ -364,12 +364,14 @@ def dashboard(host: str, port: int):
 @click.option("--host", default="127.0.0.1", help="Bind address")
 @click.option("--no-browser", is_flag=True, help="Don't open browser")
 @click.option("--skip-tasks", is_flag=True, help="Don't create demo tasks")
-def demo(port: int, host: str, no_browser: bool, skip_tasks: bool):
+@click.option("--overwrite", is_flag=True, help="Kill existing process on port and restart")
+def demo(port: int, host: str, no_browser: bool, skip_tasks: bool, overwrite: bool):
     """🎮 Run Apex demo — create AI fleet and open Command Center"""
     try:
         from apex.cli.commands.demo import run_demo
         run_demo(console=console, port=port, host=host,
-                 no_browser=no_browser, skip_tasks=skip_tasks)
+                 no_browser=no_browser, skip_tasks=skip_tasks,
+                 overwrite=overwrite)
     except Exception as e:
         console.print(f"[red]✗ Demo failed: {e}[/]")
 

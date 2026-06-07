@@ -108,6 +108,7 @@ def run_demo(
     host: str = "127.0.0.1",
     no_browser: bool = False,
     skip_tasks: bool = False,
+    overwrite: bool = False,
 ):
     """Run the full demo experience"""
     if console is None:
@@ -147,7 +148,18 @@ def run_demo(
     # ═══ STEP 3: Launch Dashboard ═══
     console.print("[bold]Step 3/4[/bold] Launching Command Center...")
     
-    dashboard_url = f"http://{host}:{port}/v5"
+    dashboard_url = f"http://{host}:{port}"
+    
+    # Kill existing process if overwrite
+    if overwrite:
+        try:
+            subprocess.run(["lsof", "-ti", f":{port}"], capture_output=True, text=True)
+            subprocess.run(["lsof", "-ti", f":{port}", "|", "xargs", "kill", "-9"],
+                         shell=True, capture_output=True)
+            time.sleep(0.5)
+            console.print("  [dim]Killed existing process on port {port}[/dim]")
+        except:
+            pass
     
     # Start dashboard in background
     try:
