@@ -356,6 +356,8 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
 .pj-org-node{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:11px}
 .pj-org-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
 .pj-org-arrow{color:var(--tx3);font-size:9px;margin:0 2px}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+.pj-refresh-time{font-size:10px;color:var(--tx3);margin-left:6px}
 
 @media(max-width:920px){
   .pj-tricol{grid-template-columns:1fr}
@@ -446,6 +448,7 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
             </div>
             <button class="btn sm" onclick="openProjectDrawer()" title="编辑项目"><i class="ti ti-edit"></i></button>
             <button class="btn sm primary" onclick="loadStandup()"><i class="ti ti-clipboard-text"></i>站会报告</button>
+            <button class="btn sm" id="pjLiveBtn" onclick="toggleAutoRefresh()" title="切换实时刷新"><span id="pjLiveDot" style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:4px;animation:pulse-dot 2s infinite"></span>Live</button>
           </div>
         </div>
         <div style="height:14px"></div>
@@ -825,6 +828,10 @@ let state = {
   liveProject: null,
   selectedProject: null,
   connected: false,
+  autoRefresh: true,       // live refresh toggle
+  refreshInterval: 15,     // seconds between auto-refreshes
+  lastRefresh: null,       // timestamp of last data fetch
+  _refreshTimer: null,     // setInterval handle
   board: { humans: [{id:'luke',name:'老卢',role:'创始人·全权',init:'L'}], ceoAgent:'ceo', authAgent:'auth', auditAgent:'audit' }
 };
 
@@ -878,6 +885,7 @@ async function loadAllData() {
 
 /* ========== Navigation ========== */
 function go(v) {
+  if (state.view !== v) stopAutoRefresh();  // stop live refresh when switching away
   state.view = v;
   $$('.nav').forEach(n => n.classList.toggle('on', n.dataset.view === v));
   $$('.view').forEach(s => s.classList.remove('on'));
@@ -1185,6 +1193,8 @@ async function loadProjectView() {
     state.data.sprints = [];
   }
   renderProject();
+  state.lastRefresh = Date.now();
+  startAutoRefresh();  // begin live polling
 }
 
 function renderProject() {
@@ -1432,22 +1442,78 @@ function openSubFunctionDrawer(mi, sfName) {
 function filterProjectView() {
   const q = ($('#pjSearch')?.value || '').toLowerCase();
   if (!q) {
-    // Show all
     $$('.pj-mod-item, .pj-agent-row, .pj-pipe-task').forEach(el => el.style.display = '');
     return;
   }
-  // Filter module items
-  $$('.pj-mod-item').forEach(el => {
-    el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
-  });
-  // Filter agent rows
-  $$('.pj-agent-row').forEach(el => {
-    el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
-  });
-  // Filter pipeline tasks
-  $$('.pj-pipe-task').forEach(el => {
-    el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
-  });
+  $$('.pj-mod-item').forEach(el => { el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none'; });
+  $$('.pj-agent-row').forEach(el => { el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none'; });
+  $$('.pj-pipe-task').forEach(el => { el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none'; });
+}
+
+// ═══ Auto-Refresh / Live Updates ═══
+function toggleAutoRefresh() {
+  state.autoRefresh = !state.autoRefresh;
+  const dot = $('#pjLiveDot');
+  const btn = $('#pjLiveBtn');
+  if (state.autoRefresh) {
+    dot.style.background = 'var(--green)';
+    dot.style.animation = 'pulse-dot 2s infinite';
+    btn.style.borderColor = 'var(--green)';
+    startAutoRefresh();
+    toast('实时刷新已开启 · 每 ' + state.refreshInterval + 's');
+  } else {
+    dot.style.background = 'var(--tx3)';
+    dot.style.animation = 'none';
+    btn.style.borderColor = '';
+    stopAutoRefresh();
+    toast('实时刷新已暂停');
+  }
+}
+
+function startAutoRefresh() {
+  stopAutoRefresh();
+  if (!state.autoRefresh) return;
+  state._refreshTimer = setInterval(async () => {
+    if (!state.autoRefresh || state.view !== 'project' || !state.selectedProject) return;
+    // Silent refresh: re-fetch project tasks + pipeline without full reload
+    try {
+      const [tasks, pipe] = await Promise.all([
+        fetchJSON(API + '/tasks'),
+        fetchJSON(API + '/pipeline/' + encodeURIComponent(state.selectedProject))
+      ]);
+      if (tasks) state.data.tasks = tasks;
+      if (pipe) { state._pipeData = pipe; renderPipelineColumn(pipe); }
+      state.lastRefresh = Date.now();
+      updateRefreshIndicator();
+      // Re-render agent loads + KPI without full project reload
+      if (state.liveProject) {
+        const d = state.data;
+        const totalTasks = (d.tasks||[]).length;
+        const doneTasks = (d.tasks||[]).filter(t => t.status === 'done').length;
+        const pct = totalTasks > 0 ? Math.round(doneTasks/totalTasks*100) : 0;
+        // Update just the KPI numbers
+        const kpiNums = $$('#pjHeroKpis .num');
+        if (kpiNums[1]) kpiNums[1].textContent = pct + '%';
+        if (kpiNums[1]) {
+          const bar = kpiNums[1].parentElement.querySelector('.bar i');
+          if (bar) bar.style.width = pct + '%';
+        }
+      }
+    } catch(e) { /* silent */ }
+  }, state.refreshInterval * 1000);
+}
+
+function stopAutoRefresh() {
+  if (state._refreshTimer) { clearInterval(state._refreshTimer); state._refreshTimer = null; }
+}
+
+function updateRefreshIndicator() {
+  if (!state.lastRefresh) return;
+  const elapsed = Math.round((Date.now() - state.lastRefresh) / 1000);
+  const dot = $('#pjLiveDot');
+  if (dot && state.autoRefresh) {
+    dot.title = '最后刷新: ' + elapsed + 's 前';
+  }
 }
 
 // ═══ Agent Classification ═══
