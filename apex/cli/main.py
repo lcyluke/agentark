@@ -160,7 +160,7 @@ def format_apex_help(self, ctx, formatter):
             cmd_data[name] = display
 
     groups = [
-        ("SETUP & START", ["setup", "quickstart", "init", "demo"]),
+        ("SETUP & START", ["setup", "quickstart", "init", "demo", "model-detect"]),
         ("DAILY USE", ["run", "chat", "status", "survey", "dashboard"]),
         ("TASK MANAGEMENT", ["task"]),
         ("TEAM & AGENTS", ["team"]),
@@ -210,6 +210,7 @@ def format_apex_help(self, ctx, formatter):
     examples = [
         ("apex setup --quick", "First-time setup (quick, all defaults)"),
         ("apex setup --check", "Check installation status"),
+        ("apex model-detect", "Auto-scan available AI models & providers"),
         ("apex team template webapp", "Create a 4-agent development team"),
         ("apex team start", "Launch all agent terminals"),
         ('apex task dispatch-smart "build login page"', "AI decomposes requirement into tasks"),
