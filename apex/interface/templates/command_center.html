@@ -722,6 +722,8 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
 
 <script>
 /* ============ Apex Command Center — Application Logic ============ */
+window.__jsErrors = [];
+window.onerror = function(m,s,l,c,e) { window.__jsErrors.push({msg:m,src:s,line:l,col:c,err:e?e.stack:''}); return false; };
 const API = '/api';
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
@@ -1895,7 +1897,7 @@ function renderAutonomy() {
     { n: 'L2', h: '半自治', p: 'agent 在预算与护栏内自动执行,只有高风险动作(花钱超阈值/对外通讯/数据外传/危险操作)才升级审批。', rec: true },
     { n: 'L3', h: '全自治', p: 'agent 在预算与护栏内完全自动运转,只在触发熔断(超支/连错/违规)时报警。适合成熟、信任分高的流程。' }
   ];
-  $('#ladder').innerHTML = LADDER.map((l, li) => `<div class="lvl ${l.rec?'on':''}" onclick="openAutonomyLevelDrawer('${l.n}','${l.h}','${l.p.replace(/'/g,\"\\\\'\")}')">
+  $('#ladder').innerHTML = LADDER.map((l, li) => `<div class="lvl ${l.rec?'on':''}" onclick="openAutonomyLevelDrawer('${l.n}','${l.h}','${l.p.replace(/'/g,"\\'")}')">
     <div class="ln">${l.n}</div><h4>${l.h}</h4><p>${l.p}</p>${l.rec?'<span class="rec"><i class="ti ti-star-filled"></i> 推荐</span>':''}</div>`).join('');
 
   // Cron jobs
@@ -1959,7 +1961,7 @@ async function renderKnowledge() {
   });
   const skillEntries = Object.entries(skillMap).sort((a, b) => b[1] - a[1]).slice(0, 15);
   $('#skillDist').innerHTML = skillEntries.length
-    ? skillEntries.map(([s, c]) => `<div class="li" style="cursor:pointer" onclick="openSkillDistDrawer('${s.replace(/'/g,\"\\\\'\")}',${c})">
+    ? skillEntries.map(([s, c]) => `<div class="li" style="cursor:pointer" onclick="openSkillDistDrawer('${s.replace(/'/g,"\\'")}',${c})">
         <div class="ic" style="background:var(--bg4)"><i class="ti ti-tag"></i></div>
         <div style="flex:1"><div class="t">${s}</div><div class="d">${c} 个 agent 拥有此技能</div></div></div>`).join('')
     : '<div style="color:var(--tx3);text-align:center;padding:20px">暂无技能数据</div>';
@@ -2405,7 +2407,7 @@ function openPipelineStageDrawer(stageId, stageName, color) {
             <span><i class="ti ti-flag"></i> ${priority}</span>
             <span class="tag" style="background:${statusColors[status]}20;color:${statusColors[status]};font-size:9px">${statusLabels[status]||status}</span>
           </div>
-          <select onchange="movePipelineTask(this, '${(t.id||'').replace(/'/g,\"\\\\'\")}')" style="background:var(--bg);color:var(--tx);border:1px solid var(--line2);border-radius:4px;padding:4px 8px;font-size:11px;font-family:var(--body)">
+          <select onchange="movePipelineTask(this, '${(t.id||'').replace(/'/g,"\\'")}')" style="background:var(--bg);color:var(--tx);border:1px solid var(--line2);border-radius:4px;padding:4px 8px;font-size:11px;font-family:var(--body)">
             <option value="">移动状态...</option>
             ${statusOptions.filter(s => s !== status).map(s => `<option value="${s}">→ ${statusLabels[s]}</option>`).join('')}
           </select>
@@ -2527,7 +2529,7 @@ function showModuleCards(modules) {
     const reuse = m.reuse_count || m.usage_count || 0;
 
     html += `<div class="card" style="padding:15px;border-left:3px solid var(--teal);cursor:pointer;transition:.15s" 
-      onclick="openModuleTemplateDrawer('${(m.name||'').replace(/'/g,\"\\\\'\")}')" 
+      onclick="openModuleTemplateDrawer('${(m.name||'').replace(/'/g,"\\'")}')" 
       onmouseenter="this.style.borderColor='var(--teal)'" onmouseleave="this.style.borderColor='var(--line)'">
       <div style="font-family:var(--disp);font-size:14px;font-weight:600;margin-bottom:6px">${m.name || '未命名模板'}</div>
       <div style="font-size:12px;color:var(--tx2);margin-bottom:10px;line-height:1.5">${m.description || '暂无描述'}</div>
