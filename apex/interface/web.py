@@ -2430,6 +2430,33 @@ def create_app():
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
+    @app.route("/api/status/health")
+    def api_health_full():
+        """Full health check — Hermes, Apex, DB status"""
+        import os, sqlite3
+        hermes_db = Path(os.environ.get("HERMES_HOME", os.path.expanduser("~/.hermes"))) / "state.db"
+        hermes_ok = hermes_db.exists()
+        apex_db = Path(os.path.expanduser("~/.apex")) / "kanban.db"
+        apex_ok = apex_db.exists()
+        
+        hermes_sessions = 0
+        if hermes_ok:
+            try:
+                c = sqlite3.connect(str(hermes_db))
+                hermes_sessions = c.execute("SELECT COUNT(*) FROM sessions").fetchone()[0]
+                c.close()
+            except: pass
+        
+        return jsonify({
+            "status": "ok",
+            "apex_version": "0.2.0",
+            "hermes_available": hermes_ok,
+            "hermes_sessions": hermes_sessions,
+            "apex_db_available": apex_ok,
+            "requires_hermes": False,
+            "note": "Apex runs standalone. Hermes integration enables real-time session tracking and token analytics." if not hermes_ok else "Hermes integrated — full analytics available.",
+        })
+
     return app
 
 
