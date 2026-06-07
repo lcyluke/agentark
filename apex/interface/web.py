@@ -73,36 +73,16 @@ def create_app():
 
     @app.route("/")
     def index():
-        return render_template("dashboard.html")
+        """Apex Command Center — 多Agent指挥中心"""
+        return render_template("command_center.html")
 
-    @app.route("/v4")
-    def dashboard_v4():
-        return render_template("dashboard_v4.html") if (Path(__file__).parent / "templates" / "dashboard_v4.html").exists() else render_template("dashboard.html")
-
-    @app.route("/v5")
-    def dashboard_v5():
-        return render_template("dashboard_v5.html") if (Path(__file__).parent / "templates" / "dashboard_v5.html").exists() else render_template("dashboard.html")
-
-    @app.route("/v6")
-    def dashboard_v6():
-        return render_template("dashboard_daily.html") if (Path(__file__).parent / "templates" / "dashboard_daily.html").exists() else render_template("dashboard.html")
-
-    @app.route("/traces")
-    def traces_page():
-        return render_template("dashboard.html", page="traces")
-
-    @app.route("/agents")
-    def agents_page():
-        return render_template("dashboard.html", page="agents")
+    # ══════════════════════════════════════════════════════════
+    # SECTION 1b: Legacy routes (redirect to command center)
+    # ══════════════════════════════════════════════════════════
 
     @app.route("/logs")
     def logs_page():
-        return render_template("dashboard.html", page="logs")
-
-    @app.route("/cc")
-    def command_center_page():
-        """🎛️ Apex Command Center — 多Agent指挥中心"""
-        return render_template("command_center.html")
+        return render_template("command_center.html", page="logs")
 
     @app.route("/auth")
     def auth_page():
@@ -591,6 +571,86 @@ def create_app():
         try:
             from apex.interface.hermes_bridge import get_model_pricing
             return jsonify(get_model_pricing())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    # ═══ Cost Tracking API ═══
+
+    @app.route("/api/cost/summary")
+    @request_logger
+    def api_cost_summary():
+        """💰 成本总览"""
+        try:
+            from apex.cost_tracker import get_summary
+            return jsonify(get_summary())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/cost/cron")
+    @request_logger
+    def api_cost_cron():
+        """📋 每个Cron任务的成本明细"""
+        try:
+            from apex.cost_tracker import get_cron_costs
+            days = request.args.get("days", 30, type=int)
+            costs = get_cron_costs(days)
+            return jsonify([c.__dict__ for c in costs])
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/cost/agents")
+    @request_logger
+    def api_cost_agents():
+        """🤖 每个Agent Profile的成本明细"""
+        try:
+            from apex.cost_tracker import get_agent_costs
+            days = request.args.get("days", 30, type=int)
+            costs = get_agent_costs(days)
+            return jsonify([c.__dict__ for c in costs])
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/cost/sources")
+    @request_logger
+    def api_cost_sources():
+        """📡 按来源渠道分解"""
+        try:
+            from apex.cost_tracker import get_source_breakdown
+            days = request.args.get("days", 30, type=int)
+            return jsonify(get_source_breakdown(days))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/cost/projects")
+    @request_logger
+    def api_cost_projects():
+        """📦 按项目聚合成本"""
+        try:
+            from apex.cost_tracker import estimate_project_costs
+            costs = estimate_project_costs()
+            return jsonify([c.__dict__ for c in costs])
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/cost/timeline")
+    @request_logger
+    def api_cost_timeline():
+        """📈 成本趋势 (hourly/daily)"""
+        try:
+            from apex.cost_tracker import get_timeline
+            days = request.args.get("days", 7, type=int)
+            granularity = request.args.get("granularity", "daily")
+            return jsonify(get_timeline(days, granularity))
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/cost/full")
+    @request_logger
+    def api_cost_full():
+        """📊 完整成本快照 (Dashboard用)"""
+        try:
+            from apex.cost_tracker import get_full_snapshot
+            return jsonify(get_full_snapshot())
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
@@ -2291,6 +2351,50 @@ def create_app():
                 msgs.append(msg)
             return jsonify({"session_id":session_id,"messages":msgs,"total":len(msgs)})
         finally: conn.close()
+
+    # ══════════════════════════════════════════
+    # Audit & Flow — 审批审计 + 数据流时序
+    # ══════════════════════════════════════════
+
+    @app.route("/api/audit/queue")
+    def api_audit_queue():
+        try:
+            from apex.interface.audit_flow import get_approval_queue
+            return jsonify(get_approval_queue())
+        except Exception as e: return jsonify({"error":str(e)}), 500
+
+    @app.route("/api/audit/approve", methods=["POST"])
+    def api_audit_approve():
+        try:
+            from apex.interface.audit_flow import approve_item
+            d = request.get_json(force=True) or {}
+            return jsonify(approve_item(d.get("id",""), d.get("approver","老卢")))
+        except Exception as e: return jsonify({"error":str(e)}), 500
+
+    @app.route("/api/audit/reject", methods=["POST"])
+    def api_audit_reject():
+        try:
+            from apex.interface.audit_flow import reject_item
+            d = request.get_json(force=True) or {}
+            return jsonify(reject_item(d.get("id",""), d.get("reason",""), d.get("rejector","老卢")))
+        except Exception as e: return jsonify({"error":str(e)}), 500
+
+    @app.route("/api/audit/log")
+    def api_audit_log():
+        try:
+            from apex.interface.audit_flow import get_audit_log, get_audit_stats
+            stats = get_audit_stats()
+            log = get_audit_log()
+            return jsonify({**stats, "entries": log.get("entries",[])})
+        except Exception as e: return jsonify({"error":str(e)}), 500
+
+    @app.route("/api/flow/timeline")
+    def api_flow_timeline():
+        try:
+            from apex.interface.audit_flow import get_data_flow_timeline
+            project = request.args.get("project", None)
+            return jsonify(get_data_flow_timeline(project))
+        except Exception as e: return jsonify({"error":str(e)}), 500
 
     return app
 

@@ -10,18 +10,43 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.30.0/tabler-icons.min.css">
 <style>
 :root{
+  /* ═══ Surface ═══ */
   --bg:#0a0d12; --bg2:#11151c; --bg3:#161b24; --bg4:#1c2330;
   --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.14);
+  /* ═══ Text ═══ */
   --tx:#e7ecf3; --tx2:#95a2b6; --tx3:#5d6878;
+  /* ═══ Brand ═══ */
   --teal:#2dd4bf; --teal-d:#0c3a36;
   --violet:#a78bfa; --violet-d:#2a2150;
   --amber:#fbbf24; --amber-d:#3a2c08;
   --green:#34d399; --green-d:#0a3327;
   --red:#f87171; --red-d:#3a1414;
   --blue:#60a5fa; --blue-d:#0e2a4a;
+  /* ═══ Radius ═══ */
   --r:10px; --r-s:7px; --r-l:14px;
+  /* ═══ Spacing ═══ */
+  --sp-xs:4px; --sp-sm:8px; --sp-md:14px; --sp-lg:20px; --sp-xl:28px;
+  /* ═══ Shadows ═══ */
+  --sh-sm:0 1px 3px rgba(0,0,0,.3); --sh-md:0 4px 12px rgba(0,0,0,.4); --sh-lg:0 8px 24px rgba(0,0,0,.5);
+  --sh-glow:0 0 20px rgba(45,212,191,.08);
+  /* ═══ Transitions ═══ */
+  --tr-fast:.12s ease; --tr-base:.2s ease; --tr-slow:.35s cubic-bezier(.4,0,.2,1);
+  /* ═══ Typography ═══ */
   --disp:'Sora',sans-serif; --body:'Manrope',sans-serif; --mono:'IBM Plex Mono',monospace;
+  /* ═══ Font sizes ═══ */
+  --fs-xs:10px; --fs-sm:12px; --fs-base:14px; --fs-lg:16px; --fs-xl:20px; --fs-2xl:28px;
 }
+/* ═══ LIGHT THEME ═══ */
+[data-theme="light"]{
+  --bg:#f8fafc; --bg2:#ffffff; --bg3:#f1f5f9; --bg4:#e2e8f0;
+  --line:rgba(0,0,0,.06); --line2:rgba(0,0,0,.12);
+  --tx:#0f172a; --tx2:#475569; --tx3:#94a3b8;
+  --teal-d:#ccfbf1;
+  --violet-d:#ede9fe; --amber-d:#fef3c7; --green-d:#dcfce7; --red-d:#fee2e2; --blue-d:#dbeafe;
+}
+[data-theme="light"] body::before{background:none}
+[data-theme="light"] .side{background:linear-gradient(180deg,var(--bg2),var(--bg))}
+[data-theme="light"] .card,[data-theme="light"] .kpi{box-shadow:0 1px 2px rgba(0,0,0,.04)}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{background:var(--bg);color:var(--tx);font-family:var(--body);font-size:14px;line-height:1.55;
@@ -333,6 +358,7 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
       <div class="sp"></div>
       <div class="pulse" id="pulseBox"><span class="dot" id="pulseDot"></span><span id="pulseTxt">连接中...</span></div>
       <button class="btn primary" onclick="openChat()"><i class="ti ti-sparkles"></i>AI 指挥官</button>
+      <button class="btn" onclick="toggleTheme()" title="切换亮色/暗色主题"><i class="ti ti-sun" id="themeIcon"></i></button>
       <button class="btn" onclick="openHire()"><i class="ti ti-user-plus"></i>招聘 Agent</button>
     </header>
 
@@ -484,15 +510,39 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
 
       <!-- VIEW 9: 数据流时序 -->
       <section class="view" id="v-flow">
-        <div class="sec-h"><i class="ti ti-timeline-event"></i>数据流时序图 · 自然语言指令 → 编排官拆解 → 派活 → 闸门审批</div>
-        <div class="seq-wrap" id="seqWrap"></div>
-        <div class="legend">
-          <span><i style="background:var(--violet)"></i>真人 / 董事会</span>
-          <span><i style="background:var(--teal)"></i>编排官</span>
-          <span><i style="background:var(--green)"></i>执行 Agent</span>
-          <span><i style="background:var(--amber)"></i>护栏 / 闸门</span>
+        <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:16px">
+          <div style="font-family:var(--disp);font-size:18px;font-weight:600"><i class="ti ti-timeline-event" style="color:var(--teal);margin-right:8px"></i>数据流时序 · 自然语言指令 → 编排官拆解 → 派活 → 闸门审批</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <select id="flowProjSwitch" onchange="renderFlow()" style="background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px 11px;font-family:var(--body);font-size:13px">
+              <option value="">-- 选择项目 --</option>
+            </select>
+          </div>
         </div>
-        <div class="note"><b>读图:</b>真人只在两端出现——开头下达目标、中途批闸门;中间的拆解、派活、执行、回传全部由 agent 自组织完成。Apex 实现的就是这种「组织化心智」。</div>
+        <!-- Flow Summary KPIs -->
+        <div class="grid" id="flowKpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px"></div>
+        <!-- Stage Distribution -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="sec-h" style="margin-bottom:10px"><i class="ti ti-chart-bar"></i>阶段分布</div>
+          <div id="flowStageDist"></div>
+        </div>
+        <!-- 5-step Flow Diagram -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="sec-h" style="margin-bottom:10px"><i class="ti ti-arrows-sort"></i>5 步流水线</div>
+          <div id="flowPipeline"></div>
+        </div>
+        <!-- Timeline List -->
+        <div class="card">
+          <div class="sec-h" style="margin-bottom:10px"><i class="ti ti-list-details"></i>最近任务</div>
+          <div id="flowTimeline"></div>
+        </div>
+        <div class="legend" style="margin-top:14px">
+          <span><i style="background:var(--violet)"></i>输入</span>
+          <span><i style="background:var(--teal)"></i>编排</span>
+          <span><i style="background:var(--blue)"></i>执行</span>
+          <span><i style="background:var(--amber)"></i>审查</span>
+          <span><i style="background:var(--green)"></i>输出</span>
+        </div>
+        <div class="note" style="margin-top:14px"><b>读图:</b>真人只在两端出现——开头下达目标、中途批闸门;中间的拆解、派活、执行、回传全部由 agent 自组织完成。Apex 实现的就是这种「组织化心智」。</div>
       </section>
 
       <!-- VIEW: Pipeline -->
@@ -617,7 +667,7 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
     <div class="x" onclick="closeAll()"><i class="ti ti-x"></i></div>
   </div>
   <div class="dbody" id="ddBody"></div>
-  <div class="df"><button class="btn ghost" onclick="closeAll()">关闭</button></div>
+  <div class="df" id="ddFooter"><button class="btn ghost" onclick="closeAll()">关闭</button></div>
 </aside>
 
 <!-- TOAST -->
@@ -874,8 +924,39 @@ function openDrawer(title, sub, iconHtml, bodyHtml) {
   $('#ddSub').textContent = sub;
   $('#ddIcon').innerHTML = iconHtml;
   $('#ddBody').innerHTML = bodyHtml;
+  $('#ddFooter').innerHTML = '<button class="btn ghost" onclick="closeAll()">关闭</button>';
   $('#scrim').classList.add('on');
   $('#detailDrawer').classList.add('on');
+}
+// Enhanced drawer with editable form + save/cancel/delete
+let _drawerSaveCb = null;
+let _drawerDelCb = null;
+function openDrawerEdit(title, sub, iconHtml, bodyHtml, saveCb, deleteCb, saveLabel, delLabel) {
+  $('#ddTitle').textContent = title;
+  $('#ddSub').textContent = sub;
+  $('#ddIcon').innerHTML = iconHtml;
+  $('#ddBody').innerHTML = bodyHtml;
+  _drawerSaveCb = saveCb || null;
+  _drawerDelCb = deleteCb || null;
+  let footerHtml = '<button class="btn ghost" onclick="closeAll()">取消</button>';
+  if (saveCb) footerHtml += `<button class="btn primary" style="margin-left:auto" onclick="_drawerSaveCb()"><i class="ti ti-device-floppy"></i>${saveLabel||'保存'}</button>`;
+  if (deleteCb) footerHtml += `<button class="btn danger" onclick="_drawerDelCb()"><i class="ti ti-trash"></i>${delLabel||'删除'}</button>`;
+  $('#ddFooter').innerHTML = footerHtml;
+  $('#scrim').classList.add('on');
+  $('#detailDrawer').classList.add('on');
+}
+// API helpers
+async function apiPut(url, data) {
+  const r = await fetch(url, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  return await r.json();
+}
+async function apiPost(url, data) {
+  const r = await fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  return await r.json();
+}
+async function apiDelete(url) {
+  const r = await fetch(url, {method:'DELETE'});
+  return await r.json();
 }
 
 /* ========== KPI Helper ========== */
@@ -1019,7 +1100,7 @@ function renderProject() {
   const pj = state.liveProject;
 
   if (pj) {
-    // ===== NEW MODULE/SUB-FUNCTION ARCHITECTURE VIEW =====
+    // ===== UNIFIED SUMMARY + CLICK-TO-DRAWER ARCHITECTURE =====
     const modules = pj.modules || [];
     const agents = pj.agents || [];
     const goal = pj.goal || '';
@@ -1029,109 +1110,75 @@ function renderProject() {
     const totalModules = modules.length;
     const totalSubFunctions = modules.reduce((sum, m) => sum + (m.sub_functions ? m.sub_functions.length : 0), 0);
     const totalAgents = agents.length;
+    const completedTasks = agents.reduce((s, a) => s + (a.done || 0), 0);
+    const totalTasks = agents.reduce((s, a) => s + (a.total || 0), 0);
+    const pct = totalTasks > 0 ? Math.round(completedTasks / totalTasks * 100) : 0;
 
-    // Build project header with goal banner
-    let html = `<div class="card" style="grid-column:1/-1;border-left:4px solid var(--teal);padding:20px 24px">
-      <div style="font-family:var(--disp);font-size:20px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:10px">
-        <i class="ti ti-target-arrow" style="color:var(--teal);font-size:24px"></i>${projectName}
-        <span class="tag teal" style="font-size:11px">已批准</span>
-      </div>
-      <div style="font-size:14px;color:var(--tx);background:var(--bg3);border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:var(--r-s);padding:14px 18px;margin:10px 0;line-height:1.7;font-weight:400">
-        <span style="color:var(--teal);font-weight:600"><i class="ti ti-target"></i> 项目目标</span><br>${goal || '（无目标描述）'}
-      </div>
-      <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:8px">
-        <span style="font-size:12px;color:var(--tx2)"><i class="ti ti-box" style="color:var(--teal)"></i> ${totalModules} 模块</span>
-        <span style="font-size:12px;color:var(--tx2)"><i class="ti ti-subtask" style="color:var(--violet)"></i> ${totalSubFunctions} 子功能</span>
-        <span style="font-size:12px;color:var(--tx2)"><i class="ti ti-robot" style="color:var(--blue)"></i> ${totalAgents} 个 Agent</span>
-      </div>
-    </div>`;
+    // ---- KPI summary row ----
+    let html = `<div class="grid kpis" style="grid-template-columns:repeat(4,1fr)">`;
+    html += `<div class="kpi" style="cursor:pointer" onclick="openProjectDrawer()"><div class="lbl"><i class="ti ti-target-arrow"></i>项目目标</div><div class="num" style="font-size:16px">${goal ? goal.slice(0, 30) + (goal.length > 30 ? '...' : '') : '点击编辑'}</div><div class="sub">${projectName} · 点击查看/编辑</div></div>`;
+    html += kpiHTML('ti-box', '模块', totalModules, totalSubFunctions + ' 子功能', '');
+    html += kpiHTML('ti-subtask', '任务进度', completedTasks + '/' + totalTasks, pct + '% 完成', pct < 50 ? 'warn' : '');
+    html += kpiHTML('ti-robot', 'Agent', totalAgents, agents.filter(a => (a.load_pct || 0) * 100 > 50).length + ' 忙碌', '');
+    html += `</div>`;
+    html += `<div style="height:18px"></div>`;
 
-    // Module grid
+    // ---- Compact module list ----
+    html += `<div class="card"><div class="sec-h"><i class="ti ti-box"></i>模块总览 · 点击模块或Agent进入编辑</div>`;
     if (modules.length > 0) {
-      html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px;grid-column:1/-1">`;
-      modules.forEach(m => {
+      html += `<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px">`;
+      modules.forEach((m, mi) => {
         const sfCount = (m.sub_functions || []).length;
-        html += `<div class="card" style="padding:16px;border-top:3px solid var(--violet)">
-          <div style="font-family:var(--disp);font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:10px">
-            <i class="ti ti-box" style="color:var(--violet);font-size:18px"></i>${m.name || '未命名模块'}
-            <span class="tag violet" style="font-size:10px">${sfCount} 子功能</span>
+        const doneSF = (m.sub_functions || []).filter(sf => (sf.agent_tasks_done || 0) >= (sf.agent_tasks_total || 1)).length;
+        html += `<div class="card" style="padding:12px;cursor:pointer;border-top:3px solid var(--violet);transition:.15s" 
+          onclick="openModuleDrawer(${mi})" onmouseenter="this.style.borderColor='var(--violet)'" onmouseleave="this.style.borderColor='var(--line)'">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <i class="ti ti-box" style="color:var(--violet)"></i>
+            <span style="font-weight:600;font-size:13px">${m.name || '未命名'}</span>
+            <span class="tag violet" style="margin-left:auto;font-size:10px">${sfCount}</span>
           </div>
-          <div style="font-size:12px;color:var(--tx2);margin-bottom:14px;line-height:1.5">${m.description || '暂无描述'}</div>`;
-
-        // Sub-functions
-        if (sfCount > 0) {
-          html += `<div style="display:flex;flex-direction:column;gap:8px">`;
-          m.sub_functions.forEach(sf => {
-            const agentName = sf.assigned_agent || '未分配';
-            const agentInit = agentName[0] ? agentName[0].toUpperCase() : '?';
-            const tasksDone = sf.agent_tasks_done || 0;
-            const tasksTotal = sf.agent_tasks_total || 0;
-            const donePct = tasksTotal > 0 ? Math.round(tasksDone / tasksTotal * 100) : 0;
-            const agentColors = ['var(--violet-d)', 'var(--teal-d)', 'var(--blue-d)', 'var(--green-d)', 'var(--amber-d)'];
-            const agentFC = ['var(--violet)', 'var(--teal)', 'var(--blue)', 'var(--green)', 'var(--amber)'];
-            const colorIdx = (agentName.charCodeAt(0) || 0) % 5;
-
-            html += `<div style="background:var(--bg3);border:1px solid var(--line);border-radius:var(--r-s);padding:10px 12px">
-              <div style="font-size:13px;font-weight:500;margin-bottom:4px">${sf.name || '子功能'}</div>
-              <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">${sf.description || ''}</div>
-              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-                <div style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="openAgentDetail('${agentName}')" title="点击查看 Agent 详情">
-                  <span class="av" style="width:22px;height:22px;font-size:10px;background:${agentColors[colorIdx]};color:${agentFC[colorIdx]}">${agentInit}</span>
-                  <span style="font-size:12px;font-weight:500;color:var(--tx)">${agentName}</span>
-                </div>
-                <span style="font-size:11px;color:var(--tx2);margin-left:auto;font-family:var(--mono)">
-                  <i class="ti ti-check" style="color:var(--green);font-size:12px"></i> ${tasksDone}/${tasksTotal} 完成
-                </span>
-              </div>
-              ${tasksTotal > 0 ? `<div class="bar" style="margin-top:6px;height:4px"><i style="width:${donePct}%;background:${donePct>=80?'var(--green)':donePct>=40?'var(--amber)':'var(--tx3)'}"></i></div>` : ''}
-            </div>`;
-          });
-          html += `</div>`;
-        } else {
-          html += `<div style="color:var(--tx3);font-size:12px;padding:8px">暂无子功能</div>`;
-        }
-
-        html += `</div>`;
+          <div style="font-size:11px;color:var(--tx3)">${m.description ? m.description.slice(0, 60) : '暂无描述'}</div>
+          <div class="bar" style="height:3px;margin-top:6px"><i style="width:${sfCount?Math.round(doneSF/sfCount*100):0}%;background:var(--violet)"></i></div>
+        </div>`;
       });
       html += `</div>`;
+    } else {
+      html += `<div style="color:var(--tx3);padding:16px;text-align:center">暂无模块数据</div>`;
     }
+    html += `</div>`;
+    html += `<div style="height:18px"></div>`;
 
-    // Agent workload section
+    // ---- Agent roster (compact) ----
     if (agents.length > 0) {
-      html += `<div class="card" style="grid-column:1/-1;margin-top:6px">
-        <div class="sec-h"><i class="ti ti-robot"></i>Agent 工作负载 · ${projectName}</div>
-        <div class="fleet-grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">`;
-
+      html += `<div class="card"><div class="sec-h"><i class="ti ti-robot"></i>Agent 编队 · 点击查看详情</div>`;
+      html += `<div class="fleet-grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">`;
       agents.forEach(a => {
         const loadPct = Math.min(100, Math.round((a.load_pct || 0) * 100));
         const loadColor = loadPct > 80 ? 'var(--red)' : loadPct > 50 ? 'var(--amber)' : 'var(--green)';
-        const saturationLabel = loadPct > 80 ? '过载' : loadPct > 50 ? '忙碌' : loadPct <= 0 ? '闲置' : '空闲';
-        const saturationColor = loadPct > 80 ? 'var(--red)' : loadPct > 50 ? 'var(--amber)' : loadPct <= 0 ? 'var(--tx3)' : 'var(--green)';
-        const canAccept = loadPct < 70;
         const statusDot = loadPct <= 0 ? 'var(--tx3)' : loadPct > 80 ? 'var(--red)' : 'var(--green)';
-
-        html += `<div class="fleet-card" onclick="openAgentDetail('${a.agent_id||''}')" style="cursor:pointer">
-          <div class="fcan">${canAccept?'<span style="background:var(--green-d);color:var(--green)">可接单</span>':'<span style="background:var(--amber-d);color:var(--amber)">忙碌</span>'}</div>
+        const agentId = a.agent_id || '';
+        html += `<div class="fleet-card" onclick="openAgentDetail('${agentId}')" style="cursor:pointer">
           <div class="fh">
             <span class="fstatus" style="background:${statusDot}"></span>
-            <div><div class="fname">${a.agent_id||'Agent'}</div>
-            <div class="frole"><span class="tag" style="background:${saturationColor}20;color:${saturationColor};font-size:10px">${saturationLabel}</span> · ${loadPct}%</div></div>
+            <div><div class="fname">${agentId || 'Agent'}</div>
+            <div class="frole"><span class="tag" style="font-size:10px">${loadPct}%</span></div></div>
           </div>
           <div class="fbar"><i style="width:${loadPct}%;background:${loadColor}"></i></div>
           <div class="fmeta">
-            <span><i class="ti ti-check" style="color:var(--green)"></i>${a.done||0} 完成</span>
-            <span><i class="ti ti-loader" style="color:var(--blue)"></i>${a.in_progress||0} 进行</span>
-            <span><i class="ti ti-inbox"></i>${a.total ? a.total - (a.done||0) - (a.in_progress||0) : 0} 待办</span>
+            <span><i class="ti ti-check" style="color:var(--green)"></i>${a.done||0}</span>
+            <span><i class="ti ti-loader" style="color:var(--blue)"></i>${a.in_progress||0}</span>
           </div>
         </div>`;
       });
       html += `</div></div>`;
     }
 
-    // Standup section
-    $('#standupMini').innerHTML = '<div class="sec-h"><i class="ti ti-clipboard-list"></i>站会报告</div><div style="font-size:12px;color:var(--tx2)">点击「站会报告」按钮加载</div>';
+    // Store project data for drawer callbacks
+    window._pjData = pj;
+    window._pjModules = modules;
+    window._pjAgents = agents;
 
-    // Set kanban to the new module view
+    $('#standupMini').innerHTML = '<div class="sec-h"><i class="ti ti-clipboard-list"></i>站会报告</div><div style="font-size:12px;color:var(--tx2)">点击「站会报告」按钮加载</div>';
     $('#kanban').innerHTML = html;
     $('#workloads').innerHTML = '';
 
@@ -1187,6 +1234,128 @@ function renderProject() {
   }
 }
 
+// === PROJECT DRAWER: edit goal, view/edit modules, agent roster ===
+function openProjectDrawer() {
+  const pj = window._pjData;
+  if (!pj) return;
+  const projectName = pj.name || state.selectedProject || '';
+  const goal = pj.goal || '';
+  const modules = window._pjModules || [];
+  const agents = window._pjAgents || [];
+
+  const bodyHtml = `
+    <div class="fld"><label><i class="ti ti-target"></i> 项目目标</label>
+      <textarea id="pjGoalInput" style="width:100%;min-height:100px;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:10px;font-family:var(--body);font-size:13px;resize:vertical">${goal.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+    </div>
+    <div class="fld"><label><i class="ti ti-box"></i> 模块总览 (${modules.length})</label>
+      <div style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto">
+        ${modules.length > 0 ? modules.map((m, mi) => `
+          <div style="background:var(--bg3);border:1px solid var(--line);border-radius:var(--r-s);padding:8px 10px;cursor:pointer;display:flex;align-items:center;gap:8px" onclick="openModuleDrawer(${mi})">
+            <i class="ti ti-box" style="color:var(--violet)"></i>
+            <span style="font-size:12px;font-weight:500">${m.name||'未命名'}</span>
+            <span class="tag violet" style="font-size:9px;margin-left:auto">${(m.sub_functions||[]).length}</span>
+          </div>`).join('') : '<div style="color:var(--tx3);font-size:12px;padding:8px">暂无模块</div>'}
+      </div>
+    </div>
+    <div class="fld"><label><i class="ti ti-robot"></i> Agent 编队 (${agents.length})</label>
+      <div style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto">
+        ${agents.length > 0 ? agents.map(a => `
+          <div style="background:var(--bg3);border:1px solid var(--line);border-radius:var(--r-s);padding:8px 10px;cursor:pointer;display:flex;align-items:center;gap:8px" onclick="openAgentDetail('${a.agent_id||''}')">
+            <span class="av" style="width:22px;height:22px;font-size:10px;background:var(--teal-d);color:var(--teal)">${(a.agent_id||'A')[0].toUpperCase()}</span>
+            <span style="font-size:12px;font-weight:500">${a.agent_id||'Agent'}</span>
+            <span class="tag" style="font-size:9px;margin-left:auto">${Math.round((a.load_pct||0)*100)}%</span>
+          </div>`).join('') : '<div style="color:var(--tx3);font-size:12px;padding:8px">暂无Agent</div>'}
+      </div>
+    </div>`;
+
+  openDrawerEdit(
+    projectName + ' · 项目编辑',
+    modules.length + ' 模块 · ' + agents.length + ' Agent',
+    '<i class="ti ti-target-arrow" style="font-size:22px;color:var(--teal)"></i>',
+    bodyHtml,
+    async () => {
+      const newGoal = document.getElementById('pjGoalInput') ? document.getElementById('pjGoalInput').value : '';
+      const res = await apiPut(API + '/projects/' + encodeURIComponent(projectName), { goal: newGoal });
+      if (res && !res.error) {
+        pj.goal = newGoal;
+        toast('<i class="ti ti-circle-check"></i> 项目目标已保存');
+        closeAll();
+        renderProject();
+      } else {
+        toast('<i class="ti ti-alert-triangle"></i> 保存失败: ' + ((res && res.error) || '未知错误'));
+      }
+    },
+    null, '💾 保存目标', ''
+  );
+}
+
+// === MODULE DRAWER: view/edit module + sub-functions ===
+function openModuleDrawer(mi) {
+  const modules = window._pjModules;
+  if (!modules || !modules[mi]) return;
+  const m = modules[mi];
+  const sf = m.sub_functions || [];
+  const sfCount = sf.length;
+  const doneSF = sf.filter(s => (s.agent_tasks_done || 0) >= (s.agent_tasks_total || 1)).length;
+
+  const sfHTML = sf.map((s, si) => {
+    const agentName = s.assigned_agent || '未分配';
+    const done = s.agent_tasks_done || 0;
+    const total = s.agent_tasks_total || 0;
+    const donePct = total > 0 ? Math.round(done / total * 100) : 0;
+    return `<div style="background:var(--bg);border:1px solid var(--line);border-radius:var(--r-s);padding:10px;margin-bottom:6px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <input value="${(s.name||'').replace(/"/g,'&quot;')}" data-sf-idx="${si}" class="sf-name-inp" style="flex:1;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:4px;padding:5px 8px;font-size:12px;font-family:var(--body)">
+        <span class="tag teal" style="font-size:9px;cursor:pointer" onclick="openAgentDetail('${agentName}')">${agentName}</span>
+      </div>
+      ${total > 0 ? `<div class="bar" style="height:4px;margin-top:4px"><i style="width:${donePct}%;background:var(--green)"></i></div>` : ''}
+      <div style="font-size:10px;color:var(--tx3);margin-top:3px">${done}/${total} 完成</div>
+    </div>`;
+  }).join('');
+
+  const bodyHtml = `
+    <div class="fld"><label>模块名称</label>
+      <input id="modNameInput" value="${(m.name||'').replace(/"/g,'&quot;')}" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px 10px;font-size:13px;font-family:var(--body)">
+    </div>
+    <div class="fld"><label>描述</label>
+      <textarea id="modDescInput" style="width:100%;min-height:70px;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px 10px;font-size:12px;resize:vertical">${(m.description||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+    </div>
+    <div class="fld"><label><i class="ti ti-subtask"></i> 子功能 (${sfCount} · ${doneSF} 完成)</label>
+      <div style="max-height:300px;overflow-y:auto">${sfHTML || '<div style="color:var(--tx3);font-size:12px;padding:8px">暂无子功能</div>'}</div>
+    </div>
+    <button class="btn sm" style="width:100%" onclick="toast('子功能通过API管理')"><i class="ti ti-plus"></i>添加子功能 (API)</button>`;
+
+  openDrawerEdit(
+    m.name || '模块详情',
+    sfCount + ' 子功能 · ' + doneSF + ' 已完成',
+    '<i class="ti ti-box" style="font-size:22px;color:var(--violet)"></i>',
+    bodyHtml,
+    async () => {
+      const newName = document.getElementById('modNameInput') ? document.getElementById('modNameInput').value : m.name;
+      const newDesc = document.getElementById('modDescInput') ? document.getElementById('modDescInput').value : m.description;
+      // Collect sub-function name edits
+      const sfNameInputs = document.querySelectorAll('.sf-name-inp');
+      const newSFs = sf.map((s, si) => {
+        const inp = document.querySelector(`.sf-name-inp[data-sf-idx="${si}"]`);
+        return { ...s, name: inp ? inp.value : s.name };
+      });
+      const pjName = (window._pjData && window._pjData.name) || state.selectedProject || '';
+      const res = await apiPut(API + '/projects/' + encodeURIComponent(pjName) + '/modules/' + encodeURIComponent(m.name || ''), {
+        name: newName, description: newDesc, sub_functions: newSFs
+      });
+      if (res && !res.error) {
+        m.name = newName; m.description = newDesc; m.sub_functions = newSFs;
+        toast('<i class="ti ti-circle-check"></i> 模块已保存');
+        closeAll();
+        renderProject();
+      } else {
+        toast('<i class="ti ti-alert-triangle"></i> 保存失败');
+      }
+    },
+    null, '💾 保存', ''
+  );
+}
+
 async function loadStandup() {
   // If we're in project view with live data, re-fetch and show toast
   const pj = state.liveProject;
@@ -1214,41 +1383,125 @@ async function loadStandup() {
 }
 
 /* =================================================================
-   VIEW 3: APPROVALS
+   VIEW 3: APPROVALS — 审批审计 (full API integration)
    ================================================================= */
 async function renderApprovals() {
-  const [authStats, authAudit] = await Promise.all([
-    fetchJSON(API + '/auth/stats'),
-    fetchJSON(API + '/auth/audit?days=7&limit=20')
+  const [queueData, logData] = await Promise.all([
+    fetchJSON(API + '/audit/queue'),
+    fetchJSON(API + '/audit/log')
   ]);
-  const stats = authStats || {};
-  const logs = (authAudit && Array.isArray(authAudit) ? authAudit : []).slice(0, 10);
 
-  const pending = stats.pending || 0;
-  $('#navAppr').textContent = pending;
+  const queue = queueData || {};
+  const items = (queue.items && Array.isArray(queue.items)) ? queue.items : [];
+  const totalPending = queue.total || queue.pending || items.length;
+  $('#navAppr').textContent = totalPending;
 
-  $('#approvalQueue').innerHTML = pending > 0
-    ? `<div class="tag amber" style="font-size:13px;padding:6px 14px">${pending} 条待审批</div>
-       <div style="margin-top:12px;color:var(--tx2);font-size:12px">授权请求等待真人签核</div>
-       <div style="margin-top:12px">${stats.pending_items && Array.isArray(stats.pending_items) ? stats.pending_items.slice(0,5).map(item => {
-         const id = item.id || item.request_id || Date.now();
-         return `<div class="card" style="margin-top:8px;padding:12px;display:flex;gap:10px;align-items:center">
-           <div class="ic" style="width:40px;height:40px;border-radius:10px;background:var(--amber-d);color:var(--amber);display:grid;place-items:center"><i class="ti ti-gavel"></i></div>
-           <div style="flex:1"><div style="font-weight:600;font-size:13px">${item.title||item.action||'审批请求'}</div>
-           <div style="font-size:11px;color:var(--tx3);margin-top:2px">${item.reason||item.why||'需真人签核'}</div></div>
-           <div style="display:flex;gap:6px">
-             <button class="btn sm danger" onclick="rejectRequest('${id}')"><i class="ti ti-x"></i>驳回</button>
-             <button class="btn sm primary" onclick="approveRequest('${id}')"><i class="ti ti-check"></i>批准</button></div></div>`;
-       }).join('') : '<div style="font-size:12px;color:var(--tx3);margin-top:8px">点击批准或驳回处理审批</div>'}</div>`
-    : `<div style="color:var(--tx3);text-align:center;padding:24px"><i class="ti ti-check" style="font-size:24px;color:var(--green)"></i><div style="margin-top:8px">队列已清空</div></div>`;
+  const logInfo = logData || {};
+  const logTotal = logInfo.total || 0;
+  const logToday = logInfo.today || 0;
+  const byAction = logInfo.by_action || {};
+  const logEntries = (logInfo.entries && Array.isArray(logInfo.entries)) ? logInfo.entries.slice(0, 20) : [];
 
-  $('#auditLog').innerHTML = logs.length ? logs.map(l => {
-    const d = new Date(l.timestamp ? l.timestamp * 1000 : Date.now());
-    return `<div class="li">
-      <div class="ic" style="background:var(--bg4)"><i class="ti ti-history"></i></div>
-      <div style="flex:1"><div class="t">${l.action||l.event||'审计记录'}</div>
-      <div class="d">${d.toLocaleString()} · ${l.agent||l.scope||''}</div></div></div>`;
-  }).join('') : '<div style="color:var(--tx3);text-align:center;padding:24px">暂无审计记录</div>';
+  // ── Stats row ──
+  let statsHTML = `<div class="grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">`;
+  statsHTML += kpiHTML('ti-hourglass', '待审批', totalPending, items.length + ' 项排队中', totalPending > 0 ? 'warn' : '');
+  statsHTML += kpiHTML('ti-history', '今日审计', logToday, '共 ' + logTotal + ' 条记录', '');
+  statsHTML += kpiHTML('ti-check', '已批准', byAction.approve || 0, byAction.approve ? '今日批准' : '无数据', '');
+  statsHTML += kpiHTML('ti-x', '已驳回', byAction.reject || 0, byAction.reject ? '今日驳回' : '无数据', '');
+  statsHTML += `</div>`;
+
+  // ── Approval queue cards ──
+  let queueHTML = '';
+  if (items.length > 0) {
+    queueHTML = items.map((item, idx) => {
+      const id = item.id || '';
+      const title = item.title || '审批请求';
+      const detail = item.detail || '';
+      const type = item.type || 'action';
+      const proposer = item.proposer || '未知';
+      const time = item.time ? new Date(item.time * 1000).toLocaleString() : '--';
+      const risk = (item.risk || 'medium').toLowerCase();
+      const riskColors = { low: 'var(--green)', medium: 'var(--amber)', high: 'var(--red)' };
+      const riskBg = { low: 'var(--green-d)', medium: 'var(--amber-d)', high: 'var(--red-d)' };
+      const riskLabel = { low: '低', medium: '中', high: '高' };
+      const typeIcons = {
+        budget: 'ti-coin', external: 'ti-world-www', data_export: 'ti-file-export',
+        dangerous: 'ti-alert-triangle', action: 'ti-gavel', deploy: 'ti-rocket'
+      };
+      const typeIcon = typeIcons[type] || 'ti-gavel';
+
+      return `<div class="card" style="padding:14px;margin-bottom:10px;border-left:3px solid ${riskColors[risk] || 'var(--amber)'};cursor:pointer;transition:.15s" 
+        onclick="openApprovalDrawer(${idx})" onmouseenter="this.style.borderLeftColor='var(--teal)'" onmouseleave="this.style.borderLeftColor='${riskColors[risk] || 'var(--amber)'}'">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div class="ic" style="width:42px;height:42px;border-radius:10px;background:${riskBg[risk] || 'var(--amber-d)'};color:${riskColors[risk] || 'var(--amber)'};display:grid;place-items:center;font-size:18px"><i class="ti ${typeIcon}"></i></div>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+              <span style="font-family:var(--disp);font-size:14px;font-weight:600">${title}</span>
+              <span class="tag" style="background:${riskBg[risk] || 'var(--amber-d)'};color:${riskColors[risk] || 'var(--amber)'}">${riskLabel[risk] || '中'}风险</span>
+              <span class="tag gray">${type}</span>
+            </div>
+            ${detail ? `<div style="font-size:12px;color:var(--tx2);margin-bottom:6px;line-height:1.5">${detail}</div>` : ''}
+            <div style="display:flex;gap:16px;font-size:11px;color:var(--tx3);font-family:var(--mono)">
+              <span><i class="ti ti-user"></i> ${proposer}</span>
+              <span><i class="ti ti-clock"></i> ${time}</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:7px;flex-shrink:0" onclick="event.stopPropagation()">
+            <button class="btn sm danger" onclick="rejectRequest('${id}')"><i class="ti ti-x"></i>拒绝</button>
+            <button class="btn sm primary" onclick="approveRequest('${id}')"><i class="ti ti-check"></i>批准</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    queueHTML = `<div style="text-align:center;padding:36px 20px;color:var(--tx3)">
+      <i class="ti ti-party-popper" style="font-size:36px;color:var(--green)"></i>
+      <div style="margin-top:10px;font-size:15px;font-weight:600;color:var(--tx)">暂无待审批项 🎉</div>
+      <div style="margin-top:4px;font-size:12px">所有高风险动作已放行或未触发护栏</div>
+    </div>`;
+  }
+
+  // ── Audit log table ──
+  let logHTML = '';
+  if (logEntries.length > 0) {
+    logHTML = `<table class="tbl">
+      <thead><tr><th>操作</th><th>执行人</th><th>详情</th><th>时间</th></tr></thead>
+      <tbody>${logEntries.map(e => {
+        const ts = e.timestamp ? new Date(e.timestamp * 1000).toLocaleString() : '--';
+        const action = e.action || '--';
+        const actor = e.actor || '--';
+        const detail = e.detail || '';
+        const actionTag = action === 'approve' ? '<span class="tag green">批准</span>'
+          : action === 'reject' ? '<span class="tag red">驳回</span>'
+          : '<span class="tag gray">' + action + '</span>';
+        return `<tr>
+          <td>${actionTag}</td>
+          <td style="font-family:var(--mono);font-size:12px">${actor}</td>
+          <td style="font-size:11px;color:var(--tx2);max-width:260px">${detail}</td>
+          <td style="font-family:var(--mono);font-size:11px;color:var(--tx3)">${ts}</td>
+        </tr>`;
+      }).join('')}</tbody></table>`;
+  } else {
+    logHTML = `<div style="text-align:center;padding:28px;color:var(--tx3)"><i class="ti ti-clipboard-text" style="font-size:24px"></i><div style="margin-top:8px">暂无审计记录</div></div>`;
+  }
+
+  // ── Render both panels ──
+  // Store queue items for drawer
+  window._approvalItems = items;
+  const queueSection = document.getElementById('v-approvals');
+  // Insert stats row before the two-column grid
+  let statsEl = queueSection.querySelector('.approval-stats');
+  if (!statsEl) {
+    statsEl = document.createElement('div');
+    statsEl.className = 'approval-stats';
+    const gridEl = queueSection.querySelector('.grid');
+    if (gridEl) gridEl.parentNode.insertBefore(statsEl, gridEl);
+    else queueSection.appendChild(statsEl);
+  }
+  statsEl.innerHTML = statsHTML;
+
+  $('#approvalQueue').innerHTML = queueHTML;
+  $('#auditLog').innerHTML = logHTML;
   renderSprintCard();
 }
 
@@ -1423,7 +1676,11 @@ async function renderFleet() {
         ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px">${a.skills.slice(0,3).map(s => `<span class="chip" style="font-size:10px;padding:1px 5px">${typeof s==='string'?s:s.name||JSON.stringify(s)}</span>`).join('')}</div>`
         : '';
 
-      return `<div class="fleet-card" onclick="openAgent('${a.id}','${a.name}','${a.role}','${a.model}','${a.status}')">
+      const onclickHandler = a.type === 'hermes-profile' 
+        ? `openHermesProfileDrawer('${a.id}','${a.name}','${a.model}')`
+        : `openAgent('${a.id}','${a.name}','${a.role}','${a.model}','${a.status}')`;
+
+      return `<div class="fleet-card" onclick="${onclickHandler}">
         <div class="fcan">${canTag}</div>
         <div class="fh">
           <span class="fstatus" style="background:${statusDot}"></span>
@@ -1549,6 +1806,74 @@ function saveBoard() {
   toast('董事会已保存 · CEO: ' + state.board.ceoAgent + ' · 授权: ' + state.board.authAgent + ' · 审计: ' + state.board.auditAgent);
 }
 
+// === HERMES PROFILE DRAWER: SOUL.md editor + config.yaml editor + model dropdown ===
+async function openHermesProfileDrawer(profileId, profileName, currentModel) {
+  const name = profileName || profileId || 'Profile';
+  const model = currentModel || 'default';
+
+  // Fetch profile data for SOUL/config
+  let soul = '', config = '';
+  try {
+    const data = await fetchJSON(API + '/fleet/profiles/' + encodeURIComponent(profileId));
+    if (data) {
+      soul = data.soul || '';
+      config = data.config ? (typeof data.config === 'string' ? data.config : JSON.stringify(data.config, null, 2)) : '';
+      if (!model || model === 'unknown') model = data.model || model;
+    }
+  } catch (e) { /* use defaults */ }
+
+  const bodyHtml = `
+    <div class="card" style="padding:14px;margin-bottom:14px;background:var(--bg3);text-align:center">
+      <div style="font-family:var(--disp);font-size:16px;font-weight:600">${name}</div>
+      <div style="font-size:11px;color:var(--tx3);font-family:var(--mono);margin-top:4px">Hermes Profile</div>
+    </div>
+    <div class="fld"><label><i class="ti ti-cpu"></i> 模型选择</label>
+      <select id="hpModel" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px 10px;font-size:13px;font-family:var(--body)">
+        ${['deepseek-v4-pro','claude-sonnet-4','gpt-5','deepseek-v3','claude-opus-4','gemini-2.5-pro'].map(m => `<option value="${m}" ${m === model ? 'selected' : ''}>${m}</option>`).join('')}
+      </select>
+    </div>
+    <div class="fld"><label><i class="ti ti-file-text"></i> SOUL.md (人设/角色描述)</label>
+      <textarea id="hpSoul" style="width:100%;min-height:160px;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:10px;font-size:13px;font-family:var(--mono);resize:vertical" placeholder="定义 Agent 人设、价值观、行为准则...">${soul.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+    </div>
+    <div class="fld"><label><i class="ti ti-settings"></i> config.yaml</label>
+      <textarea id="hpConfig" style="width:100%;min-height:140px;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:10px;font-size:13px;font-family:var(--mono);resize:vertical" placeholder="model: deepseek-v4-pro&#10;temperature: 0.7&#10;max_tokens: 8192">${config.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+    </div>`;
+
+  openDrawerEdit(
+    name + ' · Profile 编辑',
+    'Hermes Profile · 当前模型: ' + model,
+    '<i class="ti ti-file-text" style="font-size:22px;color:var(--violet)"></i>',
+    bodyHtml,
+    async () => {
+      const newModel = document.getElementById('hpModel') ? document.getElementById('hpModel').value : model;
+      const newSoul = document.getElementById('hpSoul') ? document.getElementById('hpSoul').value : soul;
+      const newConfig = document.getElementById('hpConfig') ? document.getElementById('hpConfig').value : config;
+      const res = await apiPut(API + '/fleet/profiles/' + encodeURIComponent(profileId), {
+        model: newModel, soul: newSoul, config: newConfig
+      });
+      if (res && !res.error) {
+        toast('<i class="ti ti-circle-check"></i> Profile 已保存');
+        closeAll();
+        setTimeout(() => renderFleet(), 300);
+      } else {
+        toast('<i class="ti ti-alert-triangle"></i> 保存失败: ' + ((res && res.error) || '未知错误'));
+      }
+    },
+    async () => {
+      if (confirm('确定删除 Profile: ' + name + '?')) {
+        const res = await apiDelete(API + '/fleet/profiles/' + encodeURIComponent(profileId));
+        if (res && !res.error) {
+          toast('<i class="ti ti-trash"></i> Profile 已删除');
+          closeAll();
+          setTimeout(() => renderFleet(), 300);
+        } else {
+          toast('<i class="ti ti-alert-triangle"></i> 删除失败');
+        }
+      }
+    }, '💾 保存', '🗑 删除'
+  );
+}
+
 /* =================================================================
    VIEW 5: AUTONOMY
    ================================================================= */
@@ -1570,7 +1895,7 @@ function renderAutonomy() {
     { n: 'L2', h: '半自治', p: 'agent 在预算与护栏内自动执行,只有高风险动作(花钱超阈值/对外通讯/数据外传/危险操作)才升级审批。', rec: true },
     { n: 'L3', h: '全自治', p: 'agent 在预算与护栏内完全自动运转,只在触发熔断(超支/连错/违规)时报警。适合成熟、信任分高的流程。' }
   ];
-  $('#ladder').innerHTML = LADDER.map(l => `<div class="lvl ${l.rec?'on':''}">
+  $('#ladder').innerHTML = LADDER.map((l, li) => `<div class="lvl ${l.rec?'on':''}" onclick="openAutonomyLevelDrawer('${l.n}','${l.h}','${l.p.replace(/'/g,\"\\\\'\")}')">
     <div class="ln">${l.n}</div><h4>${l.h}</h4><p>${l.p}</p>${l.rec?'<span class="rec"><i class="ti ti-star-filled"></i> 推荐</span>':''}</div>`).join('');
 
   // Cron jobs
@@ -1634,10 +1959,35 @@ async function renderKnowledge() {
   });
   const skillEntries = Object.entries(skillMap).sort((a, b) => b[1] - a[1]).slice(0, 15);
   $('#skillDist').innerHTML = skillEntries.length
-    ? skillEntries.map(([s, c]) => `<div class="li">
+    ? skillEntries.map(([s, c]) => `<div class="li" style="cursor:pointer" onclick="openSkillDistDrawer('${s.replace(/'/g,\"\\\\'\")}',${c})">
         <div class="ic" style="background:var(--bg4)"><i class="ti ti-tag"></i></div>
         <div style="flex:1"><div class="t">${s}</div><div class="d">${c} 个 agent 拥有此技能</div></div></div>`).join('')
     : '<div style="color:var(--tx3);text-align:center;padding:20px">暂无技能数据</div>';
+}
+
+// === SKILL DISTRIBUTION DRAWER ===
+function openSkillDistDrawer(skill, count) {
+  const profiles = state.data.profiles || [];
+  const agentsWithSkill = profiles.filter(p => (p.skills || []).some(s => 
+    (typeof s === 'string' ? s : s.name || '') === skill
+  ));
+  const agentListHTML = agentsWithSkill.length > 0
+    ? agentsWithSkill.map(a => `<div class="li">
+        <div class="ic" style="background:var(--teal-d);color:var(--teal)"><i class="ti ti-robot"></i></div>
+        <div style="flex:1"><div class="t">${a.name || a.agent_id || 'Agent'}</div><div class="d">${a.role || 'general'}</div></div>
+      </div>`).join('')
+    : '<div style="color:var(--tx3);text-align:center;padding:20px">暂无Agent拥有此技能</div>';
+
+  openDrawer(
+    skill + ' · 技能分布',
+    count + ' 个 Agent 拥有此技能',
+    '<i class="ti ti-tag" style="font-size:22px;color:var(--teal)"></i>',
+    `<div class="card" style="padding:14px;margin-bottom:14px;background:var(--bg3);text-align:center">
+      <div style="font-family:var(--display);font-size:18px;font-weight:600">${skill}</div>
+      <div style="font-size:12px;color:var(--tx2);margin-top:4px">${count} 个 Agent 标记此技能</div>
+    </div>
+    <div class="fld"><label>拥有此技能的 Agent</label>${agentListHTML}</div>`
+  );
 }
 
 /* =================================================================
@@ -1727,53 +2077,169 @@ async function renderSystem() {
 }
 
 /* =================================================================
-   VIEW 9: FLOW SEQUENCE DIAGRAM
+   VIEW 9: FLOW — 数据流时序 (full API integration)
    ================================================================= */
-function renderFlow() {
-  const lanes = [
-    {x:90, lbl:'真人 / 董事会', c:'#a78bfa', ic:'人'},
-    {x:300, lbl:'编排官 (Hermes)', c:'#2dd4bf', ic:'AI'},
-    {x:510, lbl:'项目 Lead', c:'#34d399', ic:'L'},
-    {x:660, lbl:'执行 Agent', c:'#34d399', ic:'A'},
-    {x:820, lbl:'护栏 / 闸门', c:'#fbbf24', ic:'!'}
-  ];
-  const steps = [
-    {y:150, from:0, to:1, lbl:'① 自然语言下达目标', c:'#a78bfa'},
-    {y:200, from:1, to:1, lbl:'② 拆解为任务DAG + 分配预算', c:'#2dd4bf', self:1},
-    {y:255, from:1, to:2, lbl:'③ 派发子目标给项目 Lead', c:'#2dd4bf'},
-    {y:305, from:2, to:3, lbl:'④ 拆成任务、分派给执行 agent', c:'#34d399'},
-    {y:355, from:3, to:4, lbl:'⑤ 高风险动作命中护栏', c:'#34d399'},
-    {y:405, from:4, to:0, lbl:'⑥ 暂停并升级到审批队列', c:'#fbbf24', dash:1},
-    {y:460, from:0, to:4, lbl:'⑦ 真人签核:批准 / 驳回', c:'#a78bfa'},
-    {y:510, from:4, to:3, lbl:'⑧ 放行,agent 继续执行', c:'#fbbf24'},
-    {y:560, from:3, to:1, lbl:'⑨ 结果回传 + trace + 成本', c:'#34d399', dash:1},
-    {y:610, from:1, to:0, lbl:'⑩ 编排官汇总向董事会汇报', c:'#2dd4bf', dash:1}
-  ];
-  const W=920, H=680;
-  let svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:860px;font-family:var(--body)">
-    <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="currentColor"/></marker></defs>`;
-  lanes.forEach(l => {
-    svg+=`<line x1="${l.x}" y1="115" x2="${l.x}" y2="${H-20}" stroke="${l.c}" stroke-opacity=".25" stroke-width="1.5"/>`;
-    svg+=`<rect x="${l.x-72}" y="40" width="144" height="56" rx="11" fill="#161b24" stroke="${l.c}" stroke-opacity=".5"/>`;
-    svg+=`<circle cx="${l.x-50}" cy="68" r="14" fill="${l.c}" fill-opacity=".18" stroke="${l.c}" stroke-opacity=".6"/>`;
-    svg+=`<text x="${l.x-50}" y="73" text-anchor="middle" font-size="11" font-weight="700" fill="${l.c}" font-family="IBM Plex Mono">${l.ic}</text>`;
-    svg+=`<text x="${l.x+6}" y="65" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e7ecf3">${l.lbl.split(' / ')[0]}</text>`;
-    if(l.lbl.includes(' / '))svg+=`<text x="${l.x+6}" y="81" text-anchor="middle" font-size="10" fill="#95a2b6">${l.lbl.split(' / ')[1]}</text>`;
+async function renderFlow() {
+  const sel = $('#flowProjSwitch');
+
+  // Populate project dropdown
+  if (sel && sel.options.length <= 1) {
+    // Try approved projects first, fallback to live/projects
+    let projects = await fetchJSON(API + '/projects/approved');
+    if (!projects || !Array.isArray(projects) || !projects.length) {
+      const liveProj = await fetchJSON(API + '/live/projects');
+      projects = (liveProj && liveProj.projects) ? liveProj.projects : (Array.isArray(liveProj) ? liveProj : []);
+    }
+    if (projects && Array.isArray(projects) && projects.length > 0) {
+      sel.innerHTML = '<option value="">-- 选择项目 --</option>' +
+        projects.map(p => {
+          const name = typeof p === 'string' ? p : (p.name || p.id || '');
+          const taskCount = typeof p === 'object' ? (p.task_count || p.tasks || '') : '';
+          return `<option value="${name}">${name}${taskCount ? ' (' + taskCount + ' 任务)' : ''}</option>`;
+        }).join('');
+    }
+    state.liveProjects = projects || [];
+  }
+
+  const project = sel ? sel.value : '';
+  if (!project) {
+    $('#flowKpis').innerHTML = '<div style="text-align:center;padding:40px;color:var(--tx3);grid-column:1/-1"><i class="ti ti-timeline-event" style="font-size:48px;display:block;margin-bottom:12px"></i><div style="font-size:15px;font-weight:600;color:var(--tx)">暂无数据</div><div style="margin-top:4px;font-size:12px">请选择一个项目查看数据流时序</div></div>';
+    $('#flowStageDist').innerHTML = '<div style="text-align:center;padding:24px;color:var(--tx3)">选择项目后加载阶段分布</div>';
+    $('#flowPipeline').innerHTML = '<div style="text-align:center;padding:24px;color:var(--tx3)">选择项目后加载流水线</div>';
+    $('#flowTimeline').innerHTML = '<div style="text-align:center;padding:24px;color:var(--tx3)">选择项目后加载任务时间线</div>';
+    return;
+  }
+
+  const flowData = await fetchJSON(API + '/flow/timeline?project=' + encodeURIComponent(project));
+
+  if (!flowData) {
+    $('#flowKpis').innerHTML = '<div style="text-align:center;padding:24px;color:var(--tx3);grid-column:1/-1"><i class="ti ti-alert-circle" style="color:var(--amber);font-size:28px"></i><div style="margin-top:8px">无法加载数据</div></div>';
+    return;
+  }
+
+  const totalTasks = flowData.total_tasks || 0;
+  const completionPct = flowData.completion_pct || 0;
+  const byStage = flowData.by_stage || {};
+  const fs = flowData.flow_statistics || {};
+  const nodes = flowData.nodes || [];
+  const edges = flowData.edges || [];
+
+  // ── KPIs ──
+  const stageCount = Object.keys(byStage).length;
+  const agentCount = new Set(nodes.map(n => n.agent).filter(Boolean)).size;
+  $('#flowKpis').innerHTML =
+    kpiHTML('ti-stack-2', '总任务', totalTasks, stageCount + ' 个阶段', '') +
+    kpiHTML('ti-progress-check', '完成率', completionPct + '%', completedTasks(byStage) + ' 已完成', completionPct >= 80 ? '' : completionPct >= 50 ? '' : 'warn') +
+    kpiHTML('ti-robot', '参与 Agent', agentCount || nodes.length, nodes.length + ' 个节点', '') +
+    kpiHTML('ti-arrows-split', '数据流阶段', stageCount, Object.keys(fs).length + ' 统计维度', '');
+
+  // ── Stage Distribution ──
+  const stageNames = ['input_stage', 'orchestration', 'execution', 'review', 'output'];
+  const stageLabels = { input_stage: '输入', orchestration: '编排', execution: '执行', review: '审查', output: '输出' };
+  const stageIcons = { input_stage: 'ti-arrow-bar-to-down', orchestration: 'ti-sitemap', execution: 'ti-player-play', review: 'ti-eye-check', output: 'ti-arrow-bar-to-up' };
+  const stageColors = { input_stage: 'var(--violet)', orchestration: 'var(--teal)', execution: 'var(--blue)', review: 'var(--amber)', output: 'var(--green)' };
+  const statusMap = { todo: '待办', ready: '就绪', in_progress: '进行中', done: '已完成', failed: '失败' };
+  const statusColors = { todo: 'var(--tx3)', ready: 'var(--blue)', in_progress: 'var(--amber)', done: 'var(--green)', failed: 'var(--red)' };
+
+  // Aggregate by_stage into stage stats
+  let stageDistHTML = '<div style="display:flex;flex-direction:column;gap:12px">';
+  stageNames.forEach(sn => {
+    const stats = byStage[sn] || {};
+    const total = Object.values(stats).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0);
+    if (total === 0) return;
+    stageDistHTML += `<div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <i class="ti ${stageIcons[sn] || 'ti-circle'}" style="color:${stageColors[sn]};font-size:14px"></i>
+        <span style="font-size:12px;font-weight:600;font-family:var(--disp)">${stageLabels[sn] || sn}</span>
+        <span class="tag" style="background:${stageColors[sn]}20;color:${stageColors[sn]}">${total}</span>
+      </div>
+      <div class="bar" style="height:8px;display:flex;border-radius:8px;overflow:hidden">`;
+    Object.entries(statusMap).forEach(([status, label]) => {
+      const count = stats[status] || 0;
+      if (count > 0) {
+        const pctVal = Math.round(count / total * 100);
+        stageDistHTML += `<i style="width:${pctVal}%;background:${statusColors[status]};display:block;height:100%" title="${label}: ${count}"></i>`;
+      }
+    });
+    stageDistHTML += `</div>
+      <div style="display:flex;gap:12px;font-size:10px;color:var(--tx3);margin-top:2px;font-family:var(--mono)">`;
+    Object.entries(statusMap).forEach(([status, label]) => {
+      const count = stats[status] || 0;
+      if (count > 0) stageDistHTML += `<span><span style="color:${statusColors[status]}">●</span> ${label} ${count}</span>`;
+    });
+    stageDistHTML += `</div></div>`;
   });
-  steps.forEach(s => {
-    const x1=lanes[s.from].x, x2=lanes[s.to].x, y=s.y, dash=s.dash?'stroke-dasharray="5 4"':'';
-    if(s.self){
-      svg+=`<path d="M${x1} ${y} h60 v26 h-60" fill="none" stroke="${s.c}" stroke-width="2" ${dash} marker-end="url(#ar)" color="${s.c}"/>`;
-      svg+=`<text x="${x1+70}" y="${y+12}" font-size="12" fill="#e7ecf3" font-weight="500">${s.lbl}</text>`;
-    }else{
-      const dir=x2>x1?1:-1, mid=(x1+x2)/2;
-      svg+=`<line x1="${x1+dir*4}" y1="${y}" x2="${x2-dir*8}" y2="${y}" stroke="${s.c}" stroke-width="2" ${dash} marker-end="url(#ar)" color="${s.c}"/>`;
-      svg+=`<text x="${mid}" y="${y-7}" text-anchor="middle" font-size="12" fill="#e7ecf3" font-weight="500">${s.lbl}</text>`;
+  stageDistHTML += '</div>';
+  if (Object.keys(byStage).length === 0) {
+    stageDistHTML = '<div style="text-align:center;padding:24px;color:var(--tx3)">暂无阶段分布数据</div>';
+  }
+  $('#flowStageDist').innerHTML = stageDistHTML;
+
+  // ── 5-step Flow Pipeline ──
+  const pipelineSteps = [
+    { id: 'input_stage', icon: 'ti-arrow-bar-to-down', desc: '自然语言指令 / API 触发 / Cron 定时' },
+    { id: 'orchestration', icon: 'ti-sitemap', desc: '编排官拆解为任务 DAG + 分配预算' },
+    { id: 'execution', icon: 'ti-player-play', desc: 'Agent 领取任务自主执行' },
+    { id: 'review', icon: 'ti-eye-check', desc: '护栏闸门 / 代码审查 / 质量评测' },
+    { id: 'output', icon: 'ti-arrow-bar-to-up', desc: '结果回传 + trace + 成本结算' }
+  ];
+
+  let pipelineHTML = '<div style="display:flex;align-items:center;gap:0;overflow-x:auto;padding:8px 0">';
+  pipelineSteps.forEach((step, i) => {
+    const sn = step.id;
+    const stats = byStage[sn] || fs[sn] || {};
+    const total = typeof stats === 'object' ? Object.values(stats).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0) : (typeof stats === 'number' ? stats : 0);
+    const color = stageColors[sn] || 'var(--tx3)';
+    const done = (typeof stats === 'object' && stats.done) ? stats.done : 0;
+
+    pipelineHTML += `<div style="flex:1;min-width:120px;text-align:center;position:relative">
+      <div style="width:48px;height:48px;border-radius:50%;background:${color}20;border:2px solid ${color};display:grid;place-items:center;margin:0 auto 8px;font-size:22px;color:${color}">
+        <i class="ti ${step.icon}"></i>
+      </div>
+      <div style="font-family:var(--disp);font-size:13px;font-weight:600;margin-bottom:4px">${stageLabels[sn] || sn}</div>
+      <div style="font-size:10px;color:var(--tx3);line-height:1.4;margin-bottom:4px">${step.desc}</div>
+      ${total > 0 ? `<div><span class="tag" style="background:${color}20;color:${color}">${total} 项</span>${done > 0 ? ` <span class="tag green">✓ ${done}</span>` : ''}</div>` : '<span class="tag gray">待激活</span>'}
+    </div>`;
+    // Arrow between steps
+    if (i < pipelineSteps.length - 1) {
+      pipelineHTML += `<div style="flex-shrink:0;width:32px;display:flex;align-items:center;justify-content:center;padding-top:12px">
+        <i class="ti ti-chevron-right" style="color:var(--tx3);font-size:20px"></i>
+      </div>`;
     }
   });
-  svg+=`<rect x="20" y="128" width="${W-40}" height="2" fill="#a78bfa" fill-opacity=".15"/>`;
-  svg+=`</svg>`;
-  $('#seqWrap').innerHTML = svg;
+  pipelineHTML += '</div>';
+  $('#flowPipeline').innerHTML = pipelineHTML;
+
+  // ── Timeline List ──
+  let timelineHTML = '';
+  if (nodes.length > 0) {
+    timelineHTML = nodes.slice(0, 20).map(n => {
+      const stage = n.stage || '';
+      const label = stageLabels[stage] || n.label || stage || '未知';
+      const color = stageColors[stage] || 'var(--tx3)';
+      const agent = n.agent || '--';
+      const id = n.id || '';
+      return `<div class="li">
+        <div class="ic" style="background:${color}20;color:${color};font-size:14px"><i class="ti ${stageIcons[stage] || 'ti-circle'}"></i></div>
+        <div style="flex:1">
+          <div class="t">${label}${id ? ' · ' + id : ''}</div>
+          <div class="d">${agent ? '<i class="ti ti-robot"></i> ' + agent + ' · ' : ''}${stage ? stage : ''}</div>
+        </div>
+        <span class="tag" style="background:${color}20;color:${color}">${stageLabels[stage] || stage || '--'}</span>
+      </div>`;
+    }).join('');
+  } else {
+    timelineHTML = '<div style="text-align:center;padding:28px;color:var(--tx3)"><i class="ti ti-clipboard-list" style="font-size:28px"></i><div style="margin-top:8px">暂无任务记录</div></div>';
+  }
+  $('#flowTimeline').innerHTML = timelineHTML;
+}
+
+function completedTasks(byStage) {
+  let total = 0;
+  Object.values(byStage || {}).forEach(stats => {
+    if (typeof stats === 'object') total += (stats.done || 0);
+  });
+  return total;
 }
 
 /* =================================================================
@@ -1842,7 +2308,9 @@ async function loadPipeline() {
     const doneCount = stageTasks.filter(t => t.status === 'done' || t.status === 'completed').length;
     const color = STAGE_COLORS[i] || 'var(--tx3)';
 
-    stagesHTML += `<div class="card" style="padding:14px;border-top:3px solid ${color}">
+    stagesHTML += `<div class="card" style="padding:14px;border-top:3px solid ${color};cursor:pointer;transition:.15s" 
+      onclick="openPipelineStageDrawer('${stageId}','${stageName}','${color}')" 
+      onmouseenter="this.style.borderTopColor='var(--teal)'" onmouseleave="this.style.borderTopColor='${color}'">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <i class="ti ${stageIcon}" style="color:${color};font-size:18px"></i>
         <span style="font-family:var(--disp);font-size:13px;font-weight:600">${stageName}</span>
@@ -1900,6 +2368,76 @@ async function loadPipeline() {
     $('#pipelineEval').innerHTML = evalHTML;
   } else {
     $('#pipelineEvalCard').style.display = 'none';
+  }
+  
+  // Store pipeline data for stage drawer
+  window._pipelineData = pjData;
+  window._pipelineTasks = tasks;
+  window._pipelineStages = stages;
+}
+
+// === PIPELINE STAGE DRAWER: click stage → task list + status change ===
+function openPipelineStageDrawer(stageId, stageName, color) {
+  const tasks = window._pipelineTasks || [];
+  const allStages = window._pipelineStages || [];
+  const stageTasks = tasks.filter(t => (t.stage || t.status) === stageId || 
+    allStages.find(s => (s.id || s.name) === stageId && (s.tasks || []).some(st => st.id === t.id || st.title === t.title)));
+  
+  // Also include tasks from the stage object
+  const stageObj = allStages.find(s => (s.id || s.name) === stageId);
+  const stageObjTasks = stageObj ? (stageObj.tasks || []) : [];
+  const combinedTasks = [...stageTasks, ...stageObjTasks.filter(ot => !stageTasks.some(t => t.id === ot.id))];
+
+  const statusOptions = ['todo','in_progress','done','blocked'];
+  const statusLabels = { todo:'待办', in_progress:'进行中', done:'完成', blocked:'阻塞' };
+  const statusColors = { todo:'var(--tx3)', in_progress:'var(--blue)', done:'var(--green)', blocked:'var(--red)' };
+
+  const taskListHTML = combinedTasks.length > 0
+    ? combinedTasks.map((t, ti) => {
+        const status = t.status || 'todo';
+        const title = t.title || t.task || t.name || '任务';
+        const assignee = t.assignee || '--';
+        const priority = t.priority || '--';
+        return `<div style="background:var(--bg3);border:1px solid var(--line);border-radius:var(--r-s);padding:10px;margin-bottom:8px">
+          <div style="font-weight:500;font-size:12px;margin-bottom:6px"><i class="ti ti-circle" style="color:${statusColors[status]};font-size:10px"></i> ${title}</div>
+          <div style="display:flex;align-items:center;gap:12px;font-size:11px;color:var(--tx3);margin-bottom:6px">
+            <span><i class="ti ti-user"></i> ${assignee}</span>
+            <span><i class="ti ti-flag"></i> ${priority}</span>
+            <span class="tag" style="background:${statusColors[status]}20;color:${statusColors[status]};font-size:9px">${statusLabels[status]||status}</span>
+          </div>
+          <select onchange="movePipelineTask(this, '${(t.id||'').replace(/'/g,\"\\\\'\")}')" style="background:var(--bg);color:var(--tx);border:1px solid var(--line2);border-radius:4px;padding:4px 8px;font-size:11px;font-family:var(--body)">
+            <option value="">移动状态...</option>
+            ${statusOptions.filter(s => s !== status).map(s => `<option value="${s}">→ ${statusLabels[s]}</option>`).join('')}
+          </select>
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--tx3);text-align:center;padding:20px">此阶段暂无任务</div>';
+
+  const bodyHtml = `
+    <div class="card" style="padding:14px;margin-bottom:14px;background:var(--bg3);text-align:center;border-top:3px solid ${color}">
+      <div style="font-family:var(--disp);font-size:18px;font-weight:600">${stageName}</div>
+      <div style="font-size:12px;color:var(--tx3);margin-top:4px">${combinedTasks.length} 个任务</div>
+    </div>
+    <div style="max-height:500px;overflow-y:auto">${taskListHTML}</div>`;
+
+  openDrawer(
+    stageName + ' · 阶段详情',
+    combinedTasks.length + ' 个任务',
+    '<i class="ti ti-timeline" style="font-size:22px;color:' + color + '"></i>',
+    bodyHtml
+  );
+}
+
+async function movePipelineTask(selectEl, taskId) {
+  const newStatus = selectEl.value;
+  if (!newStatus || !taskId) { selectEl.value = ''; return; }
+  const pjName = document.getElementById('ppProjSwitch') ? document.getElementById('ppProjSwitch').value : '';
+  const res = await apiPut(API + '/pipeline/' + encodeURIComponent(pjName) + '/tasks/' + encodeURIComponent(taskId), { status: newStatus });
+  if (res && !res.error) {
+    toast('<i class="ti ti-arrow-right"></i> 任务状态已更新: ' + newStatus);
+    setTimeout(() => { loadPipeline(); closeAll(); }, 500);
+  } else {
+    toast('<i class="ti ti-alert-triangle"></i> 更新失败');
   }
 }
 
@@ -1988,7 +2526,9 @@ function showModuleCards(modules) {
     const agents = m.agents || [];
     const reuse = m.reuse_count || m.usage_count || 0;
 
-    html += `<div class="card" style="padding:15px;border-left:3px solid var(--teal)">
+    html += `<div class="card" style="padding:15px;border-left:3px solid var(--teal);cursor:pointer;transition:.15s" 
+      onclick="openModuleTemplateDrawer('${(m.name||'').replace(/'/g,\"\\\\'\")}')" 
+      onmouseenter="this.style.borderColor='var(--teal)'" onmouseleave="this.style.borderColor='var(--line)'">
       <div style="font-family:var(--disp);font-size:14px;font-weight:600;margin-bottom:6px">${m.name || '未命名模板'}</div>
       <div style="font-size:12px;color:var(--tx2);margin-bottom:10px;line-height:1.5">${m.description || '暂无描述'}</div>
       <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--tx3)">
@@ -2003,6 +2543,113 @@ function showModuleCards(modules) {
   });
   html += '</div>';
   $('#modTemplates').innerHTML += html;
+}
+
+// === MODULE TEMPLATE DRAWER: click template → edit form ===
+function openModuleTemplateDrawer(templateName) {
+  const modules = window._modData || [];
+  const m = modules.find(mod => mod.name === templateName);
+  if (!m) { toast('模板数据未找到'); return; }
+
+  const files = m.files || [];
+  const agents = m.agents || [];
+  const complexity = m.complexity || 1;
+  const starsCheckboxes = Array.from({length: 5}, (_, i) => 
+    `<i class="ti ti-star${i < complexity ? '-filled' : ''}" style="color:${i < complexity ? 'var(--amber)' : 'var(--tx3)'};font-size:18px;cursor:pointer" onclick="toggleModuleComplexity(${i+1})" data-cx="${i+1}"></i>`
+  ).join('');
+
+  const fileListHTML = files.map((f, fi) => {
+    const fname = typeof f === 'string' ? f : (f.name || f);
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <i class="ti ti-file" style="color:var(--tx3)"></i>
+      <input value="${(fname||'').replace(/"/g,'&quot;')}" data-file-idx="${fi}" class="mt-file-inp" style="flex:1;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:4px;padding:5px 8px;font-size:12px;font-family:var(--body)">
+    </div>`;
+  }).join('');
+
+  const agentListHTML = agents.map((a, ai) => {
+    const aname = typeof a === 'string' ? a : (a.name || a);
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <i class="ti ti-robot" style="color:var(--blue)"></i>
+      <input value="${(aname||'').replace(/"/g,'&quot;')}" data-agent-idx="${ai}" class="mt-agent-inp" style="flex:1;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:4px;padding:5px 8px;font-size:12px;font-family:var(--body)">
+    </div>`;
+  }).join('');
+
+  const bodyHtml = `
+    <div class="fld"><label>模板名称</label>
+      <input id="mtName" value="${(m.name||'').replace(/"/g,'&quot;')}" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px 10px;font-size:13px;font-family:var(--body)">
+    </div>
+    <div class="fld"><label>描述</label>
+      <textarea id="mtDesc" style="width:100%;min-height:70px;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px 10px;font-size:12px;resize:vertical">${(m.description||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+    </div>
+    <div class="fld"><label><i class="ti ti-files"></i> 文件列表 (${files.length})</label>
+      <div>${fileListHTML || '<div style="color:var(--tx3);font-size:12px;padding:8px">暂无文件</div>'}</div>
+    </div>
+    <div class="fld"><label><i class="ti ti-robot"></i> 所需 Agent (${agents.length})</label>
+      <div>${agentListHTML || '<div style="color:var(--tx3);font-size:12px;padding:8px">无需特定Agent</div>'}</div>
+    </div>
+    <div class="fld"><label><i class="ti ti-star"></i> 复杂度</label>
+      <div id="mtComplexityStars">${starsCheckboxes}</div>
+      <input type="hidden" id="mtComplexity" value="${complexity}">
+    </div>`;
+
+  // Store current module for toggle
+  window._mtCurrentModule = m;
+  window._mtComplexity = complexity;
+
+  openDrawerEdit(
+    m.name || '模板编辑',
+    m.category || '未分类',
+    '<i class="ti ti-package" style="font-size:22px;color:var(--teal)"></i>',
+    bodyHtml,
+    async () => {
+      const newName = document.getElementById('mtName') ? document.getElementById('mtName').value : m.name;
+      const newDesc = document.getElementById('mtDesc') ? document.getElementById('mtDesc').value : m.description;
+      const newComplexity = window._mtComplexity;
+      const newFiles = Array.from(document.querySelectorAll('.mt-file-inp')).map(inp => inp.value).filter(Boolean);
+      const newAgents = Array.from(document.querySelectorAll('.mt-agent-inp')).map(inp => inp.value).filter(Boolean);
+      const res = await apiPut(API + '/modules/' + encodeURIComponent(m.name || ''), {
+        name: newName, description: newDesc, complexity: newComplexity,
+        files: newFiles, agents: newAgents, category: m.category
+      });
+      if (res && !res.error) {
+        m.name = newName; m.description = newDesc; m.complexity = newComplexity;
+        m.files = newFiles; m.agents = newAgents;
+        toast('<i class="ti ti-circle-check"></i> 模板已保存');
+        closeAll();
+        renderModules();
+      } else {
+        toast('<i class="ti ti-alert-triangle"></i> 保存失败');
+      }
+    },
+    async () => {
+      if (confirm('确定删除模板: ' + (m.name || '') + '?')) {
+        const res = await apiDelete(API + '/modules/' + encodeURIComponent(m.name || ''));
+        if (res && !res.error) {
+          toast('<i class="ti ti-trash"></i> 模板已删除');
+          closeAll();
+          renderModules();
+        } else {
+          toast('<i class="ti ti-alert-triangle"></i> 删除失败');
+        }
+      }
+    }, '💾 保存', '🗑 删除'
+  );
+}
+
+function toggleModuleComplexity(val) {
+  window._mtComplexity = val;
+  const stars = document.querySelectorAll('#mtComplexityStars i');
+  stars.forEach(s => {
+    const cx = parseInt(s.getAttribute('data-cx'));
+    if (cx <= val) {
+      s.className = 'ti ti-star-filled';
+      s.style.color = 'var(--amber)';
+    } else {
+      s.className = 'ti ti-star';
+      s.style.color = 'var(--tx3)';
+    }
+  });
+  document.getElementById('mtComplexity').value = val;
 }
 
 /* =================================================================
@@ -2099,24 +2746,37 @@ async function openSkillAgent(agentName) {
     '<i class="ti ti-star" style="color:var(--tx3);font-size:14px"></i>'
   ).join('');
 
-  const skillsHTML = skills.length > 0
-    ? skills.map(s => `<span class="chip" style="background:var(--teal-d);color:var(--teal)">${typeof s === 'string' ? s : s.name || JSON.stringify(s)}</span>`).join('')
-    : '<span class="chip">无记录</span>';
+  const skillsEditableHTML = skills.length > 0
+    ? skills.map((s, si) => {
+        const sk = typeof s === 'string' ? s : (s.name || JSON.stringify(s));
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <input value="${sk.replace(/"/g,'&quot;')}" data-sk-idx="${si}" class="sk-inp" style="flex:1;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:4px;padding:5px 8px;font-size:12px;font-family:var(--body)">
+          <span style="cursor:pointer;color:var(--red);font-size:14px" onclick="this.parentElement.remove()">×</span>
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--tx3);font-size:12px">无技能标签</div>';
 
   const evolutionHTML = evolution.length > 0
     ? evolution.map(e => `<div class="kv"><span class="k">${e.date || e.timestamp || ''}</span><span class="vv">+${e.xp_gained || e.xp || 0} XP · ${e.reason || e.event || ''}</span></div>`).join('')
     : '<div style="color:var(--tx3);font-size:12px;padding:8px">暂无进化记录</div>';
 
-  openDrawer(
-    name + ' · 技能详情',
+  window._skData = data;
+  window._skName = name;
+
+  openDrawerEdit(
+    name + ' · 技能编辑',
     'Lv.' + level + ' · ' + xp.toLocaleString() + ' XP',
     '<i class="ti ti-trending-up" style="font-size:22px;color:var(--teal)"></i>',
     `<div class="card" style="padding:14px;margin-bottom:14px;background:var(--bg3);text-align:center">
       <div style="font-family:var(--disp);font-size:16px;font-weight:600;margin-bottom:4px">${name}</div>
       <div style="font-size:12px;color:var(--tx2);margin-bottom:6px">Lv.${level} · ${xp.toLocaleString()} XP</div>
       <div>${starsHTML}</div>
+      <button class="btn sm" style="margin-top:8px" onclick="awardXP()"><i class="ti ti-plus"></i>奖励 XP</button>
     </div>
-    <div class="fld"><label>技能标签</label><div class="chips">${skillsHTML}</div></div>
+    <div class="fld"><label><i class="ti ti-tags"></i> 技能标签 (可编辑)</label>
+      <div id="skEditable" style="display:flex;flex-direction:column;gap:4px">${skillsEditableHTML}</div>
+      <button class="btn sm" style="margin-top:6px;width:100%" onclick="addSkillTag()"><i class="ti ti-plus"></i>添加技能</button>
+    </div>
     <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
       <div class="card" style="padding:12px"><div class="sec-h" style="margin-bottom:6px"><i class="ti ti-check" style="color:var(--green)"></i>完成项目</div>
         ${Array.isArray(projects) && projects.length > 0 ? projects.slice(0,5).map(p => `<div style="font-size:12px;padding:4px 0;color:var(--tx2)">${typeof p === 'string' ? p : p.name || JSON.stringify(p)}</div>`).join('') : '<div style="color:var(--tx3);font-size:12px">暂无</div>'}
@@ -2125,8 +2785,45 @@ async function openSkillAgent(agentName) {
         ${Array.isArray(modules) && modules.length > 0 ? modules.slice(0,5).map(m => `<div style="font-size:12px;padding:4px 0;color:var(--tx2)">${typeof m === 'string' ? m : m.name || JSON.stringify(m)}</div>`).join('') : '<div style="color:var(--tx3);font-size:12px">暂无</div>'}
       </div>
     </div>
-    <div class="fld" style="margin-top:10px"><label>进化历史</label>${evolutionHTML}</div>`
+    <div class="fld" style="margin-top:10px"><label>进化历史</label>${evolutionHTML}</div>`,
+    async () => {
+      const newSkills = Array.from(document.querySelectorAll('.sk-inp')).map(inp => inp.value).filter(Boolean);
+      const res = await apiPut(API + '/skills/' + encodeURIComponent(name), { skills: newSkills });
+      if (res && !res.error) {
+        data.skills = newSkills;
+        toast('<i class="ti ti-circle-check"></i> 技能已保存');
+        closeAll();
+      } else {
+        toast('<i class="ti ti-alert-triangle"></i> 保存失败');
+      }
+    },
+    null, '💾 保存技能', ''
   );
+}
+
+function addSkillTag() {
+  const container = document.getElementById('skEditable');
+  if (!container) return;
+  const idx = Date.now();
+  container.insertAdjacentHTML('beforeend', `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+    <input value="" data-sk-idx="${idx}" class="sk-inp" style="flex:1;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:4px;padding:5px 8px;font-size:12px;font-family:var(--body)" placeholder="新技能标签...">
+    <span style="cursor:pointer;color:var(--red);font-size:14px" onclick="this.parentElement.remove()">×</span>
+  </div>`);
+}
+
+async function awardXP() {
+  const amount = prompt('奖励多少 XP?', '50');
+  if (!amount || isNaN(parseInt(amount))) return;
+  const name = window._skName;
+  if (!name) return;
+  const res = await apiPost(API + '/skills/' + encodeURIComponent(name) + '/xp', { amount: parseInt(amount) });
+  if (res && !res.error) {
+    toast('<i class="ti ti-star-filled"></i> 奖励 ' + amount + ' XP 已发放');
+    closeAll();
+    renderSkills();
+  } else {
+    toast('<i class="ti ti-alert-triangle"></i> 奖励失败');
+  }
 }
 
 /* ========== AGENT DETAIL DRAWER (NEW V2) ========== */
@@ -2282,13 +2979,85 @@ function renderAgentDrawerV2(a) {
 
   $('#adFooter').innerHTML = `
     <button class="btn sm ghost" onclick="closeAll()"><i class="ti ti-x"></i>关闭</button>
-    <button class="btn sm" style="margin-left:auto" onclick="refreshAgentDetail('${agentId}')"><i class="ti ti-refresh"></i>刷新</button>`;
+    <button class="btn sm" style="margin-left:auto" onclick="editAgentInDrawer('${agentId}')"><i class="ti ti-edit"></i>编辑</button>
+    <button class="btn sm" onclick="refreshAgentDetail('${agentId}')"><i class="ti ti-refresh"></i>刷新</button>`;
 
   $('#scrim').classList.add('on');
   $('#agentDrawer').classList.add('on');
 
   // Load sessions asynchronously
   loadAgentSessions('${agentId}');
+}
+
+// === EDIT AGENT IN DRAWER: switches agent drawer to edit mode ===
+function editAgentInDrawer(agentId) {
+  if (!agentDetailTarget) return;
+  const a = agentDetailTarget;
+  const role = a.role || 'general';
+  const model = a.model || '';
+  const skills = a.skills || [];
+  const level = a.level || 1;
+  
+  const skillsEditableHTML = skills.length > 0
+    ? skills.map((s, si) => {
+        const sk = typeof s === 'string' ? s : (s.name || JSON.stringify(s));
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <input value="${sk.replace(/"/g,'&quot;')}" data-ask-idx="${si}" class="ask-inp" style="flex:1;background:var(--bg);color:var(--tx);border:1px solid var(--line2);border-radius:4px;padding:5px 8px;font-size:12px;font-family:var(--body)">
+          <span style="cursor:pointer;color:var(--red);font-size:14px" onclick="this.parentElement.remove()">×</span>
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--tx3);font-size:12px">无技能</div>';
+
+  $('#adBody').innerHTML = `
+    <div class="fld"><label>Agent ID</label><input id="aeId" value="${(a.agent_id||'').replace(/"/g,'&quot;')}" style="width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px 10px;font-size:13px;font-family:var(--body)" readonly></div>
+    <div class="fld"><label>角色</label>
+      <select id="aeRole" style="width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px 10px;font-size:13px;font-family:var(--body)">
+        ${['general','ceo','lead','developer','qa','reviewer','devops','researcher','designer','analyst'].map(r => `<option value="${r}" ${r===role?'selected':''}>${r}</option>`).join('')}
+      </select></div>
+    <div class="fld"><label>模型</label>
+      <select id="aeModel" style="width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px 10px;font-size:13px;font-family:var(--body)">
+        ${['deepseek-v4-pro','claude-sonnet-4','gpt-5','deepseek-v3','claude-opus-4','gemini-2.5-pro','auto'].map(m => `<option value="${m}" ${m===model?'selected':''}>${m}</option>`).join('')}
+      </select></div>
+    <div class="fld"><label>等级</label><input id="aeLevel" type="number" value="${level}" min="1" max="20" style="width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px 10px;font-size:13px;font-family:var(--body)"></div>
+    <div class="fld"><label><i class="ti ti-tags"></i> 技能标签</label>
+      <div id="aeSkills">${skillsEditableHTML}</div>
+      <button class="btn sm" style="margin-top:6px;width:100%" onclick="addAgentSkillTag()"><i class="ti ti-plus"></i>添加技能</button>
+    </div>`;
+
+  $('#adFooter').innerHTML = `
+    <button class="btn ghost" onclick="openAgentDetail('${agentId}')"><i class="ti ti-arrow-left"></i>取消编辑</button>
+    <button class="btn primary" style="margin-left:auto" onclick="saveAgentEdit('${agentId}')"><i class="ti ti-device-floppy"></i>💾 保存</button>`;
+}
+
+function addAgentSkillTag() {
+  const container = document.getElementById('aeSkills');
+  if (!container) return;
+  const idx = Date.now();
+  container.insertAdjacentHTML('beforeend', `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+    <input value="" data-ask-idx="${idx}" class="ask-inp" style="flex:1;background:var(--bg);color:var(--tx);border:1px solid var(--line2);border-radius:4px;padding:5px 8px;font-size:12px;font-family:var(--body)" placeholder="新技能...">
+    <span style="cursor:pointer;color:var(--red);font-size:14px" onclick="this.parentElement.remove()">×</span>
+  </div>`);
+}
+
+async function saveAgentEdit(agentId) {
+  const newRole = document.getElementById('aeRole') ? document.getElementById('aeRole').value : '';
+  const newModel = document.getElementById('aeModel') ? document.getElementById('aeModel').value : '';
+  const newLevel = document.getElementById('aeLevel') ? parseInt(document.getElementById('aeLevel').value) : 1;
+  const newSkills = Array.from(document.querySelectorAll('.ask-inp')).map(inp => inp.value).filter(Boolean);
+  
+  const res = await apiPut(API + '/agents/' + encodeURIComponent(agentId), {
+    role: newRole, model: newModel, level: newLevel, skills: newSkills
+  });
+  if (res && !res.error) {
+    agentDetailTarget.role = newRole;
+    agentDetailTarget.model = newModel;
+    agentDetailTarget.level = newLevel;
+    agentDetailTarget.skills = newSkills;
+    toast('<i class="ti ti-circle-check"></i> Agent 配置已保存');
+    openAgentDetail(agentId);
+  } else {
+    toast('<i class="ti ti-alert-triangle"></i> 保存失败');
+  }
 }
 
 /* ========== CHAT HISTORY SESSIONS ========== */
@@ -2595,18 +3364,136 @@ function autoReclaim() {
   setTimeout(() => { loadAllData(); renderReclamation(); }, 500);
 }
 
-/* ========== APPROVAL ACTIONS ========== */
+/* ========== APPROVAL ACTIONS (new API) ========== */
 async function approveRequest(id) {
-  toast('已批准 #' + id);
-  // Try auth API
-  await fetchJSON(API + '/auth/approve/' + id);
-  renderApprovals();
+  try {
+    const r = await fetch(API + '/audit/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, approver: 'human-operator' })
+    });
+    const data = await r.json();
+    if (data.ok) {
+      toast(`<i class="ti ti-check"></i> 已批准: ${data.item?.title || id}`);
+      // Remove the card with animation delay then refresh
+      setTimeout(() => renderApprovals(), 400);
+    } else {
+      toast(`<i class="ti ti-alert-triangle"></i> 操作失败: ${data.error || '未知错误'}`);
+    }
+  } catch (e) {
+    toast(`<i class="ti ti-x"></i> 网络错误,请重试`);
+    console.error('approve failed:', e);
+  }
 }
 
 async function rejectRequest(id) {
-  toast('已驳回 #' + id);
-  await fetchJSON(API + '/auth/reject/' + id);
-  renderApprovals();
+  const reason = prompt('请输入驳回理由:');
+  if (reason === null) return; // user cancelled
+  try {
+    const r = await fetch(API + '/audit/reject', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, reason: reason || '未指定理由', rejector: 'human-operator' })
+    });
+    const data = await r.json();
+    if (data.ok) {
+      toast(`<i class="ti ti-x"></i> 已驳回: ${data.item?.title || id}`);
+      setTimeout(() => renderApprovals(), 400);
+    } else {
+      toast(`<i class="ti ti-alert-triangle"></i> 操作失败: ${data.error || '未知错误'}`);
+    }
+  } catch (e) {
+    toast(`<i class="ti ti-x"></i> 网络错误,请重试`);
+    console.error('reject failed:', e);
+  }
+}
+
+// === APPROVAL DRAWER: click card → detail with approve/reject ===
+function openApprovalDrawer(idx) {
+  const items = window._approvalItems || [];
+  if (!items[idx]) return;
+  const item = items[idx];
+  const id = item.id || '';
+  const title = item.title || '审批请求';
+  const detail = item.detail || '';
+  const type = item.type || 'action';
+  const proposer = item.proposer || '未知';
+  const time = item.time ? new Date(item.time * 1000).toLocaleString() : '--';
+  const risk = (item.risk || 'medium').toLowerCase();
+  const riskColors = { low: 'var(--green)', medium: 'var(--amber)', high: 'var(--red)' };
+  const riskBg = { low: 'var(--green-d)', medium: 'var(--amber-d)', high: 'var(--red-d)' };
+  const riskLabel = { low: '低', medium: '中', high: '高' };
+
+  const bodyHtml = `
+    <div class="card" style="padding:14px;margin-bottom:14px;background:var(--bg3);border-left:3px solid ${riskColors[risk] || 'var(--amber)'}">
+      <div style="font-weight:600;font-size:15px;margin-bottom:6px">${title}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <span class="tag" style="background:${riskBg[risk]};color:${riskColors[risk]}">${riskLabel[risk]}风险</span>
+        <span class="tag gray">${type}</span>
+      </div>
+      ${detail ? `<div style="font-size:13px;color:var(--tx2);line-height:1.6;margin-bottom:10px">${detail}</div>` : ''}
+      <div class="kv"><span class="k">发起人</span><span class="vv">${proposer}</span></div>
+      <div class="kv"><span class="k">时间</span><span class="vv" style="font-size:11px">${time}</span></div>
+      ${item.budget ? `<div class="kv"><span class="k">预算</span><span class="vv">$${item.budget}</span></div>` : ''}
+      ${Object.entries(item).filter(([k]) => !['id','title','detail','type','proposer','time','risk','budget'].includes(k)).map(([k,v]) => `<div class="kv"><span class="k">${k}</span><span class="vv">${typeof v === 'object' ? JSON.stringify(v).slice(0,80) : v}</span></div>`).join('')}
+    </div>
+    <div class="fld"><label><i class="ti ti-message"></i> 审批理由</label>
+      <input id="approvalReason" placeholder="输入批准/拒绝理由..." style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px 10px;font-size:13px;font-family:var(--body)">
+    </div>`;
+
+  // Custom footer with approve/reject
+  $('#ddTitle').textContent = title + ' · 审批详情';
+  $('#ddSub').textContent = riskLabel[risk] + '风险 · ' + type + ' · ' + proposer;
+  $('#ddIcon').innerHTML = '<i class="ti ti-gavel" style="font-size:22px;color:' + (riskColors[risk] || 'var(--amber)') + '"></i>';
+  $('#ddBody').innerHTML = bodyHtml;
+  $('#ddFooter').innerHTML = `
+    <button class="btn ghost" onclick="closeAll()">关闭</button>
+    <button class="btn danger" style="margin-left:auto" onclick="approvalDrawerReject('${id}')"><i class="ti ti-x"></i>拒绝</button>
+    <button class="btn primary" onclick="approvalDrawerApprove('${id}')"><i class="ti ti-check"></i>批准</button>`;
+  $('#scrim').classList.add('on');
+  $('#detailDrawer').classList.add('on');
+}
+
+async function approvalDrawerApprove(id) {
+  const reason = document.getElementById('approvalReason') ? document.getElementById('approvalReason').value : '';
+  try {
+    const r = await fetch(API + '/audit/approve', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, approver: 'human-operator', reason: reason })
+    });
+    const data = await r.json();
+    if (data.ok) {
+      toast('<i class="ti ti-check"></i> 已批准: ' + (data.item?.title || id));
+      closeAll();
+      setTimeout(() => renderApprovals(), 400);
+    } else {
+      toast('<i class="ti ti-alert-triangle"></i> 操作失败: ' + (data.error || '未知错误'));
+    }
+  } catch (e) {
+    toast('<i class="ti ti-x"></i> 网络错误');
+    console.error('approve failed:', e);
+  }
+}
+
+async function approvalDrawerReject(id) {
+  const reason = document.getElementById('approvalReason') ? document.getElementById('approvalReason').value : '';
+  try {
+    const r = await fetch(API + '/audit/reject', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, reason: reason || '未指定理由', rejector: 'human-operator' })
+    });
+    const data = await r.json();
+    if (data.ok) {
+      toast('<i class="ti ti-x"></i> 已驳回: ' + (data.item?.title || id));
+      closeAll();
+      setTimeout(() => renderApprovals(), 400);
+    } else {
+      toast('<i class="ti ti-alert-triangle"></i> 操作失败: ' + (data.error || '未知错误'));
+    }
+  } catch (e) {
+    toast('<i class="ti ti-x"></i> 网络错误');
+    console.error('reject failed:', e);
+  }
 }
 
 /* ========== AUTONOMY KERNEL CARDS ========== */
@@ -2623,6 +3510,32 @@ function renderAutonomyCards() {
     <div class="ic" style="background:var(--bg4);color:${c.t}"><i class="ti ${c.ic}"></i></div>
     <div><h4>${c.h}</h4><p>${c.p}</p></div></div>`).join('')}</div>`;
 }
+
+// === AUTONOMY LEVEL DRAWER ===
+function openAutonomyLevelDrawer(level, title, desc) {
+  const bodyHtml = `
+    <div class="card" style="padding:20px;margin-bottom:14px;background:var(--bg3);text-align:center">
+      <div style="font-family:var(--mono);font-size:36px;font-weight:700;color:var(--teal)">${level}</div>
+      <div style="font-family:var(--disp);font-size:18px;font-weight:600;margin:8px 0">${title}</div>
+      <div style="font-size:13px;color:var(--tx2);line-height:1.7">${desc}</div>
+    </div>`;
+  openDrawer(level + ' · ' + title, '自治等级说明', '<i class="ti ti-adjustments-bolt" style="font-size:22px;color:var(--teal)"></i>', bodyHtml);
+}
+
+/* ========== Theme Toggle ========== */
+function toggleTheme(){
+  const html=document.documentElement;
+  const isLight=html.getAttribute('data-theme')==='light';
+  html.setAttribute('data-theme',isLight?'':'light');
+  $('#themeIcon').className='ti '+(isLight?'ti-sun':'ti-moon');
+  localStorage.setItem('apex-theme',isLight?'':'light');
+}
+(function(){
+  if(localStorage.getItem('apex-theme')==='light'){
+    document.documentElement.setAttribute('data-theme','light');
+    document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('themeIcon');if(el)el.className='ti ti-moon';});
+  }
+})();
 
 /* ========== AI Chat (Enhanced with Decomposition Engine) ========== */
 function openChat() {

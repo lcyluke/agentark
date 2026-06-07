@@ -18,9 +18,11 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
-HERMES_HOME = Path(os.environ.get("HERMES_HOME", os.path.expanduser("~/.hermes")))
+# NOTE: HERMES_HOME env var may point to a profile subdirectory (e.g. ~/.hermes/profiles/cron-inspector),
+# but state.db always lives at the root ~/.hermes/. Force the canonical path.
+HERMES_ROOT = Path(os.path.expanduser("~/.hermes"))
 APEX_HOME = Path(os.environ.get("APEX_HOME", os.path.expanduser("~/.apex")))
-STATE_DB = HERMES_HOME / "state.db"
+STATE_DB = HERMES_ROOT / "state.db"
 KANBAN_DB = APEX_HOME / "kanban.db"
 MONITOR_DB = Path(os.path.expanduser("~/Desktop/2026AIAPP/monitor/logs/monitor.db"))
 
@@ -39,14 +41,14 @@ def upsert_task(conn, task_id: str, title: str, assignee: str, status: str = "in
     if existing:
         if status in ("done", "failed"):
             conn.execute("""
-                UPDATE tasks SET output=?, status=?, completed_at=?
+                UPDATE tasks SET title=?, output=?, status=?, completed_at=?
                 WHERE id=?
-            """, (output[:5000], status, now, task_id))
+            """, (title[:200], output[:5000], status, now, task_id))
         else:
             conn.execute("""
-                UPDATE tasks SET output=?, status=?
+                UPDATE tasks SET title=?, output=?, status=?
                 WHERE id=?
-            """, (output[:5000], status, task_id))
+            """, (title[:200], output[:5000], status, task_id))
     else:
         conn.execute("""
             INSERT INTO tasks(id, title, description, assignee, status, priority, parent_id, output, created_at)
@@ -97,7 +99,7 @@ def sync_sessions(conn):
         lines.append(f"  {src:8s} | {title}")
 
     output = "\n".join(lines)
-    upsert_task(conn, "watch-sessions", "🔍 会话侦测 | {today}今日/{total}总计",
+    upsert_task(conn, "watch-sessions", f"🔍 会话侦测 | {today}今日/{total}总计",
                  "session-scout", status="done", output=output)
 
 
