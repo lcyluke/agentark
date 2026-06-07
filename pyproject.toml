@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "apex-multiagent"
-version = "0.1.0"
+version = "0.2.0"
 description = "⚡ Apex — The world's most advanced Multi-Agent Operating System. One person, infinite capacity."
 readme = "README.md"
 requires-python = ">=3.10"
