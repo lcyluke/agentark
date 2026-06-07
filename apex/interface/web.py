@@ -2396,6 +2396,40 @@ def create_app():
             return jsonify(get_data_flow_timeline(project))
         except Exception as e: return jsonify({"error":str(e)}), 500
 
+    @app.route("/api/pipeline/<project>/report")
+    def api_pipeline_report(project: str):
+        """Generate project daily report for Pipeline evaluation stage"""
+        try:
+            from apex.interface.project_factory import get_project_pipeline, get_project_evaluation
+            from apex.interface.live_status import get_project_dashboard
+            from apex.interface.hermes_bridge import get_hermes_session_stats
+            
+            pipeline = get_project_pipeline(project)
+            evaluation = get_project_evaluation(project)
+            dashboard = get_project_dashboard(project)
+            tokens = get_hermes_session_stats()
+            
+            return jsonify({
+                "project": project,
+                "generated_at": datetime.now().isoformat(),
+                "summary": {
+                    "total_tasks": pipeline["total_tasks"],
+                    "done": pipeline["done"],
+                    "progress": f"{pipeline['progress_pct']}%",
+                    "current_stage": pipeline["current_stage"],
+                },
+                "stages": pipeline.get("stages", []),
+                "evaluation": evaluation.get("evaluation", {}),
+                "rating": evaluation.get("rating", "⭐⭐⭐"),
+                "agents": dashboard.get("agents", []),
+                "token_cost_today": {
+                    "tokens": tokens.get("today_tokens", 0),
+                    "cost_usd": tokens.get("today_cost", 0),
+                },
+            })
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
     return app
 
 
