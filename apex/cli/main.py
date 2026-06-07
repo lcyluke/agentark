@@ -376,6 +376,47 @@ def demo(port: int, host: str, no_browser: bool, skip_tasks: bool, overwrite: bo
         console.print(f"[red]✗ Demo failed: {e}[/]")
 
 
+# ─── model detect command ───
+@cli.command("model-detect")
+def model_detect():
+    """🔍 Auto-detect available AI models from environment, tools, and cloud"""
+    try:
+        from apex.cli.commands.model_detect import detect_models, auto_configure
+        from rich.table import Table
+        from rich.panel import Panel
+
+        result = detect_models()
+        console.print(Panel("🔍 Model Auto-Discovery", subtitle=f"Found {result['available']} providers", border_style="cyan"))
+        
+        # Tools detected
+        if result["tools_detected"]:
+            t = Table(title="📦 Detected AI Tools", show_header=True)
+            t.add_column("Tool", style="cyan")
+            t.add_column("Model Hint", style="green")
+            t.add_column("Path")
+            for tool in result["tools_detected"]:
+                t.add_row(tool["name"], tool["model_hint"], tool["path"])
+            console.print(t)
+        
+        # Available models
+        providers = result.get("providers", {})
+        if providers:
+            t2 = Table(title="🤖 Available Models", show_header=True)
+            t2.add_column("Provider", style="cyan")
+            t2.add_column("Models", style="green")
+            t2.add_column("Auth", style="dim")
+            for p, info in providers.items():
+                t2.add_row(p, ", ".join(info["models"]), info["auth_method"])
+            console.print(t2)
+            console.print(f"\n[bold green]→ Recommended:[/] {result['recommendation']}")
+            console.print("\n[dim]To auto-configure: apex model-detect --apply <provider>[/dim]")
+        else:
+            console.print("[yellow]⚠ No model providers detected.[/]")
+            console.print("[dim]Set API keys as env vars: DEEPSEEK_API_KEY / ANTHROPIC_API_KEY / OPENAI_API_KEY[/dim]")
+    except Exception as e:
+        console.print(f"[red]✗ Detection failed: {e}[/]")
+
+
 # ════════════════════════════════════════════════════════════════
 # TASK — 📋 任务管理
 # ════════════════════════════════════════════════════════════════

@@ -117,7 +117,7 @@ def setup_cmd(
         for step in [
             "✅ Check Hermes Agent installation",
             "✅ Create default agent profiles",
-            "✅ Configure model provider & token budgets",
+            "✅ Configure model provider & token budgets (auto-detect)",
             "✅ Set up Hermes terminal wrappers with agent name display",
             "✅ Enable multi-line input (3 lines default)",
         ]:
@@ -151,22 +151,46 @@ def setup_cmd(
         progress.update(t2, completed=100,
                         description=f"[green]2/5 ✓ {profile_result['count']} 个 Agent 配置文件[/]")
 
-        # Step 3: Configure model
-        t3 = progress.add_task("[cyan]3/5 配置模型和 Token 预算...", total=100)
-        model_cfg = model or (None if quick else Prompt.ask(
-            "Default model", default="deepseek-v4-pro"))
-        token_lim = token_limit or (DEFAULT_TOKEN_LIMIT if quick else
-                                     int(Prompt.ask("Token limit per session", default=str(DEFAULT_TOKEN_LIMIT))))
-        token_bgt = token_budget or (DEFAULT_TOKEN_BUDGET if quick else
-                                      int(Prompt.ask("Total token budget", default=str(DEFAULT_TOKEN_BUDGET))))
-        input_lns = input_lines or (DEFAULT_INPUT_LINES if quick else
-                                     int(Prompt.ask("Input lines in Hermes TUI", default=str(DEFAULT_INPUT_LINES))))
-        config_result = _configure_model(model_cfg or "deepseek-v4-pro", token_lim, token_bgt)
+        # Step 3: Auto-detect model → configure (zero-interaction in 99% of cases)
+        t3 = progress.add_task("[cyan]3/5 自动检测模型并配置...", total=100)
+        # Try auto-detection first
+        model_cfg, token_lim, token_bgt, input_lns = model, token_limit, token_budget, input_lines
+        detected_info = ""
+        if not model_cfg:
+            try:
+                from apex.cli.commands.model_detect import detect_models
+                detected = detect_models()
+                providers = detected.get("providers", {})
+                if providers:
+                    # Auto-pick best provider
+                    best = _pick_best_provider(providers)
+                    model_cfg = best["model"]
+                    detected_info = f" (auto: {best['provider']})"
+                    progress.update(t3, completed=30,
+                                    description=f"[cyan]3/5 检测到 {best['provider']} → {best['model']}...[/]")
+            except Exception:
+                pass
+        # Fallback defaults
+        if not model_cfg:
+            model_cfg = "deepseek-v4-pro"
+        if not token_lim:
+            token_lim = DEFAULT_TOKEN_LIMIT
+        if not token_bgt:
+            token_bgt = DEFAULT_TOKEN_BUDGET
+        if not input_lns:
+            input_lns = DEFAULT_INPUT_LINES
+        # Only prompt if still unconfigured (rare: no detection + no flags + not quick)
+        if not quick and not detected_info:
+            model_cfg = model_cfg or Prompt.ask("Default model", default="deepseek-v4-pro")
+            token_lim = token_limit or int(Prompt.ask("Token limit/session", default=str(DEFAULT_TOKEN_LIMIT)))
+            token_bgt = token_budget or int(Prompt.ask("Total token budget", default=str(DEFAULT_TOKEN_BUDGET)))
+            input_lns = input_lines or int(Prompt.ask("Input lines", default=str(DEFAULT_INPUT_LINES)))
+        config_result = _configure_model(model_cfg, token_lim, token_bgt)
         results["config"] = config_result["status"]
         _set_input_lines(input_lns)
         results["input_lines"] = input_lns
         progress.update(t3, completed=100,
-                        description=f"[green]3/5 ✓ Model: {model_cfg or 'deepseek-v4-pro'} | Token: {token_lim}/{token_bgt}[/]")
+                        description=f"[green]3/5 ✓ {model_cfg}{detected_info} | Token: {token_lim}/{token_bgt}[/]")
 
         # Step 4: Setup wrappers
         t4 = progress.add_task("[cyan]4/5 安装 Hermes 终端包装脚本...", total=100)
@@ -377,6 +401,24 @@ exec hermes -p "$AGENT" "$@"
     count += 1
 
     return {"count": count}
+
+
+PRIORITY_ORDER = ["deepseek", "aws-bedrock", "anthropic", "openai", "google", "openrouter"]
+
+
+def _pick_best_provider(providers: dict) -> dict:
+    """Pick the best available provider by priority + cost preference."""
+    for p in PRIORITY_ORDER:
+        if p in providers:
+            return {
+                "provider": p,
+                "model": providers[p]["default"],
+                "models": providers[p]["models"],
+                "auth_method": providers[p].get("auth_method", "unknown"),
+            }
+    # Fallback: first available
+    p = next(iter(providers))
+    return {"provider": p, "model": providers[p]["default"]}
 
 
 def _verify_setup() -> dict:
