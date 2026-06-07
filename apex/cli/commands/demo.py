@@ -118,8 +118,8 @@ def run_demo(
     # ═══ BANNER ═══
     console.print()
     console.print(Panel(
-        Text("⚡  Apex Demo — Your First AI Fleet", style="bold cyan"),
-        subtitle="5 minutes to multi-agent",
+        Text("⚡  Apex Demo — Your Multi-Agent Command Center", style="bold cyan"),
+        subtitle="5 minutes to your AI fleet",
         border_style="cyan",
     ))
     console.print()
@@ -183,10 +183,10 @@ def run_demo(
     # ═══ NEXT STEPS ═══
     console.print(Panel(
         dedent(f"""\
-        [bold cyan]🚀  Your AI Fleet is Ready![/bold cyan]
+        [bold cyan]🚀  Your Multi-Agent Command Center is Ready![/bold cyan]
 
-        [bold]Command Center:[/bold]  {dashboard_url}
-        [bold]7 tabs[/bold] to manage your entire operation
+        [bold]Access:[/bold]  {dashboard_url}
+        [bold]14 views[/bold] to manage your entire operation
 
         [bold]Try next:[/bold]
           [cyan]apex swarm "Build a REST API"[/cyan]       Parallel agents
