@@ -349,6 +349,9 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
 .pj-pipe-task .task-assignee{font-size:9px;color:var(--tx3);flex-shrink:0}
 .pj-empty-state{text-align:center;padding:32px 16px;color:var(--tx3);font-size:12px}
 .pj-empty-state i{font-size:32px;display:block;margin-bottom:8px;opacity:.3}
+.pj-agent-summary{display:flex;flex-wrap:wrap;gap:4px;padding:4px 0 10px 0;border-bottom:1px solid var(--line2);margin-bottom:8px}
+.pj-agent-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500;white-space:nowrap;cursor:default}
+.pj-agent-tag{display:inline-block;vertical-align:middle}
 
 @media(max-width:920px){
   .pj-tricol{grid-template-columns:1fr}
@@ -1265,21 +1268,35 @@ function renderProject() {
   // --- L3: Agent Roster ---
   if (agents.length > 0) {
     $('#pjAgentCount').textContent = `(${totalAgents})`;
-    $('#pjAgentList').innerHTML = agents.map(a => {
+    // Mini org summary
+    const cats = categorizeAgents(agents);
+    let summaryHTML = '<div class="pj-agent-summary">';
+    for (const [cat, info] of Object.entries(cats)) {
+      if (info.count === 0) continue;
+      summaryHTML += `<span class="pj-agent-badge ${cat}" title="${info.label}: ${info.names.slice(0,3).join(', ')}">${info.icon} ${info.label} ${info.count}</span>`;
+    }
+    summaryHTML += '</div>';
+
+    // Agent rows with category stripes + tags
+    const agentHTML = agents.map(a => {
       const loadPct = Math.min(100, Math.round((a.load_pct || a.load || 0) * 100));
       const loadColor = loadPct > 80 ? 'var(--red)' : loadPct > 50 ? 'var(--amber)' : 'var(--green)';
       const agentId = a.agent_id || a.name || '';
       const initial = (agentId || 'A').charAt(0).toUpperCase();
-      return `<div class="pj-agent-row" onclick="openAgentDetail('${agentId}')">
+      const cls = classifyAgent(agentId);
+      const stripeColor = cls.color;
+      return `<div class="pj-agent-row" onclick="openAgentDetail('${agentId}')" style="border-left:3px solid ${stripeColor}">
         <div class="pj-agent-avatar" style="background:var(--${loadPct>80?'red':loadPct>50?'amber':'green'}-d);color:${loadColor}">${initial}</div>
         <div class="pj-agent-info">
-          <div class="pj-agent-name">${agentId || 'Agent'}</div>
-          <div class="pj-agent-role">${a.role || '未分配角色'}</div>
+          <div class="pj-agent-name">${agentId || 'Agent'} <span class="pj-agent-tag" style="background:${cls.bg};color:${cls.color};font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px">${cls.icon} ${cls.label}</span></div>
+          <div class="pj-agent-role">${a.role || cls.subtitle || '—'}</div>
           <div class="pj-agent-load"><i style="width:${loadPct}%;background:${loadColor}"></i></div>
         </div>
         <span style="font-size:10px;color:${loadColor};font-weight:600">${loadPct}%</span>
       </div>`;
     }).join('');
+
+    $('#pjAgentList').innerHTML = summaryHTML + agentHTML;
   } else {
     $('#pjAgentCount').textContent = '';
     $('#pjAgentList').innerHTML = '<div class="pj-empty-state"><i class="ti ti-robot"></i>暂无 Agent<br><span style="font-size:10px">通过「招聘 Agent」添加</span></div>';
@@ -1420,6 +1437,46 @@ function filterProjectView() {
   $$('.pj-pipe-task').forEach(el => {
     el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
   });
+}
+
+// ═══ Agent Classification ═══
+const AGENT_CATEGORIES = [
+  { key: 'origin',   pattern: /^(origin|default)$/i,         icon: '⚓', label: '始祖',   color: '#a78bfa', bg: 'rgba(167,139,250,.15)', subtitle: '舰队总司令，跨项目调度', tier: 0 },
+  { key: 'pm',       pattern: /-(pm)$|^pm-/i,                icon: '📋', label: 'PM',     color: '#60a5fa', bg: 'rgba(96,165,250,.15)', subtitle: '项目管理，Sprint 推进', tier: 1 },
+  { key: 'audit',    pattern: /audit|guardian|approval/i,     icon: '🔍', label: '审批审计', color: '#f59e0b', bg: 'rgba(245,158,11,.15)', subtitle: '人在环闸门，安全合规', tier: 1 },
+  { key: 'cron',     pattern: /cron|watchdog|monitor|巡检|定时/i, icon: '⏰', label: '定时巡检', color: '#8b5cf6', bg: 'rgba(139,92,246,.15)', subtitle: 'Cron 定时任务，系统巡检', tier: 2 },
+  { key: 'architect',pattern: /architect/i,                   icon: '🏛️', label: '架构',   color: '#06b6d4', bg: 'rgba(6,182,212,.15)', subtitle: '系统架构设计与评审', tier: 2 },
+  { key: 'ai',       pattern: /ai-|algorithm|ml-|training/i,  icon: '🧠', label: 'AI/ML',  color: '#ec4899', bg: 'rgba(236,72,153,.15)', subtitle: 'AI 算法研发与训练', tier: 2 },
+  { key: 'vision',   pattern: /vision/i,                      icon: '👁️', label: '视觉',   color: '#14b8a6', bg: 'rgba(20,184,166,.15)', subtitle: '图像/视频识别处理', tier: 2 },
+  { key: 'frontend', pattern: /frontend|ui-|ux-/i,            icon: '🎨', label: '前端',   color: '#f472b6', bg: 'rgba(244,114,182,.15)', subtitle: '小程序/Web UI 开发', tier: 3 },
+  { key: 'backend',  pattern: /backend|api-|server/i,         icon: '⚙️', label: '后端',   color: '#34d399', bg: 'rgba(52,211,153,.15)', subtitle: 'API/数据库/服务端开发', tier: 3 },
+  { key: 'content',  pattern: /content|copywriter|marketing|推广/i, icon: '✍️', label: '内容', color: '#fb923c', bg: 'rgba(251,146,60,.15)', subtitle: '内容创作与营销推广', tier: 3 },
+  { key: 'funding',  pattern: /fundraising|融资|pitch/i,      icon: '💰', label: '融资',   color: '#facc15', bg: 'rgba(250,204,21,.20)', subtitle: 'BP撰写与投资人路演', tier: 3 },
+  { key: 'security', pattern: /security|sec-/i,               icon: '🔒', label: '安全',   color: '#ef4444', bg: 'rgba(239,68,68,.15)', subtitle: '安全扫描与漏洞修复', tier: 2 },
+  { key: 'data',     pattern: /data|analyst|report|报表/i,     icon: '📊', label: '数据',   color: '#6366f1', bg: 'rgba(99,102,241,.15)', subtitle: '数据分析与报表生成', tier: 3 },
+  { key: 'ops',      pattern: /ops|deploy|devops|bridge/i,    icon: '🚀', label: '运维',   color: '#0ea5e9', bg: 'rgba(14,165,233,.15)', subtitle: '部署运维与桥接', tier: 2 },
+  { key: 'general',  pattern: /.*/,                            icon: '🤖', label: '通用',   color: '#9ca3af', bg: 'rgba(156,163,175,.15)', subtitle: '未分类通用 Agent', tier: 4 }
+];
+
+function classifyAgent(name) {
+  if (!name) return AGENT_CATEGORIES.find(c => c.key === 'general');
+  const lower = name.toLowerCase();
+  for (const cat of AGENT_CATEGORIES) {
+    if (cat.pattern.test(lower)) return cat;
+  }
+  return AGENT_CATEGORIES.find(c => c.key === 'general');
+}
+
+function categorizeAgents(agents) {
+  const cats = {};
+  AGENT_CATEGORIES.forEach(c => { cats[c.key] = { ...c, count: 0, names: [] }; });
+  agents.forEach(a => {
+    const name = a.agent_id || a.name || '';
+    const cls = classifyAgent(name);
+    cats[cls.key].count++;
+    cats[cls.key].names.push(name);
+  });
+  return cats;
 }
 
 // === PROJECT DRAWER: edit goal, view/edit modules, agent roster ===
