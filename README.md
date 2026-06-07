@@ -38,15 +38,14 @@ apex demo                        # 3. Launch your fleet + Command Center
 
 <p align="center"><em>One command spawns 3 agents. A browser opens. You see everything.</em></p>
 
-> **Try it now:** `apex demo` → opens http://localhost:8080/v5 — your 7-tab Command Center with real-time Agent Fleet, Token Economy, GPU Monitor, Kanban Board, Knowledge Graph, and more. **No API key needed for the demo.**
+> **Try it now:** `apex demo` → opens http://localhost:8080 — your **14-view Command Center** with real-time Agent Fleet, Project War Room, Pipeline, Token Economy, GPU Monitor, Approval System, Module Marketplace, SKILL Evolution, Knowledge Graph, and more. **No API key needed for the demo.**
 
 | Quick Links | |
 |-------------|---|
-| [🚀 Quick Start](#-quick-start) | [💡 Why Apex?](#-why-apex) |
-| [🔬 7 Innovations](#-7-core-innovations) | [🎯 Orchestration Modes](#-orchestration-modes) |
+| [🚀 Quick Start](#-quick-start) | [🖥️ Command Center](#-command-center) |
+| [💡 Why Apex?](#-why-apex) | [🎯 Orchestration Modes](#-orchestration-modes) |
 | [📊 Comparison](#-comparison-vs-top-frameworks) | [🤖 Agent Templates](#-agent-templates) |
-| [📥 Install](#-installation) | [🖥️ Dashboard](#%EF%B8%8F-web-dashboard) |
-| [⚙️ Autonomous](#-autonomous-engine) | [📦 PyPI](https://pypi.org/project/apex-multiagent/) |
+| [📥 Install](#-installation) | [📦 PyPI](https://pypi.org/project/apex-multiagent/) |
 
 ---
 
@@ -71,9 +70,9 @@ apex crew create "Design a microservices architecture"
 # One-Click Company — you are now a startup
 apex company create my-startup --industry saas
 
-# Open the Web Dashboard
+# Open the Command Center
 apex dashboard
-# → http://localhost:8080
+# → http://localhost:8080 — 14-view enterprise Command Center
 ```
 
 ---
@@ -318,7 +317,7 @@ apex run "Build a login page" --profile my-dev  # Run with your agent
 
 | Layer | Name | Purpose | Key Components |
 |-------|------|---------|---------------|
-| **L5** | **Interface** | User & developer touchpoints | CLI (20 commands), Web Dashboard (12 panels), REST API (14 endpoints), MCP Protocol |
+| **L5** | **Interface** | User & developer touchpoints | CLI (20 commands), Command Center (14 views + drawer editing), REST API (40+ endpoints) |
 | **L4** | **Intelligence** | Cross-agent memory & learning | Evolution Engine, Knowledge Graph, Memory System (short/long/shared), Skill Packages |
 | **L3** | **Orchestration** | Multi-agent collaboration | 10 modes: Single, Swarm, Crew, Chain, Debate, Router, Supervisor, Monitor, Kanban, Company |
 | **L2** | **Agent Runtime** | Individual agent execution | Profile (UPF), Runtime engine, Self-Healing (3-strike), Tool integration, Fallback handling |
