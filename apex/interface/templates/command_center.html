@@ -317,6 +317,44 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
 .board-add{display:flex;gap:8px;margin-top:8px}
 .board-add input{flex:1}
 
+/* ═══ Project War Room V2 ═══ */
+.pj-tricol{display:grid;grid-template-columns:1.8fr 2fr 3fr;gap:10px;align-items:start}
+.pj-mod-item{padding:8px 10px;border-left:3px solid var(--violet);margin-bottom:4px;background:var(--bg2);border-radius:0 6px 6px 0;cursor:pointer;transition:all .15s}
+.pj-mod-item:hover{border-left-color:var(--teal);background:var(--bg3)}
+.pj-mod-item .mod-name{font-weight:600;font-size:12px;display:flex;align-items:center;gap:6px}
+.pj-mod-item .mod-bar{height:3px;background:var(--line);border-radius:2px;margin-top:4px;overflow:hidden}
+.pj-mod-item .mod-bar i{display:block;height:100%;border-radius:2px;background:var(--violet);transition:width .3s}
+.pj-sf-item{padding:4px 0 4px 22px;font-size:11px;color:var(--tx2);display:flex;align-items:center;gap:6px;cursor:pointer}
+.pj-sf-item:hover{color:var(--tx)}
+.pj-sf-dot{width:5px;height:5px;border-radius:50%;background:var(--tx3)}
+.pj-sf-dot.done{background:var(--green)}
+.pj-agent-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:background .15s}
+.pj-agent-row:hover{background:var(--bg2)}
+.pj-agent-avatar{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;flex-shrink:0}
+.pj-agent-info{flex:1;min-width:0}
+.pj-agent-name{font-size:12px;font-weight:600}
+.pj-agent-role{font-size:10px;color:var(--tx3)}
+.pj-agent-load{height:3px;background:var(--line);border-radius:2px;margin-top:2px;overflow:hidden}
+.pj-agent-load i{display:block;height:100%;border-radius:2px;transition:width .3s}
+.pj-pipe-stage{margin-bottom:8px}
+.pj-pipe-stage-h{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--tx2);padding:4px 0;text-transform:uppercase;letter-spacing:.5px}
+.pj-pipe-stage-h .count{font-size:10px;background:var(--bg3);padding:1px 6px;border-radius:8px;color:var(--tx3)}
+.pj-pipe-task{padding:6px 8px;margin-bottom:3px;background:var(--bg2);border-radius:5px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:6px;border-left:2px solid var(--line);transition:all .15s}
+.pj-pipe-task:hover{border-left-color:var(--teal);background:var(--bg3)}
+.pj-pipe-task .prio{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.pj-pipe-task .prio.high{background:var(--red)}
+.pj-pipe-task .prio.med{background:var(--amber)}
+.pj-pipe-task .prio.low{background:var(--tx3)}
+.pj-pipe-task .task-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pj-pipe-task .task-assignee{font-size:9px;color:var(--tx3);flex-shrink:0}
+.pj-empty-state{text-align:center;padding:32px 16px;color:var(--tx3);font-size:12px}
+.pj-empty-state i{font-size:32px;display:block;margin-bottom:8px;opacity:.3}
+
+@media(max-width:920px){
+  .pj-tricol{grid-template-columns:1fr}
+  .app{grid-template-columns:1fr}.side{display:none}.kpis,.ladder,.board-grid{grid-template-columns:repeat(1,1fr)}.fleet-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+}
+
 @media(max-width:920px){.app{grid-template-columns:1fr}.side{display:none}.kpis,.kanban,.ladder,.board-grid{grid-template-columns:repeat(1,1fr)}.fleet-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}}
 </style>
 </head>
@@ -384,30 +422,73 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
         </div>
       </section>
 
-      <!-- VIEW 2: 项目作战室 -->
+      <!-- VIEW 2: 项目作战室 V2 — 5层布局 -->
       <section class="view" id="v-project">
-        <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px">
-          <div style="font-family:var(--disp);font-size:18px;font-weight:600"><i class="ti ti-target-arrow" style="color:var(--teal);margin-right:8px"></i>项目作战室</div>
+        <!-- L1: 项目选择栏 -->
+        <div class="card" id="pjTopBar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding:12px 16px">
           <div style="display:flex;align-items:center;gap:12px">
-            <select id="pjSwitch" onchange="loadProjectView()" style="width:auto;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px 11px;font-family:var(--body);font-size:13px">
-              <option value="all">全部项目</option>
+            <div style="font-family:var(--disp);font-size:16px;font-weight:600"><i class="ti ti-target-arrow" style="color:var(--teal);margin-right:6px"></i>项目作战室</div>
+            <select id="pjSwitch" onchange="loadProjectView()" style="background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:6px;padding:8px 32px 8px 12px;font-family:var(--body);font-size:13px;appearance:none;cursor:pointer">
+              <option value="">-- 选择项目 --</option>
             </select>
-            <div class="seg" id="pjSeg"></div>
-            <button class="btn sm" onclick="loadStandup()"><i class="ti ti-clipboard-text"></i>站会报告</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="position:relative">
+              <i class="ti ti-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tx3);font-size:14px"></i>
+              <input id="pjSearch" placeholder="搜索模块/Agent..." oninput="filterProjectView()" style="background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:6px;padding:8px 12px 8px 32px;font-family:var(--body);font-size:12px;width:180px">
+            </div>
+            <button class="btn sm" onclick="openProjectDrawer()" title="编辑项目"><i class="ti ti-edit"></i></button>
+            <button class="btn sm primary" onclick="loadStandup()"><i class="ti ti-clipboard-text"></i>站会报告</button>
           </div>
         </div>
-        <div style="height:18px"></div>
-        <div class="kanban" id="kanban"></div>
-        <div style="height:18px"></div>
-        <div class="grid" style="grid-template-columns:1fr 1fr">
-          <div class="card"><div class="sec-h"><i class="ti ti-robot"></i>Agent 工作负载</div><div id="workloads"></div></div>
-          <div class="card"><div class="sec-h"><i class="ti ti-clipboard-list"></i>站会报告</div><div id="standupMini" style="font-size:12px;color:var(--tx2)">点击「站会报告」按钮加载</div></div>
+        <div style="height:14px"></div>
+
+        <!-- L2: Hero 仪表盘 -->
+        <div class="grid" style="grid-template-columns:2fr 1.5fr 1fr 1fr 0.8fr;gap:10px;margin-bottom:14px" id="pjHeroKpis"></div>
+
+        <!-- L3: 三列瀑布流 -->
+        <div class="pj-tricol" id="pjTriCol">
+          <!-- 列1: 模块树 (30%) -->
+          <div class="card" id="pjModCol" style="overflow:auto;max-height:70vh">
+            <div class="sec-h" style="position:sticky;top:0;background:var(--bg);z-index:1;padding-bottom:8px">
+              <i class="ti ti-box"></i>模块架构
+              <button class="btn sm ghost" style="margin-left:auto;font-size:10px" onclick="openProjectDrawer()"><i class="ti ti-plus"></i></button>
+            </div>
+            <div id="pjModTree"></div>
+          </div>
+          <!-- 列2: Agent编队 (30%) -->
+          <div class="card" id="pjAgentCol" style="overflow:auto;max-height:70vh">
+            <div class="sec-h" style="position:sticky;top:0;background:var(--bg);z-index:1;padding-bottom:8px">
+              <i class="ti ti-robot"></i>Agent 编队
+              <span id="pjAgentCount" style="margin-left:6px;font-size:11px;color:var(--tx3)"></span>
+            </div>
+            <div id="pjAgentList"></div>
+          </div>
+          <!-- 列3: Pipeline (40%) -->
+          <div class="card" id="pjPipeCol" style="overflow:auto;max-height:70vh">
+            <div class="sec-h" style="position:sticky;top:0;background:var(--bg);z-index:1;padding-bottom:8px">
+              <i class="ti ti-arrows-shuffle"></i>Pipeline
+              <span id="pjPipeCount" style="margin-left:6px;font-size:11px;color:var(--tx3)"></span>
+            </div>
+            <div id="pjPipeStages"></div>
+          </div>
         </div>
-        <div style="height:18px"></div>
-        <!-- Sprint Pipeline -->
-        <div class="card" id="sprintCard">
-          <div class="sec-h"><i class="ti ti-run"></i>Sprint Pipeline · MVP 闭环流水线</div>
-          <div id="sprintContent" style="font-size:12px;color:var(--tx2)">加载中...</div>
+        <div style="height:14px"></div>
+
+        <!-- L4: Sprint 时间线 -->
+        <div class="card" id="pjSprintCard" style="display:none">
+          <div class="sec-h" style="cursor:pointer" onclick="this.parentElement.querySelector('#pjSprintBody').classList.toggle('hidden')">
+            <i class="ti ti-run"></i>Sprint Pipeline · 时间线
+            <i class="ti ti-chevron-down" style="margin-left:auto;transition:transform .2s"></i>
+          </div>
+          <div id="pjSprintBody"></div>
+        </div>
+
+        <!-- L5: 活动提要 -->
+        <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:10px" id="pjActivityRow">
+          <div class="card"><div class="sec-h"><i class="ti ti-git-commit"></i>最近提交</div><div id="pjCommits" style="font-size:11px;color:var(--tx3)">加载中...</div></div>
+          <div class="card"><div class="sec-h"><i class="ti ti-clipboard-list"></i>站会摘要</div><div id="pjStandupMini" style="font-size:11px;color:var(--tx3)">点击上方「站会报告」加载</div></div>
+          <div class="card"><div class="sec-h"><i class="ti ti-bulb"></i>AI 建议</div><div id="pjSuggestions" style="font-size:11px;color:var(--tx3)">选择项目后生成</div></div>
         </div>
       </section>
 
@@ -1068,6 +1149,7 @@ async function loadProjectView() {
 
   // If a project is selected, fetch its detail from the new API
   const pjName = $('#pjSwitch') && $('#pjSwitch').value;
+  state._pipeFetched = false;  // Reset pipeline cache on project switch
   if (pjName && pjName !== 'all' && pjName !== '') {
     const pjData = await fetchJSON(API + '/projects/' + encodeURIComponent(pjName));
     if (pjData && !pjData.error) {
@@ -1100,140 +1182,244 @@ async function loadProjectView() {
 
 function renderProject() {
   const pj = state.liveProject;
+  const d = state.data;
 
-  if (pj) {
-    // ===== UNIFIED SUMMARY + CLICK-TO-DRAWER ARCHITECTURE =====
-    const modules = pj.modules || [];
-    const agents = pj.agents || [];
-    const goal = pj.goal || '';
-    const projectName = pj.name || state.selectedProject || '';
-
-    // Count totals
-    const totalModules = modules.length;
-    const totalSubFunctions = modules.reduce((sum, m) => sum + (m.sub_functions ? m.sub_functions.length : 0), 0);
-    const totalAgents = agents.length;
-    const completedTasks = agents.reduce((s, a) => s + (a.done || 0), 0);
-    const totalTasks = agents.reduce((s, a) => s + (a.total || 0), 0);
-    const pct = totalTasks > 0 ? Math.round(completedTasks / totalTasks * 100) : 0;
-
-    // ---- KPI summary row ----
-    let html = `<div class="grid kpis" style="grid-template-columns:repeat(4,1fr)">`;
-    html += `<div class="kpi" style="cursor:pointer" onclick="openProjectDrawer()"><div class="lbl"><i class="ti ti-target-arrow"></i>项目目标</div><div class="num" style="font-size:16px">${goal ? goal.slice(0, 30) + (goal.length > 30 ? '...' : '') : '点击编辑'}</div><div class="sub">${projectName} · 点击查看/编辑</div></div>`;
-    html += kpiHTML('ti-box', '模块', totalModules, totalSubFunctions + ' 子功能', '');
-    html += kpiHTML('ti-subtask', '任务进度', completedTasks + '/' + totalTasks, pct + '% 完成', pct < 50 ? 'warn' : '');
-    html += kpiHTML('ti-robot', 'Agent', totalAgents, agents.filter(a => (a.load_pct || 0) * 100 > 50).length + ' 忙碌', '');
-    html += `</div>`;
-    html += `<div style="height:18px"></div>`;
-
-    // ---- Compact module list ----
-    html += `<div class="card"><div class="sec-h"><i class="ti ti-box"></i>模块总览 · 点击模块或Agent进入编辑</div>`;
-    if (modules.length > 0) {
-      html += `<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px">`;
-      modules.forEach((m, mi) => {
-        const sfCount = (m.sub_functions || []).length;
-        const doneSF = (m.sub_functions || []).filter(sf => (sf.agent_tasks_done || 0) >= (sf.agent_tasks_total || 1)).length;
-        html += `<div class="card" style="padding:12px;cursor:pointer;border-top:3px solid var(--violet);transition:.15s" 
-          onclick="openModuleDrawer(${mi})" onmouseenter="this.style.borderColor='var(--violet)'" onmouseleave="this.style.borderColor='var(--line)'">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <i class="ti ti-box" style="color:var(--violet)"></i>
-            <span style="font-weight:600;font-size:13px">${m.name || '未命名'}</span>
-            <span class="tag violet" style="margin-left:auto;font-size:10px">${sfCount}</span>
-          </div>
-          <div style="font-size:11px;color:var(--tx3)">${m.description ? m.description.slice(0, 60) : '暂无描述'}</div>
-          <div class="bar" style="height:3px;margin-top:6px"><i style="width:${sfCount?Math.round(doneSF/sfCount*100):0}%;background:var(--violet)"></i></div>
-        </div>`;
-      });
-      html += `</div>`;
-    } else {
-      html += `<div style="color:var(--tx3);padding:16px;text-align:center">暂无模块数据</div>`;
-    }
-    html += `</div>`;
-    html += `<div style="height:18px"></div>`;
-
-    // ---- Agent roster (compact) ----
-    if (agents.length > 0) {
-      html += `<div class="card"><div class="sec-h"><i class="ti ti-robot"></i>Agent 编队 · 点击查看详情</div>`;
-      html += `<div class="fleet-grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">`;
-      agents.forEach(a => {
-        const loadPct = Math.min(100, Math.round((a.load_pct || 0) * 100));
-        const loadColor = loadPct > 80 ? 'var(--red)' : loadPct > 50 ? 'var(--amber)' : 'var(--green)';
-        const statusDot = loadPct <= 0 ? 'var(--tx3)' : loadPct > 80 ? 'var(--red)' : 'var(--green)';
-        const agentId = a.agent_id || '';
-        html += `<div class="fleet-card" onclick="openAgentDetail('${agentId}')" style="cursor:pointer">
-          <div class="fh">
-            <span class="fstatus" style="background:${statusDot}"></span>
-            <div><div class="fname">${agentId || 'Agent'}</div>
-            <div class="frole"><span class="tag" style="font-size:10px">${loadPct}%</span></div></div>
-          </div>
-          <div class="fbar"><i style="width:${loadPct}%;background:${loadColor}"></i></div>
-          <div class="fmeta">
-            <span><i class="ti ti-check" style="color:var(--green)"></i>${a.done||0}</span>
-            <span><i class="ti ti-loader" style="color:var(--blue)"></i>${a.in_progress||0}</span>
-          </div>
-        </div>`;
-      });
-      html += `</div></div>`;
-    }
-
-    // Store project data for drawer callbacks
-    window._pjData = pj;
-    window._pjModules = modules;
-    window._pjAgents = agents;
-
-    $('#standupMini').innerHTML = '<div class="sec-h"><i class="ti ti-clipboard-list"></i>站会报告</div><div style="font-size:12px;color:var(--tx2)">点击「站会报告」按钮加载</div>';
-    $('#kanban').innerHTML = html;
-    $('#workloads').innerHTML = '';
-
-  } else {
-    // ===== FALLBACK: original static/fetched project view =====
-    const d = state.data;
-    const tasks = d.tasks || [];
-    const workloads = d.workloads || [];
-    const teams = d.teams || [];
-
-    // Project dropdown
-    const pjNames = [...new Set([...teams.map(t => t.name || t.project || t.id).filter(Boolean), '羽球宝AI', 'Apex', '深圳羽球地图'])];
-    const sel = $('#pjSwitch');
-    if (sel && sel.options.length <= 1) {
-      sel.innerHTML = '<option value="all">全部项目</option>' + pjNames.map(n => `<option value="${n}">${n}</option>`).join('');
-    }
-
-    // Kanban columns
-    const cols = { todo: ['待办', 'ti-inbox', 'var(--tx3)'], run: ['进行中', 'ti-loader', 'var(--blue)'],
-      gate: ['待审', 'ti-eye', 'var(--amber)'], done: ['完成', 'ti-check', 'var(--green)'] };
-    const grouped = { todo: [], run: [], gate: [], done: [] };
-    tasks.forEach(t => {
-      const s = t.status || 'todo';
-      if (grouped[s]) grouped[s].push(t);
-      else grouped.todo.push(t);
-    });
-
-    $('#kanban').innerHTML = Object.entries(cols).map(([k, [lbl, ic, tone]]) => {
-      return `<div class="col"><h4 style="color:${tone}"><i class="ti ${ic}"></i>${lbl} (${grouped[k].length})</h4>
-        ${grouped[k].map(t => `<div class="task b-${k}">
-          ${t.title||t.id}<div class="assign">→ ${t.assignee||'未分配'} · 优先级${t.priority||'?'}</div>
-        </div>`).join('')}</div>`;
-    }).join('');
-
-    // Workloads
-    const wlData = d.workloads || {};
-    const wlAgents = Array.isArray(wlData) ? wlData : (wlData.agents || []);
-    if (wlAgents.length) {
-      $('#workloads').innerHTML = wlAgents.slice(0, 8).map(w => {
-        const pct = Math.min(100, Math.round((w.load || w.saturation || 0) * 100));
-        const color = pct > 80 ? 'var(--red)' : pct > 50 ? 'var(--amber)' : 'var(--green)';
-        return `<div style="margin-bottom:12px">
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-            <span style="font-weight:500">${w.name||w.agent||w.id}</span>
-            <span class="mono" style="color:${color}">${pct}%</span></div>
-          <div class="bar"><i style="width:${pct}%;background:${color}"></i></div></div>`;
-      }).join('');
-    } else {
-      $('#workloads').innerHTML = '<div style="color:var(--tx3);font-size:12px">暂无负载数据</div>';
-    }
-
-    $('#standupMini').innerHTML = '<div style="font-size:12px;color:var(--tx2)">点击「站会报告」按钮加载</div>';
+  if (!pj) {
+    // No project selected — show empty states in all 3 columns
+    const empty = '<div class="pj-empty-state"><i class="ti ti-inbox"></i>请选择一个项目</div>';
+    $('#pjHeroKpis').innerHTML = '';
+    $('#pjModTree').innerHTML = empty;
+    $('#pjAgentList').innerHTML = empty;
+    $('#pjPipeStages').innerHTML = empty;
+    $('#pjAgentCount').textContent = '';
+    $('#pjPipeCount').textContent = '';
+    $('#pjCommits').innerHTML = '选择项目后加载';
+    $('#pjSuggestions').innerHTML = '选择项目后生成';
+    return;
   }
+
+  const modules = pj.modules || [];
+  const agents = pj.agents || [];
+  const goal = pj.goal || '';
+  const projectName = pj.name || state.selectedProject || '';
+
+  // --- Calculate KPIs ---
+  const totalModules = modules.length;
+  const totalSubFunctions = modules.reduce((sum, m) => sum + (m.sub_functions ? m.sub_functions.length : 0), 0);
+  const totalAgents = agents.length;
+  const busyAgents = agents.filter(a => (a.load_pct || a.load || 0) > 50).length;
+  // Task progress from pipeline
+  const tasks = d.tasks || [];
+  const doneTasks = tasks.filter(t => t.status === 'done').length;
+  const totalTasks = tasks.length || (pj.task_count || 0);
+  const pct = totalTasks > 0 ? Math.round(doneTasks / totalTasks * 100) : 0;
+  const todayCost = (d.cc && d.cc.hermes_sessions ? d.cc.hermes_sessions.today_cost : 0) || 0;
+  const riskLevel = (totalTasks > 0 && pct < 30) ? 'warn' : (busyAgents > totalAgents * 0.8 ? 'warn' : '');
+
+  // --- L2: Hero KPI row (5 cards) ---
+  $('#pjHeroKpis').innerHTML =
+    `<div class="kpi" style="cursor:pointer" onclick="openProjectDrawer()">
+      <div class="lbl"><i class="ti ti-target-arrow"></i>项目目标</div>
+      <div class="num" style="font-size:14px">${goal ? goal.slice(0, 40) + (goal.length > 40 ? '...' : '') : '点击编辑目标'}</div>
+      <div class="sub">${projectName}</div></div>` +
+    `<div class="kpi">
+      <div class="lbl"><i class="ti ti-progress"></i>任务进度</div>
+      <div class="num">${pct}%</div>
+      <div class="bar" style="margin-top:4px;height:5px"><i style="width:${pct}%;background:${pct>70?'var(--green)':pct>30?'var(--amber)':'var(--red)'}"></i></div>
+      <div class="sub">${doneTasks}/${totalTasks} 已完成</div></div>` +
+    `<div class="kpi">
+      <div class="lbl"><i class="ti ti-robot"></i>Agent 编队</div>
+      <div class="num">${totalAgents}<span style="font-size:12px;color:var(--tx3)"> / ${busyAgents} 忙碌</span></div>
+      <div class="sub">${totalAgents - busyAgents} 闲置可用</div></div>` +
+    `<div class="kpi">
+      <div class="lbl"><i class="ti ti-coin"></i>今日成本</div>
+      <div class="num">$${Number(todayCost).toFixed(2)}</div>
+      <div class="sub">Token 消耗估算</div></div>` +
+    `<div class="kpi">
+      <div class="lbl"><i class="ti ti-shield"></i>风险</div>
+      <div class="num" style="color:${riskLevel==='warn'?'var(--amber)':'var(--green)'}">${riskLevel==='warn'?'⚠ 关注':'🟢 正常'}</div>
+      <div class="sub">${riskLevel==='warn'?'进度滞后或负载偏高':'所有指标在安全区'}</div></div>`;
+
+  // --- L3: Module Tree ---
+  if (modules.length > 0) {
+    $('#pjModTree').innerHTML = modules.map((m, mi) => {
+      const sfs = m.sub_functions || [];
+      const doneCount = sfs.filter(sf => (sf.agent_tasks_done || 0) >= (sf.agent_tasks_total || 1)).length;
+      const sfPct = sfs.length ? Math.round(doneCount / sfs.length * 100) : 0;
+      return `<div class="pj-mod-item" onclick="openModuleDrawer(${mi})">
+        <div class="mod-name"><i class="ti ti-box" style="color:var(--violet)"></i>${m.name || '未命名'}
+          <span style="margin-left:auto;font-size:10px;color:var(--tx3)">${doneCount}/${sfs.length}</span></div>
+        <div class="mod-bar"><i style="width:${sfPct}%"></i></div>
+        ${sfs.slice(0, 6).map(sf => {
+          const done = (sf.agent_tasks_done || 0) >= (sf.agent_tasks_total || 1);
+          return `<div class="pj-sf-item" onclick="event.stopPropagation();openSubFunctionDrawer(${mi},'${(sf.name||'').replace(/'/g,"\\'")}')">
+            <span class="pj-sf-dot${done?' done':''}"></span>${sf.name||'未命名'}</div>`;
+        }).join('')}
+        ${sfs.length > 6 ? `<div class="pj-sf-item" style="color:var(--tx3)">+ ${sfs.length - 6} 更多...</div>` : ''}
+      </div>`;
+    }).join('');
+  } else {
+    $('#pjModTree').innerHTML = '<div class="pj-empty-state"><i class="ti ti-box"></i>暂无模块<br><span style="font-size:10px">点击 + 添加模块</span></div>';
+  }
+
+  // --- L3: Agent Roster ---
+  if (agents.length > 0) {
+    $('#pjAgentCount').textContent = `(${totalAgents})`;
+    $('#pjAgentList').innerHTML = agents.map(a => {
+      const loadPct = Math.min(100, Math.round((a.load_pct || a.load || 0) * 100));
+      const loadColor = loadPct > 80 ? 'var(--red)' : loadPct > 50 ? 'var(--amber)' : 'var(--green)';
+      const agentId = a.agent_id || a.name || '';
+      const initial = (agentId || 'A').charAt(0).toUpperCase();
+      return `<div class="pj-agent-row" onclick="openAgentDetail('${agentId}')">
+        <div class="pj-agent-avatar" style="background:var(--${loadPct>80?'red':loadPct>50?'amber':'green'}-d);color:${loadColor}">${initial}</div>
+        <div class="pj-agent-info">
+          <div class="pj-agent-name">${agentId || 'Agent'}</div>
+          <div class="pj-agent-role">${a.role || '未分配角色'}</div>
+          <div class="pj-agent-load"><i style="width:${loadPct}%;background:${loadColor}"></i></div>
+        </div>
+        <span style="font-size:10px;color:${loadColor};font-weight:600">${loadPct}%</span>
+      </div>`;
+    }).join('');
+  } else {
+    $('#pjAgentCount').textContent = '';
+    $('#pjAgentList').innerHTML = '<div class="pj-empty-state"><i class="ti ti-robot"></i>暂无 Agent<br><span style="font-size:10px">通过「招聘 Agent」添加</span></div>';
+  }
+
+  // --- L3: Pipeline Stages ---
+  const pipeStages = (d.cc && d.cc.hermes_cron) ? [] : []; // Pipeline from separate API
+  // Fetch pipeline data if project selected
+  if (state.selectedProject && !state._pipeFetched) {
+    state._pipeFetched = true;
+    fetchJSON(API + '/pipeline/' + encodeURIComponent(state.selectedProject)).then(pipe => {
+      state._pipeData = pipe;
+      renderPipelineColumn(pipe);
+    });
+  } else if (state._pipeData) {
+    renderPipelineColumn(state._pipeData);
+  } else {
+    // Use tasks as fallback pipeline
+    renderPipelineColumn({stages: buildStagesFromTasks(tasks)});
+  }
+
+  // --- L4: Sprint ---
+  if (state.data.sprints && state.data.sprints.length > 0) {
+    $('#pjSprintCard').style.display = 'block';
+    $('#pjSprintBody').innerHTML = state.data.sprints.map(s =>
+      `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line2)">
+        <span class="tag ${s.status==='active'?'green':'gray'}" style="font-size:10px">${s.status||'planned'}</span>
+        <span style="font-size:12px;flex:1">${s.name||s.title||'Sprint'}</span>
+        <span style="font-size:10px;color:var(--tx3)">${s.start_date||''} → ${s.end_date||''}</span>
+      </div>`
+    ).join('');
+  }
+
+  // --- L5: Activity ---
+  const recentTasks = tasks.filter(t => t.completed_at).sort((a,b) => (b.completed_at||'').localeCompare(a.completed_at||'')).slice(0,3);
+  $('#pjCommits').innerHTML = recentTasks.length > 0
+    ? recentTasks.map(t => `<div style="padding:3px 0;font-size:11px">✓ ${t.title||t.id} <span style="color:var(--tx3)">${t.assignee||''}</span></div>`).join('')
+    : '<div style="color:var(--tx3)">暂无完成记录</div>';
+
+  // Store for drawer callbacks
+  window._pjData = pj;
+  window._pjModules = modules;
+  window._pjAgents = agents;
+}
+
+function buildStagesFromTasks(tasks) {
+  const stages = {};
+  (tasks||[]).forEach(t => {
+    const s = t.status || 'todo';
+    if (!stages[s]) stages[s] = [];
+    stages[s].push(t);
+  });
+  const order = ['todo','run','gate','done'];
+  return order.filter(k => stages[k]).map(k => ({name: k, tasks: stages[k]}));
+}
+
+function renderPipelineColumn(pipe) {
+  const stages = (pipe && pipe.stages) ? pipe.stages : [];
+  if (stages.length === 0) {
+    $('#pjPipeStages').innerHTML = '<div class="pj-empty-state"><i class="ti ti-arrows-shuffle"></i>暂无 Pipeline 数据</div>';
+    $('#pjPipeCount').textContent = '';
+    return;
+  }
+  const totalPipeTasks = stages.reduce((s,st) => s + (st.tasks||[]).length, 0);
+  $('#pjPipeCount').textContent = `(${totalPipeTasks})`;
+  $('#pjPipeStages').innerHTML = stages.map(st => {
+    const tlist = st.tasks || [];
+    const stageColor = st.name === 'done' ? 'var(--green)' : st.name === 'run' ? 'var(--blue)' : st.name === 'gate' ? 'var(--amber)' : 'var(--tx3)';
+    return `<div class="pj-pipe-stage">
+      <div class="pj-pipe-stage-h" style="color:${stageColor}">${st.name||'阶段'} <span class="count">${tlist.length}</span></div>
+      ${tlist.map(t => `<div class="pj-pipe-task" onclick="openTaskDrawer('${(t.id||'').replace(/'/g,"\\'")}')">
+        <span class="prio ${t.priority==='high'?'high':t.priority==='medium'?'med':'low'}"></span>
+        <span class="task-title">${t.title||t.id||'任务'}</span>
+        <span class="task-assignee">${t.assignee||''}</span>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function openTaskDrawer(taskId) {
+  const task = (state.data.tasks||[]).find(t => t.id === taskId);
+  if (!task) return;
+  openDrawer('任务: ' + (task.title||taskId), task.status||'todo', 'ti-subtask',
+    `<div style="font-size:12px;color:var(--tx2);line-height:1.8">
+      <div><b>状态:</b> ${task.status||'?'} &nbsp; <b>优先级:</b> ${task.priority||'?'}</div>
+      <div><b>分配给:</b> ${task.assignee||'未分配'}</div>
+      <div><b>创建:</b> ${task.created_at||'?'}</div>
+      ${task.completed_at ? `<div><b>完成:</b> ${task.completed_at}</div>` : ''}
+      ${task.cost ? `<div><b>成本:</b> $${task.cost}</div>` : ''}
+    </div>`
+  );
+}
+
+function openSubFunctionDrawer(mi, sfName) {
+  const mods = window._pjModules || [];
+  const mod = mods[mi];
+  if (!mod) return;
+  const sf = (mod.sub_functions||[]).find(s => s.name === sfName);
+  if (!sf) return;
+  openDrawerEdit(
+    '子功能: ' + sfName,
+    mod.name || '模块',
+    'ti-subtask',
+    `<div style="font-size:12px">
+      <label style="display:block;margin-bottom:4px;color:var(--tx2)">关联 Agent</label>
+      <input id="sfAgentInput" value="${sf.assigned_agent||''}" placeholder="输入 Agent 名称" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:4px;padding:6px 8px;font-size:12px">
+      <div style="margin-top:8px">
+        <label style="display:block;margin-bottom:4px;color:var(--tx2)">任务进度</label>
+        <span style="font-size:11px">${sf.agent_tasks_done||0} / ${sf.agent_tasks_total||0} 完成</span>
+      </div>
+    </div>`,
+    async () => {
+      const agent = $('#sfAgentInput')?.value || '';
+      await apiPost(API + '/projects/subfunction', {project: state.selectedProject, module_idx: mi, subfunction: sfName, assigned_agent: agent});
+      closeAll();
+      loadProjectView();
+    },
+    null, '保存', null
+  );
+}
+
+function filterProjectView() {
+  const q = ($('#pjSearch')?.value || '').toLowerCase();
+  if (!q) {
+    // Show all
+    $$('.pj-mod-item, .pj-agent-row, .pj-pipe-task').forEach(el => el.style.display = '');
+    return;
+  }
+  // Filter module items
+  $$('.pj-mod-item').forEach(el => {
+    el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+  // Filter agent rows
+  $$('.pj-agent-row').forEach(el => {
+    el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+  // Filter pipeline tasks
+  $$('.pj-pipe-task').forEach(el => {
+    el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
 }
 
 // === PROJECT DRAWER: edit goal, view/edit modules, agent roster ===
