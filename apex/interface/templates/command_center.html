@@ -352,6 +352,10 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
 .pj-agent-summary{display:flex;flex-wrap:wrap;gap:4px;padding:4px 0 10px 0;border-bottom:1px solid var(--line2);margin-bottom:8px}
 .pj-agent-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500;white-space:nowrap;cursor:default}
 .pj-agent-tag{display:inline-block;vertical-align:middle}
+.pj-org-tree{padding:6px 0 8px 0;border-bottom:1px solid var(--line2);margin-bottom:8px}
+.pj-org-node{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:11px}
+.pj-org-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.pj-org-arrow{color:var(--tx3);font-size:9px;margin:0 2px}
 
 @media(max-width:920px){
   .pj-tricol{grid-template-columns:1fr}
@@ -1277,7 +1281,13 @@ function renderProject() {
     }
     summaryHTML += '</div>';
 
-    // Agent rows with category stripes + tags
+    // Compact org hierarchy tree
+    const orgTree = buildAgentOrgTree(agents);
+    if (orgTree) {
+      summaryHTML += `<div class="pj-org-tree">${orgTree}</div>`;
+    }
+
+    // Agent rows with category stripes + tags + reporting line
     const agentHTML = agents.map(a => {
       const loadPct = Math.min(100, Math.round((a.load_pct || a.load || 0) * 100));
       const loadColor = loadPct > 80 ? 'var(--red)' : loadPct > 50 ? 'var(--amber)' : 'var(--green)';
@@ -1285,11 +1295,12 @@ function renderProject() {
       const initial = (agentId || 'A').charAt(0).toUpperCase();
       const cls = classifyAgent(agentId);
       const stripeColor = cls.color;
+      const reportsTo = getReportingLine(agentId, projectName);
       return `<div class="pj-agent-row" onclick="openAgentDetail('${agentId}')" style="border-left:3px solid ${stripeColor}">
         <div class="pj-agent-avatar" style="background:var(--${loadPct>80?'red':loadPct>50?'amber':'green'}-d);color:${loadColor}">${initial}</div>
         <div class="pj-agent-info">
           <div class="pj-agent-name">${agentId || 'Agent'} <span class="pj-agent-tag" style="background:${cls.bg};color:${cls.color};font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px">${cls.icon} ${cls.label}</span></div>
-          <div class="pj-agent-role">${a.role || cls.subtitle || '—'}</div>
+          <div class="pj-agent-role">${a.role || cls.subtitle || '—'}${reportsTo ? ' · ' + reportsTo : ''}</div>
           <div class="pj-agent-load"><i style="width:${loadPct}%;background:${loadColor}"></i></div>
         </div>
         <span style="font-size:10px;color:${loadColor};font-weight:600">${loadPct}%</span>
@@ -1477,6 +1488,61 @@ function categorizeAgents(agents) {
     cats[cls.key].names.push(name);
   });
   return cats;
+}
+
+// ═══ Agent Org Hierarchy ═══
+const PROJECT_PM_MAP = {
+  '羽球宝AI': 'badminton-pm', '羽球宝AI搭子': 'badminton-pm',
+  'Apex': 'apex-pm', 'Apex Dashboard': 'apex-pm',
+  'FinOps AI': 'finops-pm',
+  '深圳羽球地图': 'shenzhen-pm'
+};
+
+function getReportingLine(agentName, projectName) {
+  if (!agentName || !projectName) return '';
+  const lower = agentName.toLowerCase();
+  // Origin reports to nobody
+  if (lower === 'origin' || lower === 'default') return '';
+  // PMs report to Origin
+  const cat = classifyAgent(agentName);
+  if (cat.key === 'pm') return '↳ ⚓ Origin';
+  // Audit reports to board
+  if (cat.key === 'audit') return '↳ 董事会';
+  // Cron agents are autonomous
+  if (cat.key === 'cron') return '⏰ 自主定时';
+  // PM-managed agents
+  const pmName = PROJECT_PM_MAP[projectName];
+  if (pmName && lower !== pmName.toLowerCase()) {
+    return '↳ ' + pmName;
+  }
+  return '';
+}
+
+function buildAgentOrgTree(agents) {
+  if (!agents || agents.length < 2) return '';
+  const names = agents.map(a => (a.agent_id || a.name || '').toLowerCase());
+  const hasOrigin = names.includes('origin') || names.includes('default');
+  const pmAgents = agents.filter(a => classifyAgent(a.agent_id || a.name || '').key === 'pm');
+  const auditAgents = agents.filter(a => classifyAgent(a.agent_id || a.name || '').key === 'audit');
+  const cronAgents = agents.filter(a => classifyAgent(a.agent_id || a.name || '').key === 'cron');
+
+  let tree = '';
+  if (hasOrigin) {
+    tree += `<div class="pj-org-node root"><span class="pj-org-dot" style="background:#a78bfa"></span>⚓ Origin <span class="pj-org-arrow">→</span>`;
+    const pmNames = pmAgents.map(a => a.agent_id || a.name || '?').join(', ');
+    tree += `<span style="color:var(--tx2);font-size:10px">督管 PM: ${pmNames || '—'}</span></div>`;
+  }
+  if (auditAgents.length > 0) {
+    tree += `<div class="pj-org-node audit"><span class="pj-org-dot" style="background:#f59e0b"></span>🔍 审批审计 <span class="pj-org-arrow">→</span><span style="color:var(--tx2);font-size:10px">监控所有 Agent · 人在环闸门</span></div>`;
+  }
+  if (cronAgents.length > 0) {
+    tree += `<div class="pj-org-node cron"><span class="pj-org-dot" style="background:#8b5cf6"></span>⏰ 定时巡检 <span class="pj-org-arrow">→</span><span style="color:var(--tx2);font-size:10px">22 个 Cron 任务 · 自主运行</span></div>`;
+  }
+  const teamCount = agents.length - pmAgents.length - auditAgents.length - cronAgents.length - (hasOrigin ? 1 : 0);
+  if (teamCount > 0) {
+    tree += `<div class="pj-org-node team"><span class="pj-org-dot" style="background:#60a5fa"></span>👥 执行团队 <span class="pj-org-arrow">→</span><span style="color:var(--tx2);font-size:10px">${teamCount} 个 Agent · 按模块分工</span></div>`;
+  }
+  return tree || '';
 }
 
 // === PROJECT DRAWER: edit goal, view/edit modules, agent roster ===
