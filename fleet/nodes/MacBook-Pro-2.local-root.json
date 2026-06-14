@@ -1,0 +1,20 @@
+{
+  "machine_id": "MacBook-Pro-2.local-root",
+  "hostname": "MacBook-Pro-2.local",
+  "role": "origin",
+  "fleet_name": "老卢舰队",
+  "projects": [
+    "badminton-coach-ai",
+    "apex",
+    "finopsai",
+    "shenzhen-badminton"
+  ],
+  "joined_at": "2026-06-14T20:18:32.843292",
+  "last_sync": null,
+  "git_status": "21 files modified",
+  "profiles": 46,
+  "skills": 136,
+  "gpu": {},
+  "gpu_alerts": [],
+  "reported_at": "2026-06-14T20:18:41.360457"
+}
