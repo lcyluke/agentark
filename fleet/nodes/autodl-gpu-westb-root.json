@@ -1,0 +1,22 @@
+{
+  "machine_id": "autodl-gpu-westb-root",
+  "hostname": "autodl-westb",
+  "role": "worker",
+  "fleet_name": "老卢舰队",
+  "profiles": 3,
+  "skills": 20,
+  "git_status": "clean",
+  "gpu": {
+    "gpu_count": 1,
+    "gpu_names": [
+      "RTX 4090"
+    ],
+    "util_pct": 85.5,
+    "mem_used_mb": 18432,
+    "mem_total_mb": 24576,
+    "mem_pct": 75.0,
+    "temp_c": 68
+  },
+  "reported_at": "2026-06-15T01:35:00",
+  "received_at": "2026-06-15T02:34:43.810824"
+}

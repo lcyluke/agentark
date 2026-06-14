@@ -8,6 +8,9 @@ triggers:
   - dashboard_v5.html 修改
   - 用户说"给 Dashboard 加个按钮"
   - Apex profile/team CRUD 操作
+  - Dashboard 安全扫描/MCP 状态面板
+  - 舰队节点心跳监控/多机监控
+  - 系统状态视图扩展
 ---
 
 # 🦅 Apex Dashboard 全栈扩展模式
@@ -428,6 +431,7 @@ with open(path, 'wb') as f:
 | API 路由 | `apex/interface/web.py` |
 | Hermes 数据桥 | `apex/interface/hermes_bridge.py` |
 | Fleet 管理 | `apex/interface/fleet_manager.py` |
+| 舰队多机 | `apex/interface/fleet_multi_mac.py` |
 | 项目注册 | `apex/interface/project_registry.py` |
 | 项目工厂 | `apex/interface/project_factory.py` |
 | 项目协作 | `apex/interface/project_ops.py` |
@@ -563,6 +567,7 @@ function openSubFunctionDrawer(mi, sfName) {
 见 `references/dashboard-perf-debugging.md` — 性能问题诊断与修复完整食谱（API并行化、SSH超时、JS转义、模板缓存）。
 见 `references/war-room-layout.md` — 项目作战室 V2 5层布局完整 HTML/CSS/JS 参考。
 见 `references/security-mcp-panel.md` — 系统状态视图添加 MCP 状态面板的完整模式（API端点+HTML卡片+JS渲染）。
+见 `references/fleet-heartbeat-panel.md` — 舰队多机心跳监控面板（POST心跳接收+节点状态卡片+GPU/Agent统计）。
 
 ## 项目下拉切换 Bug 模式 (CRITICAL)
 
