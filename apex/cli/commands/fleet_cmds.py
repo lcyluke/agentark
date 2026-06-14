@@ -714,3 +714,180 @@ def deploy_cmd(
         "tasks": result.tasks,
         "dispatch": dispatch_result,
     }
+
+
+# ════════════════════════════════════════════════════════════════
+# Multi-Mac Fleet Commands (fleet-init, fleet-join, fleet-sync)
+# ════════════════════════════════════════════════════════════════
+
+def fleet_init_cmd(
+    fleet_name: str = "老卢舰队",
+    repo_url: str = "https://github.com/lcyluke/hermes-fleet-config.git",
+    force: bool = False,
+):
+    """Initialize this Mac as fleet Origin."""
+    from apex.interface.fleet_multi_mac import fleet_init
+
+    console.print(Panel(
+        f"[bold]⚓ 初始化舰队 Origin[/]\n\n"
+        f"舰队: [cyan]{fleet_name}[/]\n"
+        f"机器: [green]{fleet_init.__module__}[/]\n"
+        f"配置仓库: [dim]{repo_url}[/]",
+        title="Fleet Init", border_style="cyan",
+    ))
+
+    result = fleet_init(fleet_name=fleet_name, repo_url=repo_url, force=force)
+
+    if "error" in result:
+        console.print(f"[red]✗ {result['error']}[/]")
+        return
+
+    for step in result["steps"]:
+        console.print(f"  {step}")
+
+    console.print(f"\n[bold green]✅ Fleet Origin 就绪！[/]")
+    console.print(f"  角色: [cyan]ORIGIN[/] (始祖)")
+    console.print(f"  机器: {result['machine_id']}")
+    console.print(f"\n[dim]下一步: 在 Worker Mac 上运行 'apex fleet-join'[/]")
+    console.print(f"[dim]配置仓库: {repo_url}[/]")
+
+
+def fleet_join_cmd(
+    repo_url: str = "https://github.com/lcyluke/hermes-fleet-config.git",
+    force: bool = False,
+):
+    """Join an existing fleet as Worker node."""
+    from apex.interface.fleet_multi_mac import fleet_join, get_machine_id
+
+    console.print(Panel(
+        f"[bold]🔗 加入舰队[/]\n\n"
+        f"配置仓库: [dim]{repo_url}[/]\n"
+        f"机器: [green]{get_machine_id()}[/]",
+        title="Fleet Join", border_style="cyan",
+    ))
+
+    result = fleet_join(repo_url=repo_url, force=force)
+
+    if "error" in result:
+        console.print(f"[red]✗ {result['error']}[/]")
+        return
+
+    for step in result["steps"]:
+        console.print(f"  {step}")
+
+    console.print(f"\n[bold green]✅ 已加入舰队！[/]")
+    console.print(f"  角色: [yellow]WORKER[/] (执行舰)")
+    console.print(f"  机器: {result['machine_id']}")
+    if "next" in result:
+        console.print(f"\n[dim]{result['next']}[/]")
+
+
+def fleet_sync_cmd(direction: str = "pull"):
+    """Sync fleet config with central repo."""
+    from apex.interface.fleet_multi_mac import fleet_sync, get_fleet_config
+
+    cfg = get_fleet_config()
+    role = cfg.get("role") or "unknown"
+
+    direction_text = "拉取" if direction == "pull" else "推送"
+    console.print(f"[bold]🔄 舰队同步 — {direction_text}[/]")
+    console.print(f"  角色: [cyan]{role.upper()}[/]")
+
+    result = fleet_sync(direction=direction)
+
+    if "error" in result:
+        console.print(f"[red]✗ {result['error']}[/]")
+        return
+
+    for step in result["steps"]:
+        console.print(f"  {step}")
+
+    if result.get("last_sync"):
+        console.print(f"  📅 上次同步: {result['last_sync']}")
+
+
+def fleet_nodes_cmd():
+    """Show all fleet nodes (multi-Mac status) — reads from GitHub-synced nodes/."""
+    from apex.interface.fleet_multi_mac import fleet_status as multi_status, get_fleet_config, get_all_nodes
+    from rich.table import Table
+
+    cfg = get_fleet_config()
+    role = cfg.get("role") or "unconfigured"
+
+    # Pull latest node statuses from GitHub first
+    if cfg.get("role"):
+        import subprocess
+        from pathlib import Path as P
+        git_dir = P(os.path.expanduser("~/.hermes/.git"))
+        if git_dir.exists():
+            subprocess.run(
+                ["git", "pull", "--rebase", "origin", "main"],
+                cwd=git_dir.parent, capture_output=True, timeout=30,
+            )
+
+    all_nodes = get_all_nodes()
+
+    console.print(Panel(
+        f"[bold]⚓ 舰队节点状态[/]\n\n"
+        f"舰队: [cyan]{cfg.get('fleet_name', 'unknown')}[/]\n"
+        f"当前机器: [green]{cfg.get('machine_id', 'unknown')}[/]\n"
+        f"角色: [bold]{role.upper()}[/]\n"
+        f"已知节点: [yellow]{len(all_nodes)}台[/]",
+        title="Fleet Nodes", border_style="blue",
+    ))
+
+    if not all_nodes:
+        console.print("[dim]暂无远程节点。Worker 运行 'apex fleet report' 后此处可见。[/]")
+        return
+
+    t = Table(title="🖥 舰队节点", box=None)
+    t.add_column("", style="bold")
+    t.add_column("机器", style="cyan", width=24)
+    t.add_column("角色", style="bold")
+    t.add_column("项目", style="green")
+    t.add_column("心跳", style="dim")
+    t.add_column("Git", style="dim")
+
+    role_icon = {"origin": "⚓", "worker": "🔧", None: "❓"}
+    for node in all_nodes:
+        nrole = node.get("role")
+        icon = role_icon.get(nrole, "❓")
+        local_mark = " [bold cyan]◀ 本机[/]" if node.get("is_local") else ""
+        reported = node.get("reported_at", node.get("last_sync", "?"))
+        if reported and len(str(reported)) > 16:
+            reported = str(reported)[:16]
+        projects_str = ", ".join(node.get("projects", [])[:3]) or "—"
+        t.add_row(
+            icon,
+            str(node.get("machine_id", "?"))[:22] + local_mark,
+            (nrole or "?").upper(),
+            projects_str,
+            str(reported),
+            node.get("git_status", "?")[:20],
+        )
+
+    console.print(t)
+    console.print("\n[dim]Worker 运行 'apex fleet report' 上报状态 → Origin 自动可见[/]")
+    console.print("[dim]配置中心: https://github.com/lcyluke/hermes-fleet-config[/]")
+
+
+def fleet_report_cmd():
+    """Report node heartbeat to fleet."""
+    from apex.interface.fleet_multi_mac import fleet_report, get_fleet_config
+
+    cfg = get_fleet_config()
+    console.print(f"[bold]📡 上报节点心跳[/]")
+    console.print(f"  机器: [cyan]{cfg.get('machine_id')}[/]")
+    console.print(f"  角色: [bold]{(cfg.get('role') or '?').upper()}[/]")
+
+    result = fleet_report()
+
+    if "error" in result:
+        console.print(f"[red]✗ {result['error']}[/]")
+        return
+
+    if result.get("push_ok"):
+        console.print(f"  ✅ 状态已推送到 GitHub")
+        console.print(f"\n[dim]Origin 运行 'apex fleet nodes' 即可看到本节点[/]")
+    else:
+        console.print(f"  ⚠️ 推送可能失败，检查网络后重试")

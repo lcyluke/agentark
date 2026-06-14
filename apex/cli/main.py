@@ -754,6 +754,45 @@ def fleet_deploy(requirement: str, project: str, template: str, auto: bool, mode
     )
 
 
+# ─── Multi-Mac Fleet Commands ───
+
+@fleet.command(name="init-fleet")
+@click.option("--name", "-n", default="老卢舰队", help="Fleet name")
+@click.option("--repo", "-r", default="https://github.com/lcyluke/hermes-fleet-config.git", help="Config repo URL")
+@click.option("--force", "-f", is_flag=True, help="Force re-init")
+def fleet_init_fleet(name: str, repo: str, force: bool):
+    """⚓ Initialize this Mac as fleet Origin (始祖)"""
+    fleet_cmds.fleet_init_cmd(fleet_name=name, repo_url=repo, force=force)
+
+
+@fleet.command(name="join-fleet")
+@click.option("--repo", "-r", default="https://github.com/lcyluke/hermes-fleet-config.git", help="Config repo URL")
+@click.option("--force", "-f", is_flag=True, help="Force re-join")
+def fleet_join_fleet(repo: str, force: bool):
+    """🔗 Join existing fleet as Worker node"""
+    fleet_cmds.fleet_join_cmd(repo_url=repo, force=force)
+
+
+@fleet.command(name="sync")
+@click.option("--push", "direction", flag_value="push", help="Push config (Origin only)")
+@click.option("--pull", "direction", flag_value="pull", default=True, help="Pull config (default)")
+def fleet_sync_cmd(direction: str):
+    """🔄 Sync fleet config — pull (worker) or push (origin)"""
+    fleet_cmds.fleet_sync_cmd(direction=direction)
+
+
+@fleet.command(name="nodes")
+def fleet_nodes():
+    """🖥 Show all fleet nodes (multi-Mac)"""
+    fleet_cmds.fleet_nodes_cmd()
+
+
+@fleet.command(name="report")
+def fleet_report():
+    """📡 Report node heartbeat to fleet (Worker → Origin via GitHub)"""
+    fleet_cmds.fleet_report_cmd()
+
+
 # ════════════════════════════════════════════════════════════════
 # MODE — 🔧 协作模式
 # ════════════════════════════════════════════════════════════════
