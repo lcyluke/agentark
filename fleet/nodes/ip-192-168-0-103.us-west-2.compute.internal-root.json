@@ -1,0 +1,20 @@
+{
+  "machine_id": "ip-192-168-0-103.us-west-2.compute.internal-root",
+  "hostname": "ip-192-168-0-103.us-west-2.compute.internal",
+  "role": "origin",
+  "fleet_name": "老卢舰队",
+  "projects": [
+    "badminton-coach-ai",
+    "apex",
+    "finopsai",
+    "shenzhen-badminton"
+  ],
+  "joined_at": "2026-06-14T20:18:32.843292",
+  "last_sync": null,
+  "git_status": "clean",
+  "profiles": 1,
+  "skills": 183,
+  "gpu": {},
+  "gpu_alerts": [],
+  "reported_at": "2026-06-14T23:28:37.468644"
+}
