@@ -1,0 +1,15 @@
+# Apex Fleet Config — Git同步白名单
+# 这些文件会跨Mac同步
+
+# 同步
+!config.yaml
+!SOUL.md
+!skills/
+!profiles/
+!nodes/
+
+# 不同步
+.env
+*.db
+*.log
+.DS_Store

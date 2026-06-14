@@ -1,0 +1,9 @@
+{
+  "last_report_path": "/Users/Mac/.hermes/logs/curator/20260613-175048",
+  "last_run_at": "2026-06-13T17:50:48.990012+00:00",
+  "last_run_duration_seconds": 222.547531,
+  "last_run_summary": "auto: no changes; llm: ## 人类可读摘要\n\n从 20 个候选技能中扫描了全部内容，识别出以下群集及处理决策：\n\n### ✅ 已合并：Apex Dashboard (1 合 1)\n\n**`apex-dashboard-development` → `apex-dashboard-dev`**\n\n两个技能覆盖同一个领域——Apex Dashboard 开发。`apex-dashboard-dev` 原本就包含更全的代码模式（JS 安全规则、CSS Token、三层模板、性能优化、作战室布局、Agent…\narchived 1 skill(s):\n  • apex-dashboard-development → apex-dashboard-dev\nfull report: hermes curator status\nkeep an umbrella stable: hermes curator pin apex-dashboard-dev",
+  "last_run_summary_shown_at": null,
+  "paused": false,
+  "run_count": 3
+}

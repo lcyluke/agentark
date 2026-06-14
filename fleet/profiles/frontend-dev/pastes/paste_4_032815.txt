@@ -1,0 +1,71 @@
+apex chat --list                                                  ──(Sat,Jun06)─┘
+                                     🤖 All Available Agents                                      
+ Name                   Role                                                   Source       Ready 
+ ai-algorithm           ---                                                    🔗 hermes    ✅    
+ ai-vision              视觉专家 — AI视觉识别引擎                              🔗 hermes    ✅    
+ apex-pm                🦅 Apex PM Agent — 多Agent平台项目总管                 🔗 hermes    ✅    
+ architect              🏗️ 架构师 — 系统架构与扩展性设计                       🔗 hermes    ✅    
+ audit-guardian         审计守护者 — 始祖的分身                                🔗 hermes    ✅    
+ backend-dev            Backend Developer                                      🔗 hermes    ✅    
+ badminton-pm           🏆 羽球宝AI PM Agent — 首席项目经理                    🔗 hermes    ✅    
+ ceo-pm                 CEO / Product Manager                                  📋 template  ✅    
+ content-marketing      ---                                                    🔗 hermes    ✅    
+ content-strategist     Content Strategist                                     📋 template  ✅    
+ copywriter             Copywriter                                             📦 apex      ✅    
+ cron-medic             军医 · Cron Health Inspector                           🔗 hermes    ✅    
+ data-analyst           Data Analyst                                           📋 template  ✅    
+ data-engineer          Data Engineer                                          📋 template  ✅    
+ data-scientist         Data Scientist                                         📋 template  ✅    
+ default                通用助手                                               📦 apex      ✅    
+ designer               Designer                                               📋 template  ✅    
+ developer              Developer                                              📦 apex      ✅    
+ devops                 DevOps Engineer                                        🔗 hermes    ✅    
+ editor                 editor                                                 🔗 hermes    ⚠️    
+ extractor              Data Extractor                                         📦 apex      ✅    
+ finops-architect       🏛️ FinOps 架构师 — 多租户SaaS架构设计专家              🔗 hermes    ✅    
+ finops-backend         🐍 FinOps Backend Developer — Python 后端与云          🔗 hermes    ✅    
+ finops-devops          FinOps DevOps Engineer —                               🔗 hermes    ✅    
+                        多租户部署与基础设施自动化专家                                            
+ finops-frontend        FinOps Frontend Developer — React管理后台与数据        🔗 hermes    ✅    
+ finops-pm              🎯 FinOps AI PM — 多租户SaaS项目经理                   🔗 hermes    ✅    
+ fleet-commander        🧭 指挥官 · Apex-Hermes Fleet Commander                🔗 hermes    ✅    
+ frontend-dev           Frontend Developer                                     🔗 hermes    ✅    
+ fullstack-dev          Fullstack Developer                                    🔗 hermes    ✅    
+ fundraising-pitch      ---                                                    🔗 hermes    ✅    
+ gpu-sentinel           ⚡ 轮机长 · GPU Cost Sentinel                          🔗 hermes    ✅    
+ growth-marketer        Growth Marketer                                        📋 template  ✅    
+ lead-researcher        Lead Researcher                                        📋 template  ✅    
+ loader                 Data Loader                                            📦 apex      ✅    
+ ml-engineer            ML Engineer                                            📋 template  ✅    
+ ops-engineer           ---                                                    🔗 hermes    ✅    
+ origin                 Origin Agent — 项目群总指挥官                          📦 apex      ✅    
+ peer-reviewer          Peer Reviewer                                          📋 template  ✅    
+ penetration-tester     🕵️ Penetration Tester                                  🔗 hermes    ✅    
+ product-manager        Product Manager                                        🔗 hermes    ✅    
+ profile-syncer         📡 通讯官 · Profile State Syncer                       🔗 hermes    ✅    
+ proj_backend           Dev                                                    📦 apex      ✅    
+ proj_frontend          Dev                                                    📦 apex      ✅    
+ project-assistant      智能项目助手                                           📋 template  ✅    
+ project-manager        Project Manager                                        🔗 hermes    ✅    
+ publisher              publisher                                              🔗 hermes    ⚠️    
+ qa-engineer            QA Engineer                                            🔗 hermes    ✅    
+ requirements-analyst   🎯 Requirements Analyst                                🔗 hermes    ✅    
+ research-analyst       Research Analyst                                       📋 template  ✅    
+ security-by-design     Security by Design                                     🔗 hermes    ✅    
+ security-compliance    ---                                                    🔗 hermes    ✅    
+ session-scout          斥候 · Session Scout                                   🔗 hermes    ✅    
+ skill-evaluator        技能评估师 (Skill Evaluator)                           🔗 hermes    ✅    
+ technical-writer       Technical Writer                                       📋 template  ✅    
+ test-agent             前端小哥 — 羽迹小程序前端开发专家                      🔗 hermes    ✅    
+ test_pm_x              Test PM                                                📦 apex      ✅    
+ tester                 QA Engineer                                            📦 apex      ✅    
+ token-guardian         💰 军需官 · Token Budget Guardian                      🔗 hermes    ✅    
+ transformer            Data Transformer                                       📦 apex      ✅    
+ vulnerability-scanner  Vulnerability Scanner                                  🔗 hermes    ✅    
+ writer                 writer                                                 🔗 hermes    ⚠️    
+ yuji-pm.bak            🏆 羽迹 PM Agent — 首席项目经理                        🔗 hermes    ✅    
+ 羽球宝AI_backend       后端架构师                                             📦 apex      ✅    
+ 羽球宝AI_content       内容运营专家                                           📦 apex      ✅    
+ 羽球宝AI_devops        DevOps运维工程师                                       📦 apex      ✅    
+ 羽球宝AI_frontend      前端开发工程师                                         📦 apex      ✅    
+ 羽球宝AI_pm            产品经理                                               📦 apex      ✅    

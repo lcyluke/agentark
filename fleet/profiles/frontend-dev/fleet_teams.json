@@ -1,0 +1,38 @@
+{
+  "teams": {
+    "羽球宝AI": {
+      "name": "羽球宝AI",
+      "description": "AI-powered badminton assistant",
+      "project": "羽球宝AI",
+      "members": [
+        {"agent_id": "frontend-dev", "role": "Frontend", "profile_type": "apex"},
+        {"agent_id": "backend-dev", "role": "Backend", "profile_type": "apex"},
+        {"agent_id": "qa-agent", "role": "QA", "profile_type": "apex"},
+        {"agent_id": "devops", "role": "DevOps", "profile_type": "apex"}
+      ],
+      "created_at": "2026-06-04T00:00:00"
+    },
+    "Apex": {
+      "name": "Apex",
+      "description": "Multi-Agent OS Core Development",
+      "project": "Apex",
+      "members": [
+        {"agent_id": "frontend-dev", "role": "Frontend Architect", "profile_type": "apex"},
+        {"agent_id": "backend-dev", "role": "Core Engine", "profile_type": "apex"},
+        {"agent_id": "security-auditor", "role": "Security", "profile_type": "apex"}
+      ],
+      "created_at": "2026-06-04T00:00:00"
+    },
+    "深圳羽球地图": {
+      "name": "深圳羽球地图",
+      "description": "Shenzhen Badminton Court Map",
+      "project": "深圳羽球地图",
+      "members": [
+        {"agent_id": "data-analyst", "role": "Data Pipeline", "profile_type": "apex"},
+        {"agent_id": "security-auditor", "role": "Security Audit", "profile_type": "apex"}
+      ],
+      "created_at": "2026-06-04T00:00:00"
+    }
+  },
+  "updated_at": "2026-06-04T02:41:00"
+}

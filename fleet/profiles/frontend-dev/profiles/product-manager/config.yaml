@@ -1,0 +1,7 @@
+agent:
+  max_turns: 100
+kanban:
+  skills_policy: inherit
+model:
+  default: deepseek-v4-pro
+  provider: deepseek

@@ -1,0 +1,11 @@
+ .venv/bin/python -m apex dashboard --port 8080              1 ↵ ──(Fri,Jun05)─┘
+
+📊 Apex Dashboard: http://127.0.0.1:8080
+   API:   http://127.0.0.1:8080/api/status
+   SSE:   http://127.0.0.1:8080/api/stream/logs
+   OpenClaw: http://127.0.0.1:8080/api/openclaw/status
+   Hermes: http://127.0.0.1:8080/api/hermes/status
+ * Serving Flask app 'apex.interface.web'
+ * Debug mode: off
+Address already in use
+Port 8080 is in use by another program. Either identify and stop that program, or start the server with a different port.

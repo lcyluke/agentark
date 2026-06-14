@@ -1,0 +1,22 @@
+⚠️  API call failed (attempt 1/3): ValidationException
+   🔌 Provider: bedrock  Model: deepseek-v4-pro
+   🌐 Endpoint: https://bedrock-runtime.us-east-1.amazonaws.com
+   📝 Error: An error occurred (ValidationException) when calling the ConverseStream operation: The provided model identifier is invalid.
+⏳ Retrying in 2.2s (attempt 1/3)...
+⚠️  API call failed (attempt 2/3): ValidationException
+   🔌 Provider: bedrock  Model: deepseek-v4-pro
+   🌐 Endpoint: https://bedrock-runtime.us-east-1.amazonaws.com
+   📝 Error: An error occurred (ValidationException) when calling the ConverseStream operation: The provided model identifier is invalid.
+⏳ Retrying in 5.9s (attempt 2/3)...
+⚠️  API call failed (attempt 3/3): ValidationException
+   🔌 Provider: bedrock  Model: deepseek-v4-pro
+   🌐 Endpoint: https://bedrock-runtime.us-east-1.amazonaws.com
+   📝 Error: An error occurred (ValidationException) when calling the ConverseStream operation: The provided model identifier is invalid.
+⚠️ Max retries (3) exhausted — trying fallback...
+❌ API failed after 3 retries — An error occurred (ValidationException) when calling the ConverseStream operation: The provided model identifier is invalid.
+   💀 Final error: An error occurred (ValidationException) when calling the ConverseStream operation: The provided model identifier is invalid.
+ ─  ⚕ Hermes  ─────────────────────────────────────────────────────────────────────────────────── 
+                                                                                                  
+     API call failed after 3 retries: An error occurred (ValidationException) when calling        
+     the ConverseStream operation: The provided model identifier is invalid.                      
+                                                                               
