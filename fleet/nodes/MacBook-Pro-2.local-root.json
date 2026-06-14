@@ -1,6 +1,7 @@
 {
   "machine_id": "MacBook-Pro-2.local-root",
   "hostname": "MacBook-Pro-2.local",
+  "display_name": "",
   "role": "origin",
   "fleet_name": "老卢舰队",
   "projects": [
@@ -16,5 +17,5 @@
   "skills": 137,
   "gpu": {},
   "gpu_alerts": [],
-  "reported_at": "2026-06-15T04:28:51.676204"
+  "reported_at": "2026-06-15T07:29:28.605872"
 }
