@@ -842,43 +842,147 @@ def fleet_nodes_cmd():
 
     t = Table(title="🖥 舰队节点", box=None)
     t.add_column("", style="bold")
-    t.add_column("机器", style="cyan", width=24)
+    t.add_column("机器", style="cyan", width=22)
     t.add_column("角色", style="bold")
     t.add_column("项目", style="green")
+    t.add_column("GPU", style="yellow")
     t.add_column("心跳", style="dim")
-    t.add_column("Git", style="dim")
 
     role_icon = {"origin": "⚓", "worker": "🔧", None: "❓"}
     for node in all_nodes:
         nrole = node.get("role")
         icon = role_icon.get(nrole, "❓")
-        local_mark = " [bold cyan]◀ 本机[/]" if node.get("is_local") else ""
+        local_mark = " ◀" if node.get("is_local") else ""
         reported = node.get("reported_at", node.get("last_sync", "?"))
         if reported and len(str(reported)) > 16:
             reported = str(reported)[:16]
         projects_str = ", ".join(node.get("projects", [])[:3]) or "—"
+
+        # GPU info
+        gpu = node.get("gpu", {})
+        if gpu:
+            util = gpu.get("util_pct", 0)
+            temp = gpu.get("temp_c", 0)
+            mem = gpu.get("mem_pct", 0)
+            gpu_str = f"{util:.0f}% {temp}°C"
+        else:
+            gpu_str = "—"
+
         t.add_row(
             icon,
-            str(node.get("machine_id", "?"))[:22] + local_mark,
+            str(node.get("machine_id", "?"))[:20] + local_mark,
             (nrole or "?").upper(),
             projects_str,
+            gpu_str,
             str(reported),
-            node.get("git_status", "?")[:20],
         )
 
     console.print(t)
-    console.print("\n[dim]Worker 运行 'apex fleet report' 上报状态 → Origin 自动可见[/]")
+
+    # GPU alerts
+    for node in all_nodes:
+        alerts = node.get("gpu_alerts", [])
+        if alerts:
+            for alert in alerts:
+                console.print(f"  {alert}")
+
+    console.print("\n[dim]Worker 运行 'apex fleet report' 上报心跳+GPU → Origin 全览[/]")
     console.print("[dim]配置中心: https://github.com/lcyluke/hermes-fleet-config[/]")
 
 
+def fleet_gpu_status_cmd():
+    """Show GPU status across all fleet nodes."""
+    from apex.interface.fleet_multi_mac import get_fleet_config, get_all_nodes, _probe_gpu
+    from rich.table import Table
+    from rich.panel import Panel
+    import subprocess
+    from pathlib import Path as P
+
+    cfg = get_fleet_config()
+
+    # Pull latest
+    if cfg.get("role"):
+        git_dir = P(os.path.expanduser("~/.hermes/.git"))
+        if git_dir.exists():
+            subprocess.run(
+                ["git", "pull", "--rebase", "origin", "main"],
+                cwd=git_dir.parent, capture_output=True, timeout=30,
+            )
+
+    all_nodes = get_all_nodes()
+    local_gpu = _probe_gpu()
+
+    console.print(Panel(
+        f"[bold]🖥 舰队 GPU 资源中心[/]\n\n"
+        f"节点: [yellow]{len(all_nodes)}台[/]  |  "
+        f"本机 GPU: [green]{local_gpu.get('util_pct', 'N/A')}%[/]" if local_gpu else "本机: 无GPU",
+        title="GPU Status", border_style="cyan",
+    ))
+
+    if not all_nodes:
+        console.print("[dim]暂无节点数据。运行 'apex fleet report' 上报。[/]")
+        return
+
+    t = Table(title="GPU 节点详情", box=None)
+    t.add_column("节点", style="cyan", width=22)
+    t.add_column("GPU", style="white", width=18)
+    t.add_column("利用率", style="bold")
+    t.add_column("显存", style="yellow")
+    t.add_column("温度", style="red")
+    t.add_column("状态", style="bold")
+
+    for node in all_nodes:
+        gpu = node.get("gpu", {})
+        if not gpu:
+            t.add_row(
+                str(node.get("machine_id", "?"))[:20],
+                "—", "—", "—", "—", "⚪ 无GPU"
+            )
+            continue
+
+        util = gpu.get("util_pct", 0)
+        if util >= 90:
+            status = "🔴 满载"
+            util_style = f"[red]{util:.0f}%[/]"
+        elif util < 30:
+            status = "🟡 空闲"
+            util_style = f"[yellow]{util:.0f}%[/]"
+        elif util < 5:
+            status = "⚪ 休眠"
+            util_style = f"[dim]{util:.0f}%[/]"
+        else:
+            status = "🟢 正常"
+            util_style = f"[green]{util:.0f}%[/]"
+
+        t.add_row(
+            str(node.get("machine_id", "?"))[:20],
+            ", ".join(gpu.get("gpu_names", ["?"]))[:16],
+            util_style,
+            f"{gpu.get('mem_used_mb',0)}/{gpu.get('mem_total_mb',0)} MB",
+            f"{gpu.get('temp_c',0)}°C",
+            status,
+        )
+
+    console.print(t)
+
+
 def fleet_report_cmd():
-    """Report node heartbeat to fleet."""
-    from apex.interface.fleet_multi_mac import fleet_report, get_fleet_config
+    """Report node heartbeat to fleet — includes GPU status + alerts."""
+    from apex.interface.fleet_multi_mac import fleet_report, get_fleet_config, fleet_status
 
     cfg = get_fleet_config()
     console.print(f"[bold]📡 上报节点心跳[/]")
     console.print(f"  机器: [cyan]{cfg.get('machine_id')}[/]")
     console.print(f"  角色: [bold]{(cfg.get('role') or '?').upper()}[/]")
+
+    # Show GPU status
+    status = fleet_status()
+    gpu = status.get("gpu", {})
+    if gpu:
+        console.print(f"  GPU: [yellow]{gpu.get('util_pct', 0):.0f}%[/] | "
+                     f"显存 {gpu.get('mem_pct', 0):.0f}% | "
+                     f"{gpu.get('temp_c', 0)}°C | "
+                     f"{', '.join(gpu.get('gpu_names', ['?']))}")
 
     result = fleet_report()
 
@@ -888,6 +992,12 @@ def fleet_report_cmd():
 
     if result.get("push_ok"):
         console.print(f"  ✅ 状态已推送到 GitHub")
-        console.print(f"\n[dim]Origin 运行 'apex fleet nodes' 即可看到本节点[/]")
+
+        # GPU alerts
+        alerts = status.get("gpu_alerts", [])
+        if alerts:
+            console.print("")
+            for alert in alerts:
+                console.print(f"  {alert}")
     else:
         console.print(f"  ⚠️ 推送可能失败，检查网络后重试")

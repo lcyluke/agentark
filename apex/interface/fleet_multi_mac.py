@@ -432,14 +432,111 @@ def fleet_sync(direction: str = "pull") -> dict:
 
 
 # ══════════════════════════════════════════
-# Fleet Status (Multi-Mac)
+# Fleet Status (Multi-Mac) — includes GPU
 # ══════════════════════════════════════════
 
+def _probe_gpu() -> dict:
+    """Probe local GPU via nvidia-smi. Returns {} if no GPU."""
+    try:
+        r = subprocess.run(
+            ["nvidia-smi", "--query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu,name",
+             "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=10
+        )
+        if r.returncode != 0 or not r.stdout.strip():
+            return {}
+
+        lines = r.stdout.strip().split("\n")
+        gpus = []
+        for line in lines:
+            parts = [p.strip() for p in line.split(",")]
+            if len(parts) >= 5:
+                try:
+                    gpus.append({
+                        "name": parts[4],
+                        "util_pct": float(parts[0]),
+                        "mem_used_mb": int(parts[1]),
+                        "mem_total_mb": int(parts[2]),
+                        "temp_c": int(parts[3]),
+                    })
+                except (ValueError, IndexError):
+                    continue
+
+        if not gpus:
+            return {}
+
+        # Aggregate
+        utils = [g["util_pct"] for g in gpus]
+        mems_used = sum(g["mem_used_mb"] for g in gpus)
+        mems_total = sum(g["mem_total_mb"] for g in gpus)
+        temps = [g["temp_c"] for g in gpus]
+
+        return {
+            "gpu_count": len(gpus),
+            "gpu_names": [g["name"] for g in gpus],
+            "util_pct": round(sum(utils) / len(utils), 1),
+            "mem_used_mb": mems_used,
+            "mem_total_mb": mems_total,
+            "mem_pct": round(mems_used / mems_total * 100, 1) if mems_total else 0,
+            "temp_c": max(temps),
+            "per_gpu": gpus,
+        }
+    except FileNotFoundError:
+        return {}
+    except Exception:
+        return {}
+
+
+def _gpu_alerts(gpu: dict, prev_state: dict) -> list[str]:
+    """Generate GPU alerts based on thresholds. Returns list of alert strings."""
+    if not gpu:
+        return []
+
+    alerts = []
+    util = gpu["util_pct"]
+    prev = prev_state.get("gpu", {})
+
+    # Overload: >90%
+    if util >= 90:
+        if not prev.get("alert_sent_overload"):
+            alerts.append(
+                f"🔴 GPU 高负载 {util:.0f}% | 显存 {gpu['mem_pct']:.0f}% | {gpu['temp_c']}°C\n"
+                f"   GPU: {', '.join(gpu['gpu_names'][:2])}"
+            )
+    else:
+        prev_state.setdefault("gpu", {})["alert_sent_overload"] = False
+
+    # Idle: <30%
+    if util < 30:
+        idle_mins = prev.get("idle_minutes", 0) + 5  # each cycle = 5min
+        prev_state.setdefault("gpu", {})["idle_minutes"] = idle_mins
+
+        if idle_mins >= 30 and not prev.get("alert_sent_idle_crit"):
+            alerts.append(
+                f"🔴 GPU 严重空闲 {util:.0f}% — {idle_mins}分钟\n"
+                f"   💡 建议检查训练状态，考虑关机省成本"
+            )
+        elif idle_mins >= 15 and not prev.get("alert_sent_idle_warn"):
+            alerts.append(
+                f"⚠️ GPU 空闲 {util:.0f}% — {idle_mins}分钟"
+            )
+    else:
+        # Reset idle counter
+        prev_state.setdefault("gpu", {})["idle_minutes"] = 0
+        prev_state.setdefault("gpu", {})["alert_sent_idle_warn"] = False
+        prev_state.setdefault("gpu", {})["alert_sent_idle_crit"] = False
+
+    return alerts
+
+
+GPU_STATE_FILE = Path("/tmp/apex_gpu_state.json")
+
+
 def fleet_status() -> dict:
-    """Get current fleet node status."""
+    """Get current fleet node status — includes GPU info."""
     cfg = get_fleet_config()
-    
-    # Check git status
+
+    # Git status
     git_status = "unknown"
     git_dir = HERMES_HOME / ".git"
     if git_dir.exists():
@@ -449,24 +546,57 @@ def fleet_status() -> dict:
         )
         if r.returncode == 0:
             dirty = len([l for l in r.stdout.split("\n") if l.strip()])
-            git_status = f"clean" if dirty == 0 else f"{dirty} files modified"
+            git_status = "clean" if dirty == 0 else f"{dirty} files modified"
 
-    # Count profiles
+    # Profiles
     profiles_dir = HERMES_HOME / "profiles"
     profile_count = 0
     if profiles_dir.exists():
         profile_count = len([d for d in profiles_dir.iterdir() if d.is_dir()])
 
-    # Count skills
+    # Skills
     skills_dir = HERMES_HOME / "skills"
     skill_count = 0
     if skills_dir.exists():
         skill_count = len(list(skills_dir.rglob("SKILL.md")))
 
+    # GPU probe
+    gpu = _probe_gpu()
+
+    # GPU alerts (with state persistence)
+    prev_state = {}
+    if GPU_STATE_FILE.exists():
+        try:
+            prev_state = json.loads(GPU_STATE_FILE.read_text())
+        except Exception:
+            pass
+
+    gpu_alerts_list = _gpu_alerts(gpu, prev_state) if gpu else []
+
+    # Persist GPU alert state
+    if gpu:
+        prev_state["gpu"] = {
+            "util_pct": gpu.get("util_pct", 0),
+            "idle_minutes": prev_state.get("gpu", {}).get("idle_minutes", 0),
+            "alert_sent_overload": prev_state.get("gpu", {}).get("alert_sent_overload", False),
+            "alert_sent_idle_warn": prev_state.get("gpu", {}).get("alert_sent_idle_warn", False),
+            "alert_sent_idle_crit": prev_state.get("gpu", {}).get("alert_sent_idle_crit", False),
+        }
+        # Update overload alert flag
+        if gpu["util_pct"] >= 90:
+            prev_state["gpu"]["alert_sent_overload"] = True
+        else:
+            prev_state["gpu"]["alert_sent_overload"] = False
+        try:
+            GPU_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+            GPU_STATE_FILE.write_text(json.dumps(prev_state))
+        except Exception:
+            pass
+
     return {
         "machine_id": get_machine_id(),
         "hostname": socket.gethostname(),
-        "role": cfg.get("role", "unconfigured"),
+        "role": cfg.get("role") or "unconfigured",
         "fleet_name": cfg.get("fleet_name", "unknown"),
         "projects": cfg.get("projects", []),
         "joined_at": cfg.get("joined_at"),
@@ -475,4 +605,6 @@ def fleet_status() -> dict:
         "profiles": profile_count,
         "skills": skill_count,
         "repo_url": cfg.get("repo_url"),
+        "gpu": gpu,
+        "gpu_alerts": gpu_alerts_list,
     }

@@ -793,6 +793,12 @@ def fleet_report():
     fleet_cmds.fleet_report_cmd()
 
 
+@fleet.command(name="gpu-status")
+def fleet_gpu_status():
+    """🖥 GPU resource center — all fleet GPUs"""
+    fleet_cmds.fleet_gpu_status_cmd()
+
+
 # ════════════════════════════════════════════════════════════════
 # MODE — 🔧 协作模式
 # ════════════════════════════════════════════════════════════════
