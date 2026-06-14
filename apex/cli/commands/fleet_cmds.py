@@ -882,7 +882,7 @@ def fleet_nodes_cmd():
                 console.print(f"  {alert}")
 
     console.print("\n[dim]Worker 运行 'apex fleet report' 上报心跳+GPU → Origin 全览[/]")
-    console.print("[dim]配置中心: https://github.com/lcyluke/hermes-fleet-config[/]")
+    console.print("[dim]仓库: lcyluke/apex[/]")
 
 
 def fleet_gpu_status_cmd():
