@@ -597,6 +597,9 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
           <div class="card"><div class="sec-h" style="margin-bottom:6px"><i class="ti ti-alert-triangle" style="color:var(--amber)"></i>闲置检测与建议</div><div id="reclaimSuggestions"></div></div>
           <div class="card"><div class="sec-h" style="margin-bottom:6px"><i class="ti ti-coins"></i>成本优化分析</div><div id="costOptimization"></div></div>
         </div>
+        <div style="height:22px"></div>
+        <div class="sec-h"><i class="ti ti-shield-check"></i>安全扫描 MCP 状态</div>
+        <div id="mcpStatus"></div>
       </section>
 
       <!-- VIEW 9: 数据流时序 -->
@@ -2453,6 +2456,81 @@ async function renderSystem() {
 
   // Resource reclamation
   renderReclamation();
+
+  // MCP security status
+  renderMcpStatus();
+}
+
+/* =================================================================
+   MCP SECURITY STATUS
+   ================================================================= */
+async function renderMcpStatus() {
+  var container = $('#mcpStatus');
+  if (!container) return;
+
+  container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--tx3)">' +
+    '<i class="ti ti-loader" style="animation:spin 1s linear infinite;font-size:20px"></i>' +
+    '<div style="margin-top:6px;font-size:12px">加载 MCP 状态...</div></div>';
+
+  var data = await fetchJSON(API + '/security/mcp-status');
+  if (!data) {
+    container.innerHTML = '<div class="card"><div style="text-align:center;padding:20px;color:var(--red)">' +
+      '<i class="ti ti-alert-circle" style="font-size:24px"></i>' +
+      '<div style="margin-top:6px">无法获取 MCP 状态</div></div></div>';
+    return;
+  }
+
+  var semgrep = data.semgrep || {};
+  var mcp = data.mcp_server || {};
+  var cfg = data.config || {};
+  var tools = data.tools || [];
+
+  // Build status rows
+  var rows = [];
+
+  // Semgrep CLI row
+  rows.push('<div class="card" style="margin-bottom:12px">' +
+    '<div class="sec-h" style="margin-bottom:10px"><i class="ti ti-code"></i>Semgrep CLI</div>' +
+    '<div class="kv"><span class="k">状态</span><span class="vv">' +
+    '<span class="tag ' + (semgrep.installed ? 'green' : 'red') + '">' +
+    (semgrep.installed ? (semgrep.version || '已安装') : '未安装') + '</span></span></div>' +
+    (semgrep.path ? '<div class="kv"><span class="k">路径</span><span class="vv" style="font-size:11px">' + semgrep.path + '</span></div>' : '') +
+    '</div>');
+
+  // MCP Server row
+  rows.push('<div class="card" style="margin-bottom:12px">' +
+    '<div class="sec-h" style="margin-bottom:10px"><i class="ti ti-plug-connected"></i>MCP Server (npm)</div>' +
+    '<div class="kv"><span class="k">状态</span><span class="vv">' +
+    '<span class="tag ' + (mcp.installed ? 'green' : 'red') + '">' +
+    (mcp.installed ? 'v' + (mcp.version || '?') : '未安装') + '</span></span></div>' +
+    (mcp.path ? '<div class="kv"><span class="k">路径</span><span class="vv" style="font-size:11px">' + mcp.path + '</span></div>' : '') +
+    '</div>');
+
+  // Config row
+  var configStatus = cfg.configured ? '已配置' : '未配置';
+  var configColor = cfg.configured ? 'green' : 'amber';
+  rows.push('<div class="card" style="margin-bottom:12px">' +
+    '<div class="sec-h" style="margin-bottom:10px"><i class="ti ti-settings"></i>Hermes Config</div>' +
+    '<div class="kv"><span class="k">mcp_servers</span><span class="vv">' +
+    '<span class="tag ' + configColor + '">' + configStatus + '</span></span></div>' +
+    (cfg.allowed_roots ? '<div class="kv"><span class="k">扫描根目录</span><span class="vv" style="font-size:11px">' + cfg.allowed_roots + '</span></div>' : '') +
+    '</div>');
+
+  // Tools grid
+  if (tools.length > 0) {
+    var toolCards = tools.map(function(t) {
+      return '<div style="background:var(--bg4);padding:8px 11px;border-radius:var(--r-s);border:1px solid var(--line2)">' +
+        '<div style="font-family:var(--mono);font-size:11px;color:var(--teal);margin-bottom:2px">mcp_semgrep_' + t.name + '</div>' +
+        '<div style="font-size:12px;color:var(--tx3)">' + t.desc + '</div></div>';
+    }).join('');
+
+    rows.push('<div class="card">' +
+      '<div class="sec-h" style="margin-bottom:10px"><i class="ti ti-tool"></i>可用 MCP 工具 (' + tools.length + ')</div>' +
+      '<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px">' +
+      toolCards + '</div></div>');
+  }
+
+  container.innerHTML = rows.join('');
 }
 
 /* =================================================================

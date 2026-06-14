@@ -722,21 +722,20 @@ def deploy_cmd(
 
 def fleet_init_cmd(
     fleet_name: str = "老卢舰队",
-    repo_url: str = "https://github.com/lcyluke/hermes-fleet-config.git",
     force: bool = False,
 ):
-    """Initialize this Mac as fleet Origin."""
-    from apex.interface.fleet_multi_mac import fleet_init
+    """Initialize this Mac as fleet Origin — uses Apex repo."""
+    from apex.interface.fleet_multi_mac import fleet_init, get_machine_id
 
     console.print(Panel(
         f"[bold]⚓ 初始化舰队 Origin[/]\n\n"
         f"舰队: [cyan]{fleet_name}[/]\n"
-        f"机器: [green]{fleet_init.__module__}[/]\n"
-        f"配置仓库: [dim]{repo_url}[/]",
+        f"机器: [green]{get_machine_id()}[/]\n"
+        f"仓库: [dim]lcyluke/apex[/]",
         title="Fleet Init", border_style="cyan",
     ))
 
-    result = fleet_init(fleet_name=fleet_name, repo_url=repo_url, force=force)
+    result = fleet_init(fleet_name=fleet_name, force=force)
 
     if "error" in result:
         console.print(f"[red]✗ {result['error']}[/]")
@@ -746,27 +745,23 @@ def fleet_init_cmd(
         console.print(f"  {step}")
 
     console.print(f"\n[bold green]✅ Fleet Origin 就绪！[/]")
-    console.print(f"  角色: [cyan]ORIGIN[/] (始祖)")
+    console.print(f"  角色: [cyan]ORIGIN[/]")
     console.print(f"  机器: {result['machine_id']}")
-    console.print(f"\n[dim]下一步: 在 Worker Mac 上运行 'apex fleet-join'[/]")
-    console.print(f"[dim]配置仓库: {repo_url}[/]")
+    console.print(f"\n[dim]下一步: Worker Mac 克隆 Apex → 'apex fleet join-fleet'[/]")
 
 
-def fleet_join_cmd(
-    repo_url: str = "https://github.com/lcyluke/hermes-fleet-config.git",
-    force: bool = False,
-):
-    """Join an existing fleet as Worker node."""
+def fleet_join_cmd(force: bool = False):
+    """Join existing fleet as Worker — syncs fleet/ from Apex repo."""
     from apex.interface.fleet_multi_mac import fleet_join, get_machine_id
 
     console.print(Panel(
         f"[bold]🔗 加入舰队[/]\n\n"
-        f"配置仓库: [dim]{repo_url}[/]\n"
+        f"仓库: [dim]lcyluke/apex[/]\n"
         f"机器: [green]{get_machine_id()}[/]",
         title="Fleet Join", border_style="cyan",
     ))
 
-    result = fleet_join(repo_url=repo_url, force=force)
+    result = fleet_join(force=force)
 
     if "error" in result:
         console.print(f"[red]✗ {result['error']}[/]")
@@ -776,14 +771,13 @@ def fleet_join_cmd(
         console.print(f"  {step}")
 
     console.print(f"\n[bold green]✅ 已加入舰队！[/]")
-    console.print(f"  角色: [yellow]WORKER[/] (执行舰)")
-    console.print(f"  机器: {result['machine_id']}")
+    console.print(f"  角色: [yellow]WORKER[/]")
     if "next" in result:
         console.print(f"\n[dim]{result['next']}[/]")
 
 
 def fleet_sync_cmd(direction: str = "pull"):
-    """Sync fleet config with central repo."""
+    """Sync fleet config via Apex repo git."""
     from apex.interface.fleet_multi_mac import fleet_sync, get_fleet_config
 
     cfg = get_fleet_config()
@@ -814,15 +808,16 @@ def fleet_nodes_cmd():
     cfg = get_fleet_config()
     role = cfg.get("role") or "unconfigured"
 
-    # Pull latest node statuses from GitHub first
+    # Pull latest node statuses from Apex repo
     if cfg.get("role"):
         import subprocess
         from pathlib import Path as P
-        git_dir = P(os.path.expanduser("~/.hermes/.git"))
-        if git_dir.exists():
+        # Use Apex project git, not ~/.hermes
+        apex_git = P(__file__).resolve().parent.parent.parent.parent
+        if (apex_git / ".git").exists():
             subprocess.run(
                 ["git", "pull", "--rebase", "origin", "main"],
-                cwd=git_dir.parent, capture_output=True, timeout=30,
+                cwd=apex_git, capture_output=True, timeout=30,
             )
 
     all_nodes = get_all_nodes()

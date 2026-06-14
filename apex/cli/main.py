@@ -758,19 +758,17 @@ def fleet_deploy(requirement: str, project: str, template: str, auto: bool, mode
 
 @fleet.command(name="init-fleet")
 @click.option("--name", "-n", default="老卢舰队", help="Fleet name")
-@click.option("--repo", "-r", default="https://github.com/lcyluke/hermes-fleet-config.git", help="Config repo URL")
 @click.option("--force", "-f", is_flag=True, help="Force re-init")
-def fleet_init_fleet(name: str, repo: str, force: bool):
-    """⚓ Initialize this Mac as fleet Origin (始祖)"""
-    fleet_cmds.fleet_init_cmd(fleet_name=name, repo_url=repo, force=force)
+def fleet_init_fleet(name: str, force: bool):
+    """⚓ Initialize this Mac as fleet Origin (Apex repo)"""
+    fleet_cmds.fleet_init_cmd(fleet_name=name, force=force)
 
 
 @fleet.command(name="join-fleet")
-@click.option("--repo", "-r", default="https://github.com/lcyluke/hermes-fleet-config.git", help="Config repo URL")
 @click.option("--force", "-f", is_flag=True, help="Force re-join")
-def fleet_join_fleet(repo: str, force: bool):
-    """🔗 Join existing fleet as Worker node"""
-    fleet_cmds.fleet_join_cmd(repo_url=repo, force=force)
+def fleet_join_fleet(force: bool):
+    """🔗 Join fleet as Worker (syncs fleet/ from Apex)"""
+    fleet_cmds.fleet_join_cmd(force=force)
 
 
 @fleet.command(name="sync")

@@ -1315,6 +1315,83 @@ def create_app():
             info["disk"] = "unknown"
         return jsonify(info)
 
+    @app.route("/api/security/mcp-status")
+    def api_security_mcp_status():
+        """Security scanning MCP status — Semgrep CLI + MCP server + config"""
+        import shutil, json as _json, os as _os
+        import subprocess as sp
+        result = {"ok": True}
+
+        # 1. Semgrep CLI
+        semgrep_path = shutil.which("semgrep")
+        result["semgrep"] = {
+            "installed": semgrep_path is not None,
+            "path": semgrep_path or None,
+            "version": None,
+        }
+        if semgrep_path:
+            try:
+                r = sp.run([semgrep_path, "--version"], capture_output=True, text=True, timeout=10)
+                v = r.stdout.strip() or r.stderr.strip()
+                for line in v.split("\n"):
+                    if line.strip() and not line.startswith("/") and "new version" not in line.lower():
+                        result["semgrep"]["version"] = line.strip()
+                        break
+                if not result["semgrep"]["version"]:
+                    result["semgrep"]["version"] = v.split("\n")[0] if v else "unknown"
+            except:
+                result["semgrep"]["version"] = "error"
+
+        # 2. MCP Server (npm package)
+        npm_global = "/opt/homebrew/lib/node_modules"
+        mcp_path = _os.path.join(npm_global, "mcp-server-semgrep", "build", "index.js")
+        result["mcp_server"] = {
+            "installed": _os.path.exists(mcp_path),
+            "path": mcp_path if _os.path.exists(mcp_path) else None,
+            "version": None,
+        }
+        if result["mcp_server"]["installed"]:
+            try:
+                pkg_json = _os.path.join(npm_global, "mcp-server-semgrep", "package.json")
+                with open(pkg_json) as f:
+                    pkg = _json.load(f)
+                result["mcp_server"]["version"] = pkg.get("version")
+            except:
+                pass
+
+        # 3. Config status
+        result["config"] = {"configured": False, "allowed_roots": None}
+        try:
+            import yaml
+            config_path = _os.path.expanduser("~/.hermes/config.yaml")
+            if _os.path.exists(config_path):
+                with open(config_path) as f:
+                    cfg = yaml.safe_load(f)
+                mcp = cfg.get("mcp_servers", {})
+                semgrep_cfg = mcp.get("semgrep", {})
+                if semgrep_cfg:
+                    result["config"]["configured"] = True
+                    result["config"]["command"] = semgrep_cfg.get("command")
+                    result["config"]["args"] = semgrep_cfg.get("args", [])
+                    result["config"]["timeout"] = semgrep_cfg.get("timeout", 120)
+                    env = semgrep_cfg.get("env", {})
+                    result["config"]["allowed_roots"] = env.get("MCP_SERVER_SEMGREP_ALLOWED_ROOTS")
+        except:
+            pass
+
+        # 4. Available MCP tools
+        result["tools"] = [
+            {"name": "scan_directory", "desc": "扫描目录中的源代码，发现潜在问题"},
+            {"name": "list_rules", "desc": "列出 Semgrep 支持的规则和语言"},
+            {"name": "analyze_results", "desc": "详细分析扫描结果"},
+            {"name": "create_rule", "desc": "创建自定义 Semgrep 规则"},
+            {"name": "filter_results", "desc": "按条件过滤扫描结果"},
+            {"name": "export_results", "desc": "导出结果 (JSON/CSV/SARIF)"},
+            {"name": "compare_results", "desc": "比较两次扫描结果（修复前后对比）"},
+        ]
+
+        return jsonify(result)
+
     @app.route("/api/fleet/profiles/list")
     def api_fleet_profiles_list():
         """List all Hermes profiles with full details"""

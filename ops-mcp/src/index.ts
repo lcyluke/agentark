@@ -9,6 +9,7 @@
  * at ~/.apex/agentops.db (with socket-based forwarding as future path).
  */
 
+import * as os from "node:os";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -288,7 +289,7 @@ server.tool(
     }
 
     // Check 4: APEX_HOME
-    const apexHome = process.env["APEX_HOME"] || require("node:os").homedir() + "/.apex";
+    const apexHome = process.env["APEX_HOME"] || os.homedir() + "/.apex";
     results["checks"]["apex_home"] = {
       status: "info",
       path: apexHome,
@@ -310,7 +311,7 @@ async function main() {
   await server.connect(transport);
 
   // Log to stderr so it doesn't interfere with stdio MCP protocol
-  const apexHome = process.env["APEX_HOME"] || require("node:os").homedir() + "/.apex";
+  const apexHome = process.env["APEX_HOME"] || os.homedir() + "/.apex";
   console.error(`[apex-ops-mcp] started (APEX_HOME=${apexHome})`);
 
   // Graceful shutdown
