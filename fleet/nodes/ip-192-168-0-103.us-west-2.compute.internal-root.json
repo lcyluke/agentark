@@ -1,6 +1,6 @@
 {
-  "machine_id": "MacBook-Pro-2.local-root",
-  "hostname": "MacBook-Pro-2.local",
+  "machine_id": "ip-192-168-0-103.us-west-2.compute.internal-root",
+  "hostname": "ip-192-168-0-103.us-west-2.compute.internal",
   "role": "origin",
   "fleet_name": "老卢舰队",
   "projects": [
@@ -11,10 +11,10 @@
   ],
   "joined_at": "2026-06-14T20:18:32.843292",
   "last_sync": null,
-  "git_status": "4 files modified",
-  "profiles": 46,
-  "skills": 137,
+  "git_status": "clean",
+  "profiles": 1,
+  "skills": 183,
   "gpu": {},
   "gpu_alerts": [],
-  "reported_at": "2026-06-15T02:54:52.244335"
+  "reported_at": "2026-06-15T02:58:18.037088"
 }
