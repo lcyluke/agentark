@@ -1,0 +1,21 @@
+{
+  "machine_id": "lu-s-Pro.local-root",
+  "hostname": "lusPro.local",
+  "display_name": "lu'sPro (Mac-A)",
+  "role": "origin",
+  "fleet_name": "老卢舰队",
+  "projects": [
+    "badminton-coach-ai",
+    "apex",
+    "finopsai",
+    "shenzhen-badminton"
+  ],
+  "joined_at": "2026-06-14T20:18:32.843292",
+  "last_sync": null,
+  "git_status": "1 files modified",
+  "profiles": 1,
+  "skills": 183,
+  "gpu": {},
+  "gpu_alerts": [],
+  "reported_at": "2026-06-15T07:20:34.836571"
+}
