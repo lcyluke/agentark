@@ -301,8 +301,11 @@ def fleet_report() -> dict:
     NODES_DIR.mkdir(parents=True, exist_ok=True)
     status = fleet_status()
     status["reported_at"] = datetime.now().isoformat()
+    # Use configured machine_id for stable identity across network changes
+    mid = cfg.get("machine_id") or get_machine_id()
+    status["machine_id"] = mid
 
-    node_file = NODES_DIR / f"{get_machine_id()}.json"
+    node_file = NODES_DIR / f"{mid}.json"
     node_file.write_text(json.dumps(status, indent=2, ensure_ascii=False, default=str))
 
     # Commit + push
@@ -473,8 +476,9 @@ def fleet_status() -> dict:
             pass
 
     return {
-        "machine_id": get_machine_id(),
+        "machine_id": cfg.get("machine_id") or get_machine_id(),
         "hostname": socket.gethostname(),
+        "display_name": cfg.get("display_name", ""),
         "role": cfg.get("role") or "unconfigured",
         "fleet_name": cfg.get("fleet_name", "unknown"),
         "projects": cfg.get("projects", []),
