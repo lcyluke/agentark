@@ -1,6 +1,6 @@
 {
   "machine_id": "lu-s-Pro.local-root",
-  "hostname": "ip-192-168-0-103.us-west-2.compute.internal",
+  "hostname": "lusPro.local",
   "display_name": "lu'sPro (Mac-A)",
   "role": "origin",
   "fleet_name": "老卢舰队",
@@ -14,8 +14,8 @@
   "last_sync": null,
   "git_status": "1 files modified",
   "profiles": 1,
-  "skills": 183,
+  "skills": 180,
   "gpu": {},
   "gpu_alerts": [],
-  "reported_at": "2026-06-17T02:14:00.233756"
+  "reported_at": "2026-06-17T07:42:45.435574"
 }
