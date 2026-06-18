@@ -11,7 +11,13 @@ class Apex < Formula
   depends_on "tmux"
 
   def install
-    virtualenv_install_with_resources
+    venv = virtualenv_create(libexec, "python3.12")
+    # Use pre-built wheels only — no compiler needed
+    system libexec/"bin/pip", "install", "--only-binary", ":all:", "-v", "."
+  rescue
+    # Fallback: try without binary restriction if pre-built not available
+    ohai "Pre-built wheels not available for some packages, trying source build..."
+    system libexec/"bin/pip", "install", "-v", "."
   end
 
   def post_install
