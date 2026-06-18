@@ -3,8 +3,8 @@ class ApexMultiagent < Formula
 
   desc "⚡ Multi-Agent Operating System — one person, infinite capacity"
   homepage "https://github.com/lcyluke/apex"
-  url "https://github.com/lcyluke/apex/archive/refs/tags/v0.2.1.tar.gz"
-  sha256 "e210d80e2fa7f7fb8a513c434eac1825c3e427ddaf2532e5cbf4dcc09e8f4d8f"
+  url "https://github.com/lcyluke/apex/archive/refs/tags/v0.3.0.tar.gz"
+  sha256 "f941e0377c73cc25ffbc7c494406ec06323737f75264c40a24def43592ab9485"
   license "MIT"
 
   depends_on "python@3.12"
