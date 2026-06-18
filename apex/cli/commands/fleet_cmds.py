@@ -1033,6 +1033,16 @@ def fleet_tmux_init(agents: list[str] | None = None):
     console.print(f"\n[dim]Attach: tmux attach -t {state.session_name}[/]")
     console.print(f"[dim]Status:  apex fleet status[/]")
 
+    # Step 3: Tool discovery
+    console.print("\n[bold]3/3  Scanning installed tools...[/]")
+    from apex.interface.tool_discovery import ToolDiscovery
+    td = ToolDiscovery()
+    inventory = td.scan(force=True)
+    summary = td.summary()
+    console.print(f"[green]✅ Found {summary['found']}/{summary['total']} tools[/]")
+    for cat, tools in summary["by_category"].items():
+        console.print(f"   [{cat}] {', '.join(tools)}")
+
 
 def fleet_tmux_start(agents: list[str] | None = None):
     """Start (or restart) all agents in tmux."""

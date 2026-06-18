@@ -955,6 +955,57 @@ def monitor_skills():
     cmd_skills()
 
 
+@monitor.command(name="tools")
+def monitor_tools():
+    """🔧 System tool discovery — what's installed and who can use it"""
+    from apex.interface.tool_discovery import ToolDiscovery
+    td = ToolDiscovery()
+    inventory = td.scan(force=True)
+
+    console.print()
+    console.print(Panel("[bold]🔧 Apex Tool Discovery[/]", border_style="cyan"))
+    console.print(
+        f"[dim]Scanned {inventory.total_tools} tools, "
+        f"[green]found {len(inventory.found)}[/], "
+        f"[red]missing {len(inventory.missing)}[/][/]"
+    )
+    console.print()
+
+    # Found tools table
+    table = Table(box=box.ROUNDED, border_style="blue", header_style="bold cyan")
+    table.add_column("Tool", style="bold")
+    table.add_column("Category", style="dim")
+    table.add_column("Version", style="green", max_width=25)
+    table.add_column("Provides", style="yellow")
+    table.add_column("Used By", style="dim", max_width=30)
+
+    for t in inventory.found:
+        table.add_row(
+            t.display,
+            t.category,
+            t.version[:24],
+            ", ".join(t.provides[:3]),
+            ", ".join(t.recommended_agents[:4]),
+        )
+
+    console.print(table)
+    console.print()
+
+    # Missing tools
+    if inventory.missing:
+        missing_str = ", ".join(inventory.missing)
+        console.print(f"[dim]Not installed: {missing_str}[/]")
+        console.print(f"[dim]Install missing tools to unlock more agent capabilities.[/]")
+
+    # Agent tool summary
+    console.print()
+    console.print("[bold]Agent → Tool Mapping[/]")
+    for agent, tools in sorted(inventory.agent_tool_map.items()):
+        if agent == "all":
+            continue
+        console.print(f"  [cyan]{agent:20s}[/] → {', '.join(tools)}")
+
+
 # ════════════════════════════════════════════════════════════════
 # PM — 📊 项目管理 (调度/分配/健康/时间线)
 # ════════════════════════════════════════════════════════════════
