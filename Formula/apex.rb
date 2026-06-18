@@ -1,4 +1,4 @@
-class ApexMultiagent < Formula
+class Apex < Formula
   include Language::Python::Virtualenv
 
   desc "⚡ Multi-Agent Operating System — one person, infinite capacity"
@@ -15,7 +15,6 @@ class ApexMultiagent < Formula
   end
 
   def post_install
-    # Print fleet quickstart
     ohai "🚀 Apex Fleet Quickstart"
     puts ""
     puts "  Initialize your fleet (one-time):"
@@ -24,14 +23,11 @@ class ApexMultiagent < Formula
     puts "  Start all agents:"
     puts "    apex fleet start"
     puts ""
-    puts "  Attach to your fleet:"
-    puts "    apex fleet attach"
+    puts "  Monitor your fleet:"
+    puts "    apex monitor status"
+    puts "    apex monitor skills"
     puts ""
-    puts "  Or manage individually:"
-    puts "    apex fleet add <agent>    Add an agent"
-    puts "    apex fleet log <agent>    View agent output"
-    puts "    apex fleet broadcast \"msg\"  Send to all agents"
-    puts "    apex fleet status          Fleet overview"
+    puts "Docs: https://github.com/lcyluke/apex"
     puts ""
   end
 
@@ -42,15 +38,19 @@ class ApexMultiagent < Formula
 
   def caveats
     <<~EOS
-      ⚡ Apex installed with tmux multi-agent fleet.
+      ⚡ Apex — Multi-Agent Operating System
 
-      First run:
-        apex fleet init    # Create profiles + start fleet (one-time)
-        apex fleet start   # Launch all 7 dev agents in tmux windows
-        apex fleet attach  # Show tmux attach command
+      Quickstart:
+        apex fleet init      Create profiles + launch fleet (one-time)
+        apex fleet start     Start 7 dev agents in tmux windows
+        apex monitor status  Agent status + badminton pipeline
 
       Fleet commands:
         apex fleet {init,start,stop,attach,add,kill,log,status,broadcast}
+      Monitor commands:
+        apex monitor {status,skills}
+
+      Works on macOS, Linux, and Windows (WSL).
 
       Docs: https://github.com/lcyluke/apex
     EOS
