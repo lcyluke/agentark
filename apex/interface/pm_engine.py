@@ -1,20 +1,23 @@
-"""Apex PM Engine — project scheduling, critical path, agent assignment.
+"""Apex PM Engine v2 — intelligent multi-factor agent assignment.
 
-Core algorithms:
-  - Critical Path Method (CPM): longest dependency chain → min project duration
-  - Task scheduling: serial/parallel aware, agent-skill matching
-  - Agent health: heartbeat + skill level + load assessment
+Assignment strategy (4-factor weighted scoring):
+  1. Historical success rate on similar tasks  (35%)
+  2. Core SKILL matching (Hermes profiles)     (30%)
+  3. Role alignment (SOUL.md)                  (20%)
+  4. Current load balancing                    (15%)
 
-Data flows:
-  agent_monitor.json  ─┐
-  badminton_tasks.json ─┤
-  sprints.json         ─┼──→ PM Engine ──→ dashboard / schedule / assign
-  agent skills DB      ─┘
+Data sources:
+  - ~/.hermes/profiles/<agent>/SOUL.md        → role, expertise
+  - ~/.hermes/profiles/<agent>/skills/        → actual skills
+  - finopsai/data/badminton_tasks.json        → task history + completion
+  - finopsai/data/agent_monitor.json          → heartbeat + status
+  - Project source tree                       → code module ownership
 """
 
 from __future__ import annotations
 
 import json
+import re
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
@@ -24,8 +27,10 @@ from typing import Optional
 
 TZ = timezone(timedelta(hours=8))
 FINOPs = Path.home() / "finopsai" / "data"
+HERMES = Path.home() / ".hermes"
+PROFILES_DIR = HERMES / "profiles"
 
-# ─── Data Models ─────────────────────────────────────────────────
+# ─── Extended Data Models ─────────────────────────────────────────
 
 
 @dataclass
@@ -39,12 +44,14 @@ class Task:
     estimated_hours: float = 0.0
     actual_hours: float = 0.0
     dependencies: list[str] = field(default_factory=list)
-    priority: int = 2  # 0=P0 critical, 1=P1 high, 2=P2 normal
+    priority: int = 2
     project: str = ""
     milestone: str = ""
     skills_required: list[str] = field(default_factory=list)
+    task_type: str = ""  # e.g. "data_collection", "model_training", "api_dev"
     started_at: str = ""
     completed_at: str = ""
+    _assignment_reason: str = ""  # internal: why this agent was chosen
 
     @property
     def is_ready(self) -> bool:
@@ -54,83 +61,485 @@ class Task:
     def is_blocked(self) -> bool:
         return self.status == "blocked"
 
+    def infer_type(self) -> str:
+        """Infer task type from name and ID patterns."""
+        name_lower = (self.name + self.id).lower()
+        patterns = {
+            "data_collection": ["采集", "collect", "download", "爬", "scrape", "bilibili"],
+            "data_processing": ["处理", "process", "clean", "清洗", "organize", "clip"],
+            "model_training": ["训练", "train", "model", "videoMAE", "fine-tune"],
+            "model_integration": ["集成", "integrate", "track", "face", "insight"],
+            "api_development": ["api", "服务", "server", "endpoint", "web"],
+            "deployment": ["部署", "deploy", "gpu", "推理", "inference", "docker"],
+            "testing": ["测试", "test", "qa", "验证", "verify", "quality"],
+            "infrastructure": ["infra", "ci", "cd", "pipeline", "数据库", "postgres"],
+            "security": ["安全", "security", "auth", "权限", "vulnerability"],
+            "documentation": ["文档", "doc", "readme", "wiki"],
+        }
+        for task_type, keywords in patterns.items():
+            if any(kw in name_lower for kw in keywords):
+                return task_type
+        return "general"
+
 
 @dataclass
-class Agent:
-    """An agent with skills, load, and current assignments."""
+class AgentProfile:
+    """Rich agent profile for intelligent assignment."""
 
     name: str
     status: str = "offline"
+
+    # Role (from SOUL.md)
+    role: str = ""
+    expertise: list[str] = field(default_factory=list)
+
+    # Skills (from Hermes profile skills directory)
     skills: list[str] = field(default_factory=list)
-    skill_level: int = 1  # 1-5
-    current_tasks: list[str] = field(default_factory=list)
+    skill_count: int = 0
+    top_skills: list[str] = field(default_factory=list)  # top 5 by level
+
+    # Historical performance
     completed_tasks: int = 0
     total_tasks: int = 0
+    task_type_history: dict[str, dict] = field(default_factory=dict)
+    # {task_type: {completed: N, total: N, avg_hours: F, last_at: str}}
+
+    # Current load
+    current_tasks: list[str] = field(default_factory=list)
+    load_pct: float = 0.0
+    estimated_free_at: float = 0.0
+
+    # Code ownership
+    owned_modules: list[str] = field(default_factory=list)
+
+    # Meta
     last_heartbeat: str = ""
-    estimated_free_at: float = 0.0  # timestamp when current work finishes
+    model: str = ""
 
     @property
     def is_available(self) -> bool:
-        return self.status == "active" and len(self.current_tasks) < 3
+        return self.status == "active" and self.load_pct < 0.8
 
     @property
-    def load_pct(self) -> float:
-        if not self.current_tasks:
-            return 0.0
-        return min(1.0, len(self.current_tasks) / 3.0)
+    def success_rate(self) -> float:
+        if self.total_tasks == 0:
+            return 0.5  # neutral for new agents
+        return self.completed_tasks / self.total_tasks
+
+    def task_type_success(self, task_type: str) -> float:
+        """Historical success rate for a specific task type."""
+        hist = self.task_type_history.get(task_type)
+        if not hist or hist["total"] == 0:
+            return 0.5  # neutral
+        return hist["completed"] / hist["total"]
+
+
+# ─── Assignment Result ─────────────────────────────────────────────
 
 
 @dataclass
-class CriticalPath:
-    """Result of critical path analysis."""
-
-    path: list[str]  # task IDs in the critical chain
-    total_hours: float
-    parallel_groups: list[list[str]]  # tasks that can run in parallel
-    bottleneck_tasks: list[str]  # tasks on the critical path
-    estimated_completion: str  # ISO datetime
+class AssignmentResult:
+    task_id: str
+    agent_name: str
+    score: float
+    reasons: list[str]
 
 
-@dataclass
-class Schedule:
-    """A complete schedule for a project."""
-
-    project: str
-    tasks: list[Task]
-    critical_path: CriticalPath
-    assignments: dict[str, str]  # task_id → agent_name
-    total_estimated_hours: float
-    serial_hours: float
-    parallel_savings: float
-    generated_at: str
-
-
-# ─── PM Engine ────────────────────────────────────────────────────
+# ─── PM Engine v2 ─────────────────────────────────────────────────
 
 
 class PMEngine:
-    """Project management engine: scheduling, assignment, health."""
+    """Enhanced PM engine with multi-factor agent profiling."""
 
     def __init__(self, data_dir: Path = FINOPs):
         self.data_dir = data_dir
+        self._agent_cache: dict[str, AgentProfile] = {}
 
-    # ── Data Loading ──────────────────────────────────────────────
+    # ══════════════════════════════════════════════════════════════
+    # Agent Profiling
+    # ══════════════════════════════════════════════════════════════
+
+    def build_agent_profiles(self, force_refresh: bool = False) -> list[AgentProfile]:
+        """Build rich AgentProfiles from all data sources."""
+        if self._agent_cache and not force_refresh:
+            return list(self._agent_cache.values())
+
+        profiles = {}
+
+        # ── Source 1: agent_monitor.json (heartbeat + status) ──
+        monitor_data = self._load_json(self.data_dir / "agent_monitor.json")
+        for a in monitor_data.get("agents", []):
+            name = a.get("name", "?")
+            profiles[name] = AgentProfile(
+                name=name,
+                status=a.get("status", "offline"),
+                last_heartbeat=a.get("last_heartbeat", ""),
+            )
+
+        # ── Source 2: Hermes profile SOUL.md (role + expertise) ──
+        for pdir in PROFILES_DIR.iterdir() if PROFILES_DIR.exists() else []:
+            if not pdir.is_dir():
+                continue
+            name = pdir.name
+            if name not in profiles:
+                profiles[name] = AgentProfile(name=name)
+
+            soul_file = pdir / "SOUL.md"
+            if soul_file.exists():
+                content = soul_file.read_text()
+                profiles[name].role = self._extract_role(content)
+                profiles[name].expertise = self._extract_expertise(content)
+
+            # Skills
+            skills_dir = pdir / "skills"
+            if skills_dir.exists():
+                skill_files = list(skills_dir.rglob("SKILL.md"))
+                profiles[name].skill_count = len(skill_files)
+                skill_names = [f.parent.name for f in skill_files]
+                profiles[name].skills = skill_names[:50]
+                profiles[name].top_skills = skill_names[:5]
+
+            # Model
+            config_file = pdir / "config.yaml"
+            if config_file.exists():
+                profiles[name].model = self._extract_model(config_file)
+
+        # ── Source 3: badminton_tasks.json (historical performance) ──
+        tasks_data = self._load_json(self.data_dir / "badminton_tasks.json")
+        for t in tasks_data.get("tasks", []):
+            assignee = t.get("owner", t.get("assignee", ""))
+            if not assignee:
+                continue
+
+            # Create profile for assignees not in agent_monitor
+            if assignee not in profiles:
+                profiles[assignee] = AgentProfile(name=assignee)
+
+            p = profiles[assignee]
+            p.total_tasks += 1
+            if t.get("status") == "completed":
+                p.completed_tasks += 1
+
+            task_type = Task(
+                id=t.get("id", "?"),
+                name=t.get("name", t.get("title", "")),
+                status=t.get("status", "?"),
+            ).infer_type()
+
+            if task_type not in p.task_type_history:
+                p.task_type_history[task_type] = {
+                    "completed": 0, "total": 0,
+                    "avg_hours": 0.0, "task_ids": [],
+                }
+            hist = p.task_type_history[task_type]
+            hist["total"] += 1
+            if t.get("status") == "completed":
+                hist["completed"] += 1
+            hist["task_ids"].append(t.get("id", "?")[:20])
+
+            # Track in-progress for load
+            if t.get("status") == "in_progress":
+                p.current_tasks.append(t.get("id", "?"))
+
+        # ── Source 4: Code module ownership ──
+        self._assign_module_ownership(profiles)
+
+        # ── Compute load percentage ──
+        for p in profiles.values():
+            p.load_pct = min(1.0, len(p.current_tasks) / 3.0)
+
+        self._agent_cache = profiles
+        return list(profiles.values())
+
+    def get_agent_profile(self, name: str) -> Optional[AgentProfile]:
+        """Get a single agent's profile."""
+        profiles = self.build_agent_profiles()
+        for p in profiles:
+            if p.name == name:
+                return p
+        return None
+
+    # ── SOUL parsing ─────────────────────────────────────────────
+
+    def _extract_role(self, soul_content: str) -> str:
+        """Extract role from SOUL.md."""
+        # Pattern: "# Role Name — Description" or "You are the Role Name"
+        for line in soul_content.split("\n"):
+            line = line.strip()
+            if line.startswith("# ") and "—" in line:
+                return line.replace("# ", "").split("—")[0].strip()
+            if "You are the" in line:
+                m = re.search(r"You are the (.+?)($|of|\.|,)", line)
+                if m:
+                    return m.group(1).strip()
+        return ""
+
+    def _extract_expertise(self, soul_content: str) -> list[str]:
+        """Extract expertise areas from SOUL.md."""
+        expertise = []
+        for line in soul_content.split("\n"):
+            line = line.strip()
+            if line.startswith("## ") and "Core " in line:
+                expertise.append(line.replace("## ", "").strip())
+            if line.startswith("- ") and any(
+                kw in line.lower()
+                for kw in ["design", "develop", "test", "deploy", "manage",
+                           "coordinate", "build", "own", "ensure", "review"]
+            ):
+                expertise.append(line.replace("- ", "").strip()[:60])
+        return expertise[:8]
+
+    def _extract_model(self, config_file: Path) -> str:
+        try:
+            import yaml
+            with open(config_file) as f:
+                cfg = yaml.safe_load(f) or {}
+            return cfg.get("model", {}).get("default", "?")
+        except Exception:
+            return "?"
+
+    def _assign_module_ownership(self, profiles: dict[str, AgentProfile]):
+        """Map agents to code modules based on their role and skills."""
+        module_map = {
+            "data_collection": ["collector", "download", "scrape", "crawler", "bilibili"],
+            "data_processing": ["clip", "process", "organize", "pipeline", "extract"],
+            "model_training": ["train", "model", "videoMAE", "tracknet", "finetune"],
+            "api_backend": ["api", "server", "endpoint", "fastapi", "flask"],
+            "frontend": ["ui", "dashboard", "react", "component", "html"],
+            "devops": ["ci", "cd", "docker", "deploy", "monitor", "pipeline"],
+            "testing": ["test", "qa", "verify", "quality", "coverage"],
+            "security": ["auth", "security", "vulnerability", "compliance"],
+        }
+
+        for name, profile in profiles.items():
+            name_lower = name.lower()
+            owned = []
+            for module, keywords in module_map.items():
+                if any(kw in name_lower for kw in keywords):
+                    owned.append(module)
+                elif any(kw in (profile.role or "").lower() for kw in keywords):
+                    owned.append(module)
+                elif any(
+                    any(kw in skill.lower() for kw in keywords)
+                    for skill in profile.skills[:10]
+                ):
+                    owned.append(module)
+
+            if not owned:
+                owned.append("general")
+            profile.owned_modules = list(set(owned))
+
+    # ══════════════════════════════════════════════════════════════
+    # Intelligent Assignment (4-factor weighted scoring)
+    # ══════════════════════════════════════════════════════════════
+
+    def auto_assign(
+        self,
+        tasks: list[Task] | None = None,
+        agents: list[AgentProfile] | None = None,
+        explain: bool = True,
+    ) -> list[AssignmentResult]:
+        """Auto-assign tasks using multi-factor scoring.
+
+        Args:
+            tasks: Tasks to assign. If None, loads from data dir.
+            agents: Agent profiles. If None, builds from all sources.
+            explain: Include assignment reasons in results.
+
+        Returns:
+            List of AssignmentResult with scores and reasons.
+        """
+        if tasks is None:
+            tasks = self.load_tasks()
+        if agents is None:
+            agents = self.build_agent_profiles()
+
+        task_map = {t.id: t for t in tasks}
+
+        # Filter: ready tasks (pending, unassigned, dependencies met)
+        ready = [
+            t for t in tasks
+            if t.status in ("pending",)
+            and all(
+                d in task_map and task_map[d].status == "completed"
+                for d in t.dependencies
+            )
+        ]
+
+        # Sort by priority then critical path position
+        cp = self.critical_path_analysis(tasks)
+        critical_set = set(cp.path)
+
+        def sort_key(t: Task) -> tuple:
+            return (
+                t.priority,
+                t.id not in critical_set,
+                -t.estimated_hours,
+            )
+
+        ready.sort(key=sort_key)
+
+        # Filter available agents
+        available = [a for a in agents if a.is_available]
+        if not available:
+            available = [a for a in agents if a.status == "active"]
+
+        results: list[AssignmentResult] = []
+
+        for task in ready:
+            scored = []
+            for agent in available:
+                score, reasons = self._compute_assignment_score(task, agent)
+                scored.append((score, reasons, agent))
+
+            scored.sort(key=lambda x: x[0], reverse=True)
+
+            if scored and scored[0][0] > 0.1:
+                best = scored[0]
+                agent = best[2]
+                task.assignee = agent.name
+                task._assignment_reason = " | ".join(best[1][:3])
+                agent.current_tasks.append(task.id)
+                # Re-sort available by updated load
+                available.sort(key=lambda a: a.load_pct)
+
+                results.append(AssignmentResult(
+                    task_id=task.id,
+                    agent_name=agent.name,
+                    score=best[0],
+                    reasons=best[1],
+                ))
+
+        return results
+
+    def _compute_assignment_score(
+        self, task: Task, agent: AgentProfile
+    ) -> tuple[float, list[str]]:
+        """4-factor weighted scoring for task-agent fit.
+
+        Returns:
+            (score 0.0-1.0, list of reason strings)
+        """
+        task_type = task.infer_type()
+        reasons = []
+        total = 0.0
+
+        # ── Factor 1: Historical success on similar tasks (35%) ──
+        hist_success = agent.task_type_success(task_type)
+        hist_weight = 0.35
+        total += hist_success * hist_weight
+        if agent.task_type_history.get(task_type, {}).get("total", 0) > 0:
+            reasons.append(
+                f"历史{task_type}: {hist_success:.0%} "
+                f"({agent.task_type_history[task_type]['completed']}/"
+                f"{agent.task_type_history[task_type]['total']})"
+            )
+        else:
+            reasons.append(f"历史{task_type}: 无记录 (中性评分)")
+
+        # ── Factor 2: Core SKILL match (30%) ──
+        if task.skills_required:
+            matches = sum(
+                1 for s in task.skills_required if s in agent.skills
+            )
+            skill_score = matches / max(1, len(task.skills_required))
+        else:
+            # Infer required skills from task type
+            inferred = self._infer_skills_for_type(task_type)
+            matches = sum(1 for s in inferred if s in agent.skills)
+            skill_score = matches / max(1, len(inferred)) if inferred else 0.5
+
+        skill_weight = 0.30
+        total += skill_score * skill_weight
+        if skill_score > 0.5:
+            reasons.append(
+                f"技能匹配: {skill_score:.0%} "
+                f"(拥有: {', '.join(agent.top_skills[:3])})"
+            )
+        else:
+            reasons.append(f"技能匹配: {skill_score:.0%}")
+
+        # ── Factor 3: Role alignment (20%) ──
+        role_score = self._role_task_fit(agent.role, task_type)
+        role_weight = 0.20
+        total += role_score * role_weight
+        if agent.role:
+            reasons.append(f"角色匹配: {agent.role[:20]} → {task_type} ({role_score:.0%})")
+
+        # ── Factor 4: Load balancing (15%) ──
+        load_score = 1.0 - agent.load_pct
+        load_weight = 0.15
+        total += load_score * load_weight
+        reasons.append(f"负载: {agent.load_pct:.0%} ({len(agent.current_tasks)}个进行中)")
+
+        return min(1.0, total), reasons
+
+    def _role_task_fit(self, role: str, task_type: str) -> float:
+        """Score how well an agent's role fits a task type."""
+        role_lower = role.lower()
+        mapping = {
+            "data_collection": ["data", "采集", "collect"],
+            "data_processing": ["data", "处理", "process", "backend"],
+            "model_training": ["ml", "machine", "训练", "model", "ai"],
+            "model_integration": ["ml", "backend", "integrate", "集成"],
+            "api_development": ["backend", "api", "fullstack", "dev"],
+            "frontend": ["frontend", "前端", "ui"],
+            "deployment": ["devops", "运维", "deploy", "infra"],
+            "testing": ["qa", "test", "测试", "quality"],
+            "infrastructure": ["devops", "infra", "运维", "architect"],
+            "security": ["security", "安全", "auth"],
+        }
+
+        keywords = mapping.get(task_type, [])
+        if not keywords:
+            return 0.3  # generic
+
+        matches = sum(1 for kw in keywords if kw in role_lower)
+        return min(1.0, 0.3 + matches * 0.23)
+
+    def _infer_skills_for_type(self, task_type: str) -> list[str]:
+        """Infer required skills for a task type."""
+        mapping = {
+            "data_collection": ["python", "data-collection", "web-scraping", "bilibili"],
+            "data_processing": ["python", "data-processing", "video-processing", "ffmpeg"],
+            "model_training": ["python", "pytorch", "machine-learning", "videoMAE"],
+            "model_integration": ["python", "api", "integration", "tracking"],
+            "api_development": ["python", "api", "fastapi", "backend", "database"],
+            "deployment": ["docker", "kubernetes", "ci-cd", "gpu", "inference"],
+            "testing": ["python", "testing", "pytest", "quality-assurance"],
+            "infrastructure": ["docker", "terraform", "kubernetes", "ci-cd", "monitoring"],
+            "security": ["security", "audit", "compliance", "vulnerability-scanning"],
+            "documentation": ["writing", "documentation", "markdown"],
+        }
+        return mapping.get(task_type, ["python", "general"])
+
+    # ══════════════════════════════════════════════════════════════
+    # Data Loading (from v1, kept for compatibility)
+    # ══════════════════════════════════════════════════════════════
 
     def load_tasks(self, project: str = "") -> list[Task]:
-        """Load tasks from badminton_tasks.json or tasks.json."""
-        # Try badminton tasks first
         path = self.data_dir / "badminton_tasks.json"
         if not path.exists():
             path = self.data_dir / "tasks.json"
         if not path.exists():
             return []
 
-        with open(path) as f:
-            data = json.load(f)
+        try:
+            with open(path) as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, FileNotFoundError):
+            return []
 
-        tasks = []
         raw_tasks = data.get("tasks", data if isinstance(data, list) else [])
+        tasks = []
         for t in raw_tasks:
+            # Handle both naming conventions
+            raw_priority = t.get("priority", "P2")
+            if isinstance(raw_priority, str) and raw_priority.startswith("P"):
+                priority = int(raw_priority[1]) if raw_priority[1].isdigit() else 2
+            else:
+                priority = int(raw_priority) if raw_priority else 2
+
             task = Task(
                 id=t.get("id", "?"),
                 name=t.get("name", t.get("title", "?")),
@@ -138,95 +547,21 @@ class PMEngine:
                 assignee=t.get("owner", t.get("assignee", "")),
                 estimated_hours=float(t.get("estimated_hours", t.get("est_hours", 2.0))),
                 dependencies=t.get("dependencies", t.get("deps", [])),
-                priority=t.get("priority", 2),
+                priority=priority,
                 project=t.get("project", project or "default"),
                 milestone=t.get("milestone", ""),
                 skills_required=t.get("skills_required", t.get("skills", [])),
             )
+            task.task_type = task.infer_type()
             if not project or task.project == project:
                 tasks.append(task)
-
         return tasks
 
-    def load_agents(self) -> list[Agent]:
-        """Load agents from agent_monitor.json."""
-        path = self.data_dir / "agent_monitor.json"
-        if not path.exists():
-            return []
+    # ══════════════════════════════════════════════════════════════
+    # Critical Path Method (from v1, unchanged)
+    # ══════════════════════════════════════════════════════════════
 
-        with open(path) as f:
-            data = json.load(f)
-
-        agents = []
-        for a in data.get("agents", []):
-            name = a.get("name", "?")
-            agent = Agent(
-                name=name,
-                status=a.get("status", "offline"),
-                last_heartbeat=a.get("last_heartbeat", ""),
-                skills=self._infer_skills(name),
-            )
-
-            # Count tasks from badminton_tasks.json
-            tasks = self.load_tasks()
-            for t in tasks:
-                if t.assignee == name:
-                    agent.total_tasks += 1
-                    if t.status == "completed":
-                        agent.completed_tasks += 1
-                    elif t.status == "in_progress":
-                        agent.current_tasks.append(t.id)
-                        # Estimate when they'll be free
-                        remaining = t.estimated_hours - t.actual_hours
-                        if agent.estimated_free_at == 0:
-                            agent.estimated_free_at = time.time() + remaining * 3600
-                        else:
-                            agent.estimated_free_at += remaining * 3600
-
-            agents.append(agent)
-
-        return agents
-
-    def _infer_skills(self, agent_name: str) -> list[str]:
-        """Infer agent skills from name patterns."""
-        name_lower = agent_name.lower()
-        skills = []
-
-        mapping = {
-            "data": ["data-collection", "data-processing", "python"],
-            "ml": ["machine-learning", "pytorch", "training"],
-            "qa": ["testing", "quality-assurance", "python"],
-            "pipeline": ["ci-cd", "devops", "automation"],
-            "security": ["security", "audit", "compliance"],
-            "frontend": ["react", "ui", "typescript"],
-            "backend": ["api", "database", "python"],
-            "infra": ["kubernetes", "docker", "terraform"],
-            "devops": ["ci-cd", "docker", "monitoring"],
-            "ceo": ["management", "decision-making"],
-            "coach": ["coordination", "planning"],
-        }
-
-        for key, sks in mapping.items():
-            if key in name_lower:
-                skills.extend(sks)
-
-        return list(set(skills)) if skills else ["general"]
-
-    # ── Critical Path Method (CPM) ────────────────────────────────
-
-    def critical_path_analysis(self, tasks: list[Task]) -> CriticalPath:
-        """Calculate the critical path through the task dependency graph.
-
-        Returns the longest chain of dependent tasks that determines
-        the minimum project completion time.
-
-        Algorithm:
-          1. Build DAG from dependencies
-          2. Topological sort
-          3. Forward pass: earliest start/finish times
-          4. Backward pass: latest start/finish times
-          5. Critical path: tasks where early_start == late_start
-        """
+    def critical_path_analysis(self, tasks: list[Task]) -> "CriticalPath":
         if not tasks:
             return CriticalPath(
                 path=[], total_hours=0, parallel_groups=[],
@@ -243,12 +578,11 @@ class PMEngine:
                     adj.setdefault(dep_id, []).append(t.id)
                     in_degree[t.id] = in_degree.get(t.id, 0) + 1
 
-        # Forward pass
         early_start: dict[str, float] = {}
         early_finish: dict[str, float] = {}
         queue = deque([t.id for t in tasks if in_degree.get(t.id, 0) == 0])
-
         topo_order = []
+
         while queue:
             tid = queue.popleft()
             topo_order.append(tid)
@@ -259,13 +593,11 @@ class PMEngine:
                     es = max(es, early_finish[dep_id])
             early_start[tid] = es
             early_finish[tid] = es + task.estimated_hours
-
             for next_id in adj.get(tid, []):
                 in_degree[next_id] -= 1
                 if in_degree[next_id] == 0:
                     queue.append(next_id)
 
-        # Backward pass
         max_finish = max(early_finish.values()) if early_finish else 0
         late_start: dict[str, float] = {}
         late_finish: dict[str, float] = {}
@@ -279,23 +611,18 @@ class PMEngine:
             task = task_map[tid]
             late_start[tid] = lf - task.estimated_hours
 
-        # Critical path: where early_start == late_start
         critical_ids = [
             tid for tid in topo_order
             if abs(early_start[tid] - late_start.get(tid, early_start[tid])) < 0.01
         ]
 
-        # Parallel groups: tasks at same depth with no interdependencies
         parallel_groups = self._find_parallel_groups(tasks, task_map, adj)
-
-        # Bottlenecks: tasks on critical path sorted by duration
         bottleneck_tasks = sorted(
             critical_ids,
             key=lambda tid: task_map[tid].estimated_hours,
             reverse=True,
         )[:5]
 
-        # Estimated completion
         now = datetime.now(TZ)
         completion_dt = now + timedelta(hours=max_finish)
 
@@ -312,8 +639,6 @@ class PMEngine:
         task_map: dict[str, Task],
         adj: dict[str, list[str]],
     ) -> list[list[str]]:
-        """Identify groups of tasks that can run in parallel."""
-        # Tasks at the same topological depth with no mutual dependencies
         depth: dict[str, int] = {}
         for t in tasks:
             if not t.dependencies:
@@ -322,15 +647,12 @@ class PMEngine:
                 depth[t.id] = 1 + max(
                     (depth.get(d, 0) for d in t.dependencies), default=0
                 )
-
         by_depth: dict[int, list[str]] = defaultdict(list)
         for t in tasks:
             by_depth[depth[t.id]].append(t.id)
-
         parallel_groups = []
         for d, tids in sorted(by_depth.items()):
             if len(tids) > 1:
-                # Check no mutual dependencies
                 mutually_dependent = False
                 for i, a in enumerate(tids):
                     for b in tids[i + 1:]:
@@ -339,89 +661,37 @@ class PMEngine:
                             break
                 if not mutually_dependent:
                     parallel_groups.append(tids)
-
         return parallel_groups
 
-    # ── Agent Assignment ──────────────────────────────────────────
+    # ══════════════════════════════════════════════════════════════
+    # Schedule (from v1)
+    # ══════════════════════════════════════════════════════════════
 
-    def auto_assign(self, tasks: list[Task],
-                    agents: list[Agent]) -> dict[str, str]:
-        """Auto-assign tasks to best-fit available agents.
-
-        Strategy:
-          1. Sort tasks by priority (P0 first) then by critical path position
-          2. For each ready task, find best agent by skill match + load
-          3. Respect dependencies — don't assign blocked tasks
-        """
+    def generate_schedule(self, project: str = "") -> "Schedule":
+        tasks = self.load_tasks(project)
         cp = self.critical_path_analysis(tasks)
-        critical_set = set(cp.path)
+        assignments = self.auto_assign(tasks, explain=True)
+        serial_hours = sum(t.estimated_hours for t in tasks)
+        parallel_savings = serial_hours - cp.total_hours
 
-        # Sort: P0 critical path first, then P0, then P1, then P2
-        def sort_key(t: Task) -> tuple:
-            return (
-                t.priority,                    # P0 < P1 < P2
-                t.id not in critical_set,       # critical path tasks first
-                t.estimated_hours,              # shorter tasks first
-            )
+        assign_map = {a.task_id: a.agent_name for a in assignments}
+        return Schedule(
+            project=project or "all",
+            tasks=tasks,
+            critical_path=cp,
+            assignments=assign_map,
+            total_estimated_hours=serial_hours,
+            serial_hours=serial_hours,
+            parallel_savings=parallel_savings,
+            generated_at=datetime.now(TZ).isoformat(),
+        )
 
-        task_map = {t.id: t for t in tasks}
-        ready_tasks = [
-            t for t in tasks
-            if t.status in ("pending",) and not t.assignee
-            and all(
-                d in task_map and task_map[d].status == "completed"
-                for d in t.dependencies
-            )
-        ]
-        ready_tasks.sort(key=sort_key)
-
-        available = [a for a in agents if a.is_available]
-        assignments: dict[str, str] = {}
-
-        for task in ready_tasks:
-            best_agent = self._best_fit(task, available)
-            if best_agent:
-                assignments[task.id] = best_agent.name
-                best_agent.current_tasks.append(task.id)
-                # Re-sort available by load
-                available.sort(key=lambda a: a.load_pct)
-
-        return assignments
-
-    def _best_fit(self, task: Task, agents: list[Agent]) -> Optional[Agent]:
-        """Find the best agent for a task based on skill match and load."""
-        if not agents:
-            return None
-
-        scored = []
-        for agent in agents:
-            # Skill match score (0-1)
-            if task.skills_required:
-                matches = sum(
-                    1 for s in task.skills_required if s in agent.skills
-                )
-                skill_score = matches / max(1, len(task.skills_required))
-            else:
-                skill_score = 0.5  # neutral
-
-            # Load penalty
-            load_penalty = agent.load_pct
-
-            # Experience bonus
-            exp_bonus = min(1.0, agent.completed_tasks / max(1, agent.total_tasks))
-
-            # Composite score
-            score = (skill_score * 0.5) - (load_penalty * 0.3) + (exp_bonus * 0.2)
-            scored.append((score, agent))
-
-        scored.sort(key=lambda x: x[0], reverse=True)
-        return scored[0][1] if scored[0][0] > 0.1 else None
-
-    # ── Health Check ──────────────────────────────────────────────
+    # ══════════════════════════════════════════════════════════════
+    # Health (from v1)
+    # ══════════════════════════════════════════════════════════════
 
     def health_check(self) -> dict:
-        """Run full health check on all agents."""
-        agents = self.load_agents()
+        agents = self.build_agent_profiles()
         tasks = self.load_tasks()
 
         report = {
@@ -443,7 +713,6 @@ class PMEngine:
             "recommendations": [],
         }
 
-        # Check offline agents (excluding the 19 that are always offline)
         core_agents = {
             "CEO_LuC", "Data_Agent_LuD", "ML_Agent_LuM",
             "QA_Agent_LuQ", "Pipeline_Agent_LuP", "BadmintonCoach_LuB",
@@ -454,55 +723,56 @@ class PMEngine:
                     f"🔴 Core agent {agent.name} is {agent.status}!"
                 )
 
-        # Check stalled tasks
         for task in tasks:
             if task.status == "in_progress" and task.estimated_hours > 0:
                 if task.actual_hours > task.estimated_hours * 1.5:
                     report["alerts"].append(
-                        f"🟡 Task {task.id} is {task.actual_hours/task.estimated_hours:.0%} over estimate"
+                        f"🟡 {task.id} over estimate "
+                        f"({task.actual_hours/task.estimated_hours:.0%})"
                     )
 
-        # Check blocked tasks
         blocked = [t for t in tasks if t.status == "blocked"]
         if blocked:
             report["alerts"].append(
-                f"🔴 {len(blocked)} tasks BLOCKED: {', '.join(t.id for t in blocked)}"
+                f"🔴 {len(blocked)} tasks BLOCKED"
             )
 
-        # Recommendations
         if report["tasks"]["in_progress"] == 0 and report["tasks"]["pending"] > 0:
             report["recommendations"].append(
-                "No tasks in progress. Run 'apex pm assign' to auto-assign pending tasks."
-            )
-
-        offline = report["agents"]["offline"]
-        if offline > 20:
-            report["recommendations"].append(
-                f"{offline} agents offline — most are platform agents that need profile creation."
+                "No tasks in progress. Run 'apex pm assign'."
             )
 
         return report
 
-    # ── Full Schedule Generation ──────────────────────────────────
+    # ── Helpers ──────────────────────────────────────────────────
 
-    def generate_schedule(self, project: str = "") -> Schedule:
-        """Generate a complete project schedule."""
-        tasks = self.load_tasks(project)
-        agents = self.load_agents()
-        cp = self.critical_path_analysis(tasks)
-        assignments = self.auto_assign(tasks, agents)
+    def _load_json(self, path: Path) -> dict:
+        try:
+            with open(path) as f:
+                return json.load(f)
+        except Exception:
+            return {}
 
-        # Calculate serial vs parallel
-        serial_hours = sum(t.estimated_hours for t in tasks)
-        parallel_savings = serial_hours - cp.total_hours
 
-        return Schedule(
-            project=project or "all",
-            tasks=tasks,
-            critical_path=cp,
-            assignments=assignments,
-            total_estimated_hours=serial_hours,
-            serial_hours=serial_hours,
-            parallel_savings=parallel_savings,
-            generated_at=datetime.now(TZ).isoformat(),
-        )
+# ─── Re-export data classes ──────────────────────────────────────
+
+
+@dataclass
+class CriticalPath:
+    path: list[str]
+    total_hours: float
+    parallel_groups: list[list[str]]
+    bottleneck_tasks: list[str]
+    estimated_completion: str
+
+
+@dataclass
+class Schedule:
+    project: str
+    tasks: list[Task]
+    critical_path: CriticalPath
+    assignments: dict[str, str]
+    total_estimated_hours: float
+    serial_hours: float
+    parallel_savings: float
+    generated_at: str

@@ -1015,6 +1015,16 @@ def pm_timeline(project: str):
     render_timeline(engine, project)
 
 
+@pm.command(name="profile")
+@click.argument("agent_name")
+def pm_profile(agent_name: str):
+    """🔍 Agent capability profile: skills, history, role, modules"""
+    from apex.interface.pm_engine import PMEngine
+    from apex.interface.pm_render import render_profile
+    engine = PMEngine()
+    render_profile(engine, agent_name)
+
+
 # ════════════════════════════════════════════════════════════════
 # PROJECT — 📦 项目管理
 # ════════════════════════════════════════════════════════════════
