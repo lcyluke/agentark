@@ -956,6 +956,66 @@ def monitor_skills():
 
 
 # ════════════════════════════════════════════════════════════════
+# PM — 📊 项目管理 (调度/分配/健康/时间线)
+# ════════════════════════════════════════════════════════════════
+
+@cli.group()
+def pm():
+    """📊 PM — project scheduling, assignment, health, timeline"""
+
+
+@pm.command(name="dashboard")
+@click.option("--project", "-p", default="", help="Filter by project")
+def pm_dashboard(project: str):
+    """📊 Full project dashboard: agents, tasks, critical path, health"""
+    from apex.interface.pm_engine import PMEngine
+    from apex.interface.pm_render import render_dashboard
+    engine = PMEngine()
+    render_dashboard(engine, project)
+
+
+@pm.command(name="schedule")
+@click.option("--project", "-p", default="", help="Filter by project")
+def pm_schedule(project: str):
+    """📅 Schedule with critical path, parallel groups, assignments"""
+    from apex.interface.pm_engine import PMEngine
+    from apex.interface.pm_render import render_schedule
+    engine = PMEngine()
+    render_schedule(engine, project)
+
+
+@pm.command(name="assign")
+@click.option("--project", "-p", default="", help="Filter by project")
+def pm_assign(project: str):
+    """🤖 Auto-assign pending tasks to best-fit agents"""
+    from apex.interface.pm_engine import PMEngine
+    from apex.interface.pm_render import render_schedule
+    engine = PMEngine()
+    schedule = engine.generate_schedule(project)
+    console.print(f"[green]✅ Assigned {len(schedule.assignments)} tasks[/]")
+    render_schedule(engine, project)
+
+
+@pm.command(name="health")
+def pm_health():
+    """🩺 Health check: agent heartbeats, task status, alerts"""
+    from apex.interface.pm_engine import PMEngine
+    from apex.interface.pm_render import render_health
+    engine = PMEngine()
+    render_health(engine)
+
+
+@pm.command(name="timeline")
+@click.option("--project", "-p", default="", help="Filter by project")
+def pm_timeline(project: str):
+    """📊 Gantt-style timeline with critical path highlighting"""
+    from apex.interface.pm_engine import PMEngine
+    from apex.interface.pm_render import render_timeline
+    engine = PMEngine()
+    render_timeline(engine, project)
+
+
+# ════════════════════════════════════════════════════════════════
 # PROJECT — 📦 项目管理
 # ════════════════════════════════════════════════════════════════
 
