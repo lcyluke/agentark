@@ -160,16 +160,13 @@ def format_apex_help(self, ctx, formatter):
             cmd_data[name] = display
 
     groups = [
-        ("SETUP & START", ["setup", "quickstart", "init", "demo", "model-detect"]),
-        ("DAILY USE", ["run", "chat", "status", "survey", "dashboard"]),
-        ("TASK MANAGEMENT", ["task"]),
-        ("TEAM & AGENTS", ["team"]),
-        ("FLEET & MONITORING", ["fleet"]),
-        ("COLLABORATION MODES", ["mode"]),
-        ("PROJECT MANAGEMENT", ["project"]),
-        ("SYSTEM", ["system"]),
-        ("HELP & INTEGRATION", ["help", "integrate"]),
-        ("GLOBAL COMMANDS", ["origin", "crew"]),
+        ("🚀 SETUP & START", ["setup", "quickstart", "init", "demo", "model-detect"]),
+        ("💻 LOCAL MGMT", ["fleet", "monitor", "version", "update"]),
+        ("📋 TASK MGMT", ["task", "run", "chat", "status"]),
+        ("👥 TEAM & AGENTS", ["team", "mode"]),
+        ("📊 PM & PROJECT", ["pm", "project", "survey", "dashboard"]),
+        ("⚙️ SYSTEM", ["system"]),
+        ("🔗 INTEGRATION", ["help", "integrate", "origin"]),
     ]
 
     for group_name, cmd_names in groups:
@@ -209,20 +206,20 @@ def format_apex_help(self, ctx, formatter):
     formatter.write("Examples:\n")
     examples = [
         ("apex setup --quick", "First-time setup (quick, all defaults)"),
-        ("apex setup --check", "Check installation status"),
-        ("apex model-detect", "Auto-scan available AI models & providers"),
+        ("apex fleet init", "Create profiles + launch tmux fleet (one-time)"),
+        ("apex fleet start", "Start all 7 agents in tmux windows"),
+        ("apex monitor status", "Agent heartbeat + task status panel"),
+        ("apex monitor tools", "Scan system: Hermes, Claude Code, OpenClaw"),
+        ("apex pm dashboard", "PM dashboard: agents, tasks, critical path"),
+        ("apex pm schedule", "Schedule with intelligent auto-assignment"),
+        ("apex pm profile ML_Agent_LuM", "Agent capability profile (skills+history)"),
+        ("apex version", "Show version + check for updates"),
+        ("apex update", "Self-update to latest GitHub release"),
+        ("apex task dispatch-smart 'build login'", "AI decomposes → task list"),
+        ("apex chat frontend-dev", "Chat with any agent directly"),
         ("apex team template webapp", "Create a 4-agent development team"),
-        ("apex team start", "Launch all agent terminals"),
-        ('apex task dispatch-smart "build login page"', "AI decomposes requirement into tasks"),
-        ("apex task schedule", "View Gantt chart timeline of all tasks"),
-        ("apex fleet status", "Show agent fleet status dashboard"),
-        ("apex chat frontend-dev", "Chat with the frontend developer agent"),
-        ('apex mode chain "refactor auth" -p dev', "Run a sequential chain pipeline"),
-        ('apex mode supervise "build payment" -w 3', "Manager delegates to 3 workers"),
-        ("apex system skill list", "View all agent skills and levels"),
-        ("apex integrate hermes profiles", "List Hermes profiles"),
-        ('apex survey "AI FinOps"', "Competitive analysis — market research"),
-        ("apex origin overview", "Cross-project fleet overview"),
+        ("apex mode chain 'refactor auth' -p dev", "Sequential chain pipeline"),
+        ("apex system skill list", "View agent skills and levels"),
     ]
     for cmd_example, desc in examples:
         formatter.write(f"    {cmd_example:<55s} {desc}\n")
