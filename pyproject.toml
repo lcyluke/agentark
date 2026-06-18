@@ -37,9 +37,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/luke/apex"
-Repository = "https://github.com/luke/apex"
-Documentation = "https://github.com/luke/apex#readme"
+Homepage = "https://github.com/lcyluke/apex"
+Repository = "https://github.com/lcyluke/apex"
+Documentation = "https://github.com/lcyluke/apex#readme"
 
 [project.optional-dependencies]
 dev = [
