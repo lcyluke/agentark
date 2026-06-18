@@ -35,3 +35,10 @@ superpowers/
 superpowers/
 superpowers/
 fleet/fleet.json
+
+# Fleet profiles (generated at init time — NOT stored in git)
+fleet/profiles/
+
+# Node modules
+node_modules/
+ops-mcp/node_modules/

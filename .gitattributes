@@ -1,0 +1,5 @@
+# Exclude large directories from GitHub archive tarballs
+# (these are generated at install time)
+fleet/profiles/    export-ignore
+ops-mcp/node_modules/ export-ignore
+.venv/             export-ignore
