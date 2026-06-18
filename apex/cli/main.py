@@ -931,6 +931,31 @@ def mode_pipeline_confirm(pipeline_id: str):
 
 
 # ════════════════════════════════════════════════════════════════
+# MONITOR — 📊 状态监控 (Agent状态 + Skills总览)
+# ════════════════════════════════════════════════════════════════
+
+@cli.group()
+def monitor():
+    """📊 Monitor — agent status, skills, tasks dashboard"""
+
+
+@monitor.command(name="status")
+@click.option("--json", "json_output", is_flag=True, help="JSON output for dashboard")
+@click.option("--watch", "-w", type=int, default=0, help="Auto-refresh interval (seconds)")
+def monitor_status(json_output: bool, watch: int):
+    """🤖 Agent task execution status panel"""
+    from apex.interface.monitor import cmd_status
+    cmd_status(json_output=json_output, watch=watch)
+
+
+@monitor.command(name="skills")
+def monitor_skills():
+    """🧠 Agent skills overview — profile skills, SOUL, wrappers"""
+    from apex.interface.monitor import cmd_skills
+    cmd_skills()
+
+
+# ════════════════════════════════════════════════════════════════
 # PROJECT — 📦 项目管理
 # ════════════════════════════════════════════════════════════════
 
