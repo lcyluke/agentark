@@ -12,12 +12,10 @@ class Apex < Formula
 
   def install
     venv = virtualenv_create(libexec, "python3.12")
-    # Use pre-built wheels only — no compiler needed
-    system libexec/"bin/pip", "install", "--only-binary", ":all:", "-v", "."
-  rescue
-    # Fallback: try without binary restriction if pre-built not available
-    ohai "Pre-built wheels not available for some packages, trying source build..."
-    system libexec/"bin/pip", "install", "-v", "."
+    # Upgrade pip first to get latest wheel resolution
+    system libexec/"bin/pip", "install", "--upgrade", "pip"
+    # Install purely from pre-built wheels — zero compilation
+    system libexec/"bin/pip", "install", "--only-binary", ":all:", "."
   end
 
   def post_install
@@ -51,13 +49,7 @@ class Apex < Formula
         apex fleet start     Start 7 dev agents in tmux windows
         apex monitor status  Agent status + badminton pipeline
 
-      Fleet commands:
-        apex fleet {init,start,stop,attach,add,kill,log,status,broadcast}
-      Monitor commands:
-        apex monitor {status,skills}
-
       Works on macOS, Linux, and Windows (WSL).
-
       Docs: https://github.com/lcyluke/apex
     EOS
   end
