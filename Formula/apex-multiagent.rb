@@ -8,30 +8,49 @@ class ApexMultiagent < Formula
   license "MIT"
 
   depends_on "python@3.12"
-
-  # Declared in pyproject.toml
-  # click, httpx, pyyaml, pydantic, rich, jinja2
+  depends_on "tmux"
 
   def install
     virtualenv_install_with_resources
   end
 
+  def post_install
+    # Print fleet quickstart
+    ohai "🚀 Apex Fleet Quickstart"
+    puts ""
+    puts "  Initialize your fleet (one-time):"
+    puts "    apex fleet init"
+    puts ""
+    puts "  Start all agents:"
+    puts "    apex fleet start"
+    puts ""
+    puts "  Attach to your fleet:"
+    puts "    apex fleet attach"
+    puts ""
+    puts "  Or manage individually:"
+    puts "    apex fleet add <agent>    Add an agent"
+    puts "    apex fleet log <agent>    View agent output"
+    puts "    apex fleet broadcast \"msg\"  Send to all agents"
+    puts "    apex fleet status          Fleet overview"
+    puts ""
+  end
+
   test do
-    # Verify CLI entry point exists and runs
     output = shell_output("#{bin}/apex --version 2>&1 || true")
     assert_match "Apex", output
   end
 
   def caveats
     <<~EOS
-      🚀 Apex installed! Get started:
+      ⚡ Apex installed with tmux multi-agent fleet.
 
-        apex init my-project && cd my-project
-        apex run "Write a login page"
+      First run:
+        apex fleet init    # Create profiles + start fleet (one-time)
+        apex fleet start   # Launch all 7 dev agents in tmux windows
+        apex fleet attach  # Show tmux attach command
 
-      Multi-agent fleet mode:
-        apex fleet status
-        apex squad start
+      Fleet commands:
+        apex fleet {init,start,stop,attach,add,kill,log,status,broadcast}
 
       Docs: https://github.com/lcyluke/apex
     EOS

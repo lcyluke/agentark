@@ -1,0 +1,186 @@
+{
+  "sprint": "001",
+  "project": "apex",
+  "start": "2026-06-19",
+  "end": "2026-06-25",
+  "pm": "PM_Lu",
+  "tasks": [
+    {
+      "id": "APX-001",
+      "title": "[apex] 审计现有代码架构，输出架构评审报告",
+      "assignee": "architect",
+      "module": "core-engine",
+      "priority": "P0",
+      "status": "todo",
+      "est_hours": 2,
+      "depends_on": [],
+      "created": "2026-06-18T23:50:00"
+    },
+    {
+      "id": "APX-002",
+      "title": "[apex] 设计 Skill Evolution 引擎架构",
+      "assignee": "architect",
+      "module": "core-engine",
+      "priority": "P0",
+      "status": "todo",
+      "est_hours": 4,
+      "depends_on": ["APX-001"],
+      "created": "2026-06-18T23:50:00"
+    },
+    {
+      "id": "APX-003",
+      "title": "[apex] 设计跨项目知识图谱共享协议",
+      "assignee": "architect",
+      "module": "core-engine",
+      "priority": "P1",
+      "status": "todo",
+      "est_hours": 3,
+      "depends_on": ["APX-001"],
+      "created": "2026-06-18T23:50:00"
+    },
+    {
+      "id": "APX-004",
+      "title": "[apex] 实现 Token Budget Bank 核心路由逻辑",
+      "assignee": "backend-dev",
+      "module": "core-engine",
+      "priority": "P0",
+      "status": "todo",
+      "est_hours": 4,
+      "depends_on": [],
+      "created": "2026-06-18T23:50:00"
+    },
+    {
+      "id": "APX-005",
+      "title": "[apex] 修复 CLI 18条命令连通性",
+      "assignee": "backend-dev",
+      "module": "cli-interface",
+      "priority": "P0",
+      "status": "todo",
+      "est_hours": 3,
+      "depends_on": [],
+      "created": "2026-06-18T23:50:00"
+    },
+    {
+      "id": "APX-006",
+      "title": "[apex] 实现 Self-Healing 三振出局机制",
+      "assignee": "backend-dev",
+      "module": "core-engine",
+      "priority": "P1",
+      "status": "todo",
+      "est_hours": 4,
+      "depends_on": ["APX-002"],
+      "created": "2026-06-18T23:50:00"
+    },
+    {
+      "id": "APX-007",
+      "title": "[apex] 完善 Web Dashboard Agent实时状态面板",
+      "assignee": "frontend-dev",
+      "module": "dashboard",
+      "priority": "P0",
+      "status": "todo",
+      "est_hours": 4,
+      "depends_on": [],
+      "created": "2026-06-18T23:50:00"
+    },
+    {
+      "id": "APX-008",
+      "title": "[apex] 实现项目舰队可视化 Org Chart",
+      "assignee": "frontend-dev",
+      "module": "dashboard",
+      "priority": "P1",
+      "status": "todo",
+      "est_hours": 3,
+      "depends_on": ["APX-007"],
+      "created": "2026-06-18T23:50:00"
+    },
+    {
+      "id": "APX-009",
+      "title": "[apex] 搭建前端组件测试框架 Playwright",
+      "assignee": "frontend-dev",
+      "module": "dashboard",
+      "priority": "P1",
+      "status": "todo",
+      "est_hours": 2,
+      "depends_on": ["APX-007"],
+      "created": "2026-06-18T23:50:00"
+    },
+    {
+      "id": "APX-010",
+      "title": "[apex] 搭建 CI/CD Pipeline (lint→test→build)",
+      "assignee": "devops",
+      "module": "devops-pipeline",
+      "priority": "P0",
+      "status": "todo",
+      "est_hours": 3,
+      "depends_on": [],
+      "created": "2026-06-18T23:50:00"
+    },
+    {
+      "id": "APX-011",
+      "title": "[apex] 配置多环境部署 (dev/staging/prod)",
+      "assignee": "devops",
+      "module": "devops-pipeline",
+      "priority": "P1",
+      "status": "todo",
+      "est_hours": 2,
+      "depends_on": ["APX-010"],
+      "created": "2026-06-18T23:50:00"
+    },
+    {
+      "id": "APX-012",
+      "title": "[apex] 集成 PyPI 自动发布流水线",
+      "assignee": "devops",
+      "module": "devops-pipeline",
+      "priority": "P2",
+      "status": "todo",
+      "est_hours": 2,
+      "depends_on": ["APX-010"],
+      "created": "2026-06-18T23:50:00"
+    },
+    {
+      "id": "APX-013",
+      "title": "[apex] 编写核心模块单元测试 (runtime/profile/providers)",
+      "assignee": "qa-engineer",
+      "module": "quality-gate",
+      "priority": "P0",
+      "status": "todo",
+      "est_hours": 4,
+      "depends_on": [],
+      "created": "2026-06-18T23:50:00"
+    },
+    {
+      "id": "APX-014",
+      "title": "[apex] 设计集成测试场景矩阵 (6种编排模式)",
+      "assignee": "qa-engineer",
+      "module": "quality-gate",
+      "priority": "P1",
+      "status": "todo",
+      "est_hours": 3,
+      "depends_on": ["APX-013"],
+      "created": "2026-06-18T23:50:00"
+    },
+    {
+      "id": "APX-015",
+      "title": "[apex] 建立质量门控标准 + 覆盖率CI卡点",
+      "assignee": "qa-engineer",
+      "module": "quality-gate",
+      "priority": "P1",
+      "status": "todo",
+      "est_hours": 2,
+      "depends_on": ["APX-010", "APX-013"],
+      "created": "2026-06-18T23:50:00"
+    }
+  ],
+  "summary": {
+    "total": 15,
+    "by_agent": {
+      "architect": 3,
+      "backend-dev": 3,
+      "frontend-dev": 3,
+      "devops": 3,
+      "qa-engineer": 3
+    },
+    "by_priority": {"P0": 7, "P1": 7, "P2": 1},
+    "total_est_hours": 48
+  }
+}

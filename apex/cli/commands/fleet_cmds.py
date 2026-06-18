@@ -988,11 +988,177 @@ def fleet_report_cmd():
     if result.get("push_ok"):
         console.print(f"  ✅ 状态已推送到 GitHub")
 
-        # GPU alerts
-        alerts = status.get("gpu_alerts", [])
-        if alerts:
-            console.print("")
-            for alert in alerts:
-                console.print(f"  {alert}")
+
+# ════════════════════════════════════════════════════════════════
+# Tmux Fleet Commands — native tmux-based multi-agent runtime
+# ════════════════════════════════════════════════════════════════
+
+def fleet_tmux_init(agents: list[str] | None = None):
+    """Initialize fleet: create profiles + start tmux session."""
+    from apex.fleet import ProfileBundler, TmuxFleetManager
+
+    console.print()
+    console.print(Panel("⚡ Apex Fleet — tmux-powered multi-agent runtime",
+                        border_style="cyan"))
+
+    # Step 1: Init profiles
+    console.print("\n[bold]1/2  Initializing Agent Profiles...[/]")
+    bundler = ProfileBundler()
+    results = bundler.init_all()
+
+    t = Table(box=None)
+    t.add_column("Agent", style="cyan")
+    t.add_column("Status", style="green")
+    for r in results:
+        icon = {"created": "✅", "exists": "⏭️", "error": "❌"}.get(r.status, "❓")
+        t.add_row(r.agent, f"{icon} {r.message}")
+    console.print(t)
+
+    # Step 2: Start tmux fleet
+    console.print("\n[bold]2/2  Starting tmux Fleet...[/]")
+    fm = TmuxFleetManager()
+    all_agents = agents or list(ProfileBundler.DEV_SQUAD.keys())
+    initialized = bundler.list_initialized()
+    if not initialized:
+        console.print("[red]❌ No profiles initialized. Run 'apex fleet init' first.[/]")
+        return
+
+    state = fm.init_fleet(initialized)
+    console.print(f"[green]✅ Fleet '{state.session_name}' started with {state.total_windows} agents[/]")
+
+    # Show agent list
+    for a in state.agents:
+        console.print(f"   [{a.window_index}] {a.name} {'🟢' if a.active else '⚪'}")
+
+    console.print(f"\n[dim]Attach: tmux attach -t {state.session_name}[/]")
+    console.print(f"[dim]Status:  apex fleet status[/]")
+
+
+def fleet_tmux_start(agents: list[str] | None = None):
+    """Start (or restart) all agents in tmux."""
+    from apex.fleet import ProfileBundler, TmuxFleetManager
+
+    fm = TmuxFleetManager()
+    bundler = ProfileBundler()
+
+    if not fm.exists:
+        # Auto-init
+        console.print("[yellow]⚡ Fleet not initialized. Running auto-init...[/]")
+        initialized = bundler.list_initialized()
+        if not initialized:
+            console.print("[dim]No profiles found. Creating default squad...[/]")
+            bundler.init_all()
+            initialized = bundler.list_initialized()
+
+        state = fm.init_fleet(initialized)
     else:
-        console.print(f"  ⚠️ 推送可能失败，检查网络后重试")
+        state = fm.start(agents)
+
+    console.print(f"[green]✅ Fleet running: {state.total_windows} agents[/]")
+    for a in state.agents:
+        console.print(f"   [{a.window_index}] {a.name} {'🟢' if a.active else '⚪'}")
+
+    console.print(f"\n[dim]Attach: {fm.attach_command()}[/]")
+
+
+def fleet_tmux_stop(kill_session: bool = False):
+    """Stop agents or destroy the tmux session."""
+    from apex.fleet import TmuxFleetManager
+
+    fm = TmuxFleetManager()
+    if not fm.exists:
+        console.print("[yellow]⚠ Fleet is not running.[/]")
+        return
+
+    fm.stop(kill_session=kill_session)
+    if kill_session:
+        console.print("[red]💀 Fleet session destroyed.[/]")
+    else:
+        console.print("[yellow]⏹ Agent windows stopped.[/]")
+
+
+def fleet_tmux_attach():
+    """Print command to attach to the fleet tmux session."""
+    from apex.fleet import TmuxFleetManager
+
+    fm = TmuxFleetManager()
+    if not fm.exists:
+        console.print("[yellow]⚠ Fleet is not running. Start it with 'apex fleet start'[/]")
+        return
+
+    console.print(Panel(
+        f"[bold cyan]tmux attach -t {fm.session_name}[/]\n\n"
+        f"[dim]Keys: Ctrl+B 0-9 (switch window) | Ctrl+B d (detach) | Ctrl+B n/p (next/prev)[/]",
+        title="🖥 Attach to Apex Fleet",
+        border_style="cyan",
+    ))
+
+
+def fleet_tmux_add(agent_name: str):
+    """Add a new agent to the running fleet."""
+    from apex.fleet import ProfileBundler, TmuxFleetManager
+
+    fm = TmuxFleetManager()
+    if not fm.exists:
+        console.print("[red]❌ Fleet is not running. Start it first: apex fleet start[/]")
+        return
+
+    # Ensure profile exists
+    bundler = ProfileBundler()
+    if agent_name not in bundler.list_initialized():
+        console.print(f"[dim]Creating profile for {agent_name}...[/]")
+        result = bundler.init_agent(agent_name)
+        if result.status == "error":
+            console.print(f"[red]❌ {result.message}[/]")
+            return
+
+    if fm.add_agent(agent_name):
+        console.print(f"[green]✅ Agent '{agent_name}' added to fleet[/]")
+    else:
+        console.print(f"[red]❌ Failed to add agent '{agent_name}'[/]")
+
+
+def fleet_tmux_kill(agent_name: str):
+    """Kill a specific agent window."""
+    from apex.fleet import TmuxFleetManager
+
+    fm = TmuxFleetManager()
+    if not fm.exists:
+        console.print("[yellow]⚠ Fleet is not running.[/]")
+        return
+
+    if fm.kill_agent(agent_name):
+        console.print(f"[yellow]🗑 Agent '{agent_name}' killed[/]")
+    else:
+        console.print(f"[red]❌ Failed to kill agent '{agent_name}'[/]")
+
+
+def fleet_tmux_log(agent_name: str, lines: int = 30):
+    """Show recent output from an agent window."""
+    from apex.fleet import TmuxFleetManager
+
+    fm = TmuxFleetManager()
+    if not fm.exists:
+        console.print("[yellow]⚠ Fleet is not running.[/]")
+        return
+
+    output = fm.log(agent_name, lines=lines)
+    if output:
+        console.print(Panel(output.strip(), title=f"📋 {agent_name} (last {lines} lines)",
+                            border_style="dim"))
+    else:
+        console.print(f"[dim]No output captured from '{agent_name}'[/]")
+
+
+def fleet_tmux_broadcast(message: str):
+    """Send a message to all agents."""
+    from apex.fleet import TmuxFleetManager
+
+    fm = TmuxFleetManager()
+    if not fm.exists:
+        console.print("[yellow]⚠ Fleet is not running.[/]")
+        return
+
+    fm.broadcast(message)
+    state = fm.status()
+    console.print(f"[green]✅ Broadcast sent to {state.total_windows} agents[/]")

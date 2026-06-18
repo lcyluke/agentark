@@ -797,6 +797,66 @@ def fleet_gpu_status():
     fleet_cmds.fleet_gpu_status_cmd()
 
 
+# ── Tmux-backed fleet runtime ───────────────────────────────────
+
+@fleet.command(name="init")
+@click.option("--agents", "-a", default="", help="Comma-separated agent names (default: all squad)")
+def fleet_tmux_init(agents: str):
+    """⚡ Initialize fleet: create profiles + start tmux session"""
+    agent_list = [a.strip() for a in agents.split(",") if a.strip()] if agents else None
+    fleet_cmds.fleet_tmux_init(agent_list)
+
+
+@fleet.command(name="start")
+@click.option("--agents", "-a", default="", help="Comma-separated agent names")
+def fleet_tmux_start(agents: str):
+    """▶️ Start all agents in tmux (auto-inits if needed)"""
+    agent_list = [a.strip() for a in agents.split(",") if a.strip()] if agents else None
+    fleet_cmds.fleet_tmux_start(agent_list)
+
+
+@fleet.command(name="stop")
+@click.option("--destroy", "-d", is_flag=True, help="Destroy the tmux session entirely")
+def fleet_tmux_stop(destroy: bool):
+    """⏹ Stop agent windows (--destroy to kill tmux session)"""
+    fleet_cmds.fleet_tmux_stop(kill_session=destroy)
+
+
+@fleet.command(name="attach")
+def fleet_tmux_attach():
+    """🖥 Show command to attach to fleet tmux session"""
+    fleet_cmds.fleet_tmux_attach()
+
+
+@fleet.command(name="add")
+@click.argument("agent_name")
+def fleet_tmux_add(agent_name: str):
+    """➕ Add an agent to the running fleet"""
+    fleet_cmds.fleet_tmux_add(agent_name)
+
+
+@fleet.command(name="kill")
+@click.argument("agent_name")
+def fleet_tmux_kill(agent_name: str):
+    """🗑 Kill a specific agent window"""
+    fleet_cmds.fleet_tmux_kill(agent_name)
+
+
+@fleet.command(name="log")
+@click.argument("agent_name")
+@click.option("--lines", "-n", default=30, help="Number of lines to show")
+def fleet_tmux_log(agent_name: str, lines: int):
+    """📋 Show recent output from an agent"""
+    fleet_cmds.fleet_tmux_log(agent_name, lines)
+
+
+@fleet.command(name="broadcast")
+@click.argument("message")
+def fleet_tmux_broadcast(message: str):
+    """📢 Send a message to all running agents"""
+    fleet_cmds.fleet_tmux_broadcast(message)
+
+
 # ════════════════════════════════════════════════════════════════
 # MODE — 🔧 协作模式
 # ════════════════════════════════════════════════════════════════
