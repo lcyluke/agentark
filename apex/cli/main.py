@@ -1834,4 +1834,21 @@ def quickstart():
         title="⚓ Apex Fleet — Quick Start",
     )
     console.print(panel)
-    console.print("\n[dim]Full help: apex --help  |  Command help: apex <command> --help[/]")
+    console.print("\\n[dim]Full help: apex --help  |  Command help: apex <command> --help[/]")
+
+# ════════════════════════════════════════════════════════════════
+# VERSION & UPDATE
+# ════════════════════════════════════════════════════════════════
+
+@cli.command(name="version")
+def version_cmd():
+    """📋 Show version and check for updates"""
+    from apex.interface.version import cmd_version
+    cmd_version()
+
+
+@cli.command(name="update")
+def update_cmd():
+    """🚀 Update Apex to the latest version from GitHub"""
+    from apex.interface.version import cmd_update
+    cmd_update()
