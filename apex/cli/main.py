@@ -161,7 +161,7 @@ def format_apex_help(self, ctx, formatter):
 
     groups = [
         ("🚀 SETUP & START", ["setup", "quickstart", "init", "demo", "model-detect"]),
-        ("💻 LOCAL MGMT", ["fleet", "monitor", "version", "update"]),
+        ("💻 LOCAL MGMT", ["fleet", "monitor", "version", "update", "theme", "alias"]),
         ("📋 TASK MGMT", ["task", "run", "chat", "status"]),
         ("👥 TEAM & AGENTS", ["team", "mode"]),
         ("📊 PM & PROJECT", ["pm", "project", "survey", "dashboard"]),
@@ -1898,6 +1898,8 @@ def config_path_cmd():
 @cli.command(name="version")
 def version_cmd():
     """📋 Show version and check for updates"""
+    from apex.interface.logo import render_mini
+    render_mini(console, "0.5.0")
     from apex.interface.version import cmd_version
     cmd_version()
 
@@ -1907,3 +1909,81 @@ def update_cmd():
     """🚀 Update Apex to the latest version from GitHub"""
     from apex.interface.version import cmd_update
     cmd_update()
+
+
+@cli.group()
+def theme():
+    """🎨 Theme management — switch CLI color themes"""
+
+
+@theme.command(name="list")
+def theme_list():
+    """List available themes"""
+    from apex.interface.skin_engine import SkinEngine
+    from rich.table import Table
+    engine = SkinEngine()
+    current = engine.current
+    table = Table(box=None)
+    table.add_column("", width=3)
+    table.add_column("主题", style="bold")
+    table.add_column("说明", style="dim")
+    for skin in engine.list_themes():
+        marker = "→" if skin.name == current.name else " "
+        table.add_row(marker, skin.display, skin.description)
+    console.print(table)
+    console.print(f"\n[dim]切换: apex theme set <name>[/]")
+
+
+@theme.command(name="set")
+@click.argument("name")
+def theme_set(name: str):
+    """Set active theme"""
+    from apex.interface.skin_engine import get_engine
+    engine = get_engine()
+    if engine.set_theme(name):
+        console.print(f"[green]✅ 主题切换为: {name}[/]")
+    else:
+        available = ", ".join(engine.themes.keys())
+        console.print(f"[red]未知主题: {name}[/]")
+        console.print(f"[dim]可用: {available}[/]")
+
+
+@cli.group()
+def alias():
+    """🔗 Command aliases — short names for frequent commands"""
+
+
+@alias.command(name="list")
+def alias_list():
+    """List all aliases"""
+    from apex.interface.aliases import list_aliases
+    from rich.table import Table
+    aliases = list_aliases()
+    table = Table(box=None)
+    table.add_column("别名", style="bold cyan")
+    table.add_column("命令", style="white")
+    table.add_column("来源", style="dim")
+    for name, (cmd, marker) in sorted(aliases.items()):
+        table.add_row(f"apex {name}", cmd, marker)
+    console.print(table)
+
+
+@alias.command(name="add")
+@click.argument("name")
+@click.argument("command")
+def alias_add(name: str, command: str):
+    """Add a custom alias"""
+    from apex.interface.aliases import add_alias
+    add_alias(name, command)
+    console.print(f"[green]✅ apex {name} → {command}[/]")
+
+
+@alias.command(name="remove")
+@click.argument("name")
+def alias_remove(name: str):
+    """Remove a custom alias"""
+    from apex.interface.aliases import remove_alias
+    if remove_alias(name):
+        console.print(f"[green]✅ 已删除 alias: {name}[/]")
+    else:
+        console.print(f"[yellow]无法删除: {name} (内置别名或不存在)[/]")
