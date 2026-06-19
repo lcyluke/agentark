@@ -162,21 +162,31 @@ def run_demo(
             pass
     
     # Start dashboard in background
+    flask_ok = False
     try:
-        import threading
         from apex.interface.web import create_app
+        flask_ok = True
+    except ImportError:
+        pass
 
-        def _serve():
-            app = create_app()
-            app.run(host=host, port=port, debug=False, use_reloader=False)
+    if flask_ok:
+        try:
+            import threading
 
-        server_thread = threading.Thread(target=_serve, daemon=True)
-        server_thread.start()
-        time.sleep(2)
-        console.print(f"  [green]✓[/green] Dashboard running at [cyan]{dashboard_url}[/cyan]")
-    except Exception as e:
-        console.print(f"  [yellow]⚠[/yellow] Dashboard start failed: {e}")
-        console.print(f"  Run manually: [cyan]apex dashboard[/cyan]")
+            def _serve():
+                app = create_app()
+                app.run(host=host, port=port, debug=False, use_reloader=False)
+
+            server_thread = threading.Thread(target=_serve, daemon=True)
+            server_thread.start()
+            time.sleep(2)
+            console.print(f"  [green]✓[/green] Dashboard running at [cyan]{dashboard_url}[/cyan]")
+        except Exception as e:
+            console.print(f"  [yellow]⚠[/yellow] Dashboard start failed: {e}")
+            console.print(f"  Run manually: [cyan]apex dashboard[/cyan]")
+    else:
+        console.print(f"  [yellow]⚠[/yellow] Flask not installed — skipping web dashboard")
+        console.print(f"  [dim]Install: pip install flask && apex dashboard[/dim]")
     
     console.print()
 
