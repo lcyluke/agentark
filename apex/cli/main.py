@@ -122,7 +122,7 @@ class AliasedGroup(click.Group):
         return super().resolve_command(ctx, args)
 
 
-@click.group(cls=AliasedGroup)
+@click.group(cls=AliasedGroup, context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(version="0.5.0", message="Apex v0.5.0 — 46 Agents, 30 commands, infinite capacity.")
 @click.pass_context
 def cli(ctx):
@@ -148,11 +148,10 @@ from datetime import datetime
 
 
 def format_apex_help(self, ctx, formatter):
-    """Hermes-style help output matching the Hermes CLI format.
+    """OpenClaw-inspired help output — clean, colorful, grouped.
 
     Only applies to the root CLI group; sub-groups use standard Click format.
     """
-    # Root CLI only — sub-groups use standard format
     if getattr(self, "name", None) is not None and self.name not in (None, "cli"):
         original_format_help(self, ctx, formatter)
         return
@@ -164,96 +163,83 @@ def format_apex_help(self, ctx, formatter):
         if cmd and not cmd.hidden:
             help_text = cmd.help or cmd.short_help or ""
             first_line = help_text.split("\n")[0].strip()
-            # Strip leading emoji
             import unicodedata
             if first_line and unicodedata.category(first_line[0]) == 'So':
                 parts = first_line.split(" ", 1)
                 first_line = parts[1].strip() if len(parts) > 1 else first_line
-            cmd_data[name] = first_line
+            # Mark groups (commands that have subcommands)
+            is_group = isinstance(cmd, click.Group)
+            cmd_data[name] = (first_line, is_group)
 
-    # Command groups
     groups = [
-        ("🚀 SETUP & START", ["setup", "quickstart", "init", "demo", "model-detect"]),
-        ("💻 LOCAL MGMT", ["fleet", "monitor", "version", "update", "theme", "alias", "tutorial", "doctor"]),
-        ("📋 TASK MGMT", ["task", "run", "chat", "status"]),
-        ("👥 TEAM & AGENTS", ["team", "mode"]),
-        ("📊 PM & PROJECT", ["pm", "project", "survey", "dashboard"]),
-        ("⚙️ SYSTEM", ["system"]),
-        ("🔗 INTEGRATION", ["help", "integrate", "origin"]),
+        ("Setup & Start", ["setup", "quickstart", "init", "demo", "model-detect"]),
+        ("Local Management", ["fleet", "monitor", "version", "update", "theme", "alias", "tutorial", "doctor"]),
+        ("Task Management", ["task", "run", "chat", "status"]),
+        ("Team & Agents", ["team", "mode"]),
+        ("PM & Project", ["pm", "project", "survey", "dashboard"]),
+        ("System", ["system"]),
+        ("Integration", ["help", "integrate", "origin"]),
     ]
 
-    # Flatten command names for usage line
     all_cmds = []
     for _, cmds in groups:
         all_cmds.extend(c for c in cmds if c in cmd_data)
-    cmd_usage = ",".join(all_cmds)
 
     # ── Render ──
-    terminal_width = shutil.get_terminal_size((80, 20)).columns
-    now_str = datetime.now().strftime("%a %b %d %H:%M:%S")
-    header = f"Apex --help{' ' * (terminal_width - 18 - len(now_str))}{now_str}\n"
+    W = formatter.width if formatter.width else 80
 
-    formatter.write(header)
+    # Header — clean, no timestamp, like OpenClaw
+    formatter.write("\n")
+    formatter.write("Apex 0.5.0 — Multi-Agent Operating System. One person, infinite capacity.\n")
     formatter.write("\n")
 
     # Usage
-    formatter.write(f"usage: apex [-h] [--version] [-m MODEL] [--token-limit N]\n")
-    formatter.write(f"       [--profile PROFILE] [--swarm] [--workers N]\n")
-    formatter.write(f"       {{{cmd_usage}}}\n")
-    formatter.write(f"       ...\n")
+    formatter.write("Usage: apex [options] [command]\n")
     formatter.write("\n")
 
-    # Description
-    formatter.write("Apex - Multi-Agent Operating System. One person, infinite capacity.\n")
+    # Options
+    formatter.write("Options:\n")
+    opts = [
+        ("-m, --model <model>",
+         "Model override (e.g. deepseek-v4-pro). Applies to run/chat/team start."),
+        ("-p, --profile <name>",
+         "Agent profile to use. Applies to run. E.g. -p backend-dev"),
+        ("-s, --swarm",
+         "Use Swarm mode for parallel execution. Applies to run."),
+        ("-w, --workers <n>",
+         "Number of parallel workers for Swarm mode (default: 3)."),
+        ("--token-limit <n>",
+         "Per-session token cap. Applies to run/chat/team start."),
+        ("--input-lines <n>",
+         "TUI composer height in lines (default: 3)."),
+        ("-h, --help",
+         "Display help for command"),
+        ("-V, --version",
+         "Output the version number"),
+    ]
+    for flag, desc in opts:
+        formatter.write(f"  {flag:<35s} {desc}\n")
     formatter.write("\n")
 
-    # Positional arguments (commands grouped)
-    formatter.write("positional arguments:\n")
-    formatter.write(f"  {{{cmd_usage}}}\n")
-    formatter.write("                        Command to run\n")
+    # Commands
+    formatter.write("Commands:\n")
+    hint = "  Hint: commands suffixed with * have subcommands. Run <command> --help for details.\n"
+    formatter.write(hint)
 
     for group_name, cmd_names in groups:
         present = [n for n in cmd_names if n in cmd_data]
         if not present:
             continue
-        formatter.write(f"\n  {group_name}:\n")
+        formatter.write(f"  {group_name}:\n")
         for name in present:
-            desc = cmd_data[name]
-            padded = name.ljust(22)
-            formatter.write(f"    {padded} {desc}\n")
-
-    formatter.write("\n")
-
-    # Options
-    formatter.write("options:\n")
-    opts = [
-        ("-h, --help", "show this help message and exit"),
-        ("--version, -V", "Show version and exit"),
-        ("", ""),
-        ("-m MODEL, --model MODEL",
-         "Model override (e.g. deepseek-v4-pro). Applies to run/chat/team start."),
-        ("--token-limit N",
-         "Per-session token cap. Applies to run/chat/team start."),
-        ("--input-lines N",
-         "Hermes TUI composer height in lines (default: 3)."),
-        ("-p PROFILE, --profile PROFILE",
-         "Agent profile to use. Applies to run. E.g. -p backend-dev"),
-        ("-s, --swarm",
-         "Use Swarm mode for parallel execution. Applies to run."),
-        ("-w N, --workers N",
-         "Number of parallel workers for Swarm mode (default: 3)."),
-    ]
-    for flag, desc in opts:
-        if flag == "" and desc == "":
-            formatter.write("\n")
-        elif desc == "":
-            formatter.write(f"  {flag}\n")
-        else:
-            formatter.write(f"  {flag:<45s} {desc}\n")
+            desc, is_group = cmd_data[name]
+            suffix = " *" if is_group else "  "
+            marker = f"  {name}{suffix}"
+            formatter.write(f"    {marker:<28s} {desc}\n")
     formatter.write("\n")
 
     # Built-in shortcuts
-    formatter.write("built-in shortcuts:\n")
+    formatter.write("Shortcuts:\n")
     shortcuts = [
         ("s", "monitor status", "Agent status panel"),
         ("p", "pm dashboard", "PM dashboard"),
@@ -262,34 +248,30 @@ def format_apex_help(self, ctx, formatter):
         ("up", "update", "Self-update"),
     ]
     for alias, target, desc in shortcuts:
-        formatter.write(f"  apex {alias:<8s} → {target:<22s} {desc}\n")
+        formatter.write(f"  apex {alias:<6s} → {target:<22s} {desc}\n")
     formatter.write("\n")
 
     # Examples
     formatter.write("Examples:\n")
     examples = [
-        ("apex setup --quick", "First-time setup (all defaults)"),
-        ("apex init", "Interactive project wizard (8 steps)"),
-        ("apex init --quick", "Quick project init (smart defaults)"),
-        ("apex fleet init", "Create profiles + launch tmux fleet"),
-        ("apex fleet start", "Start all agents in tmux windows"),
-        ("apex s", "Agent status panel (alias)"),
-        ("apex p", "PM dashboard (alias)"),
-        ("apex chat backend-dev", "Chat with backend agent"),
-        ("apex run \"Add login page\" -p frontend-dev", "Execute task with agent"),
-        ("apex team template webapp", "Create a 4-agent dev team"),
-        ("apex mode chain \"refactor auth\" -p dev", "Sequential chain pipeline"),
+        ("apex init", "Interactive project wizard — 8 steps, agent matching, tech stack"),
+        ("apex init --quick", "Quick project init with smart auto-detection"),
+        ("apex s", "Agent status panel (shortcut)"),
+        ("apex p", "PM dashboard (shortcut)"),
+        ("apex fleet init", "Create agent profiles + launch tmux fleet"),
+        ("apex chat backend-dev", "Chat with a specific agent"),
+        ("apex run \"Add login\" -p frontend-dev", "Execute a task with an agent"),
+        ("apex team template webapp", "Create a 4-agent development team"),
         ("apex tutorial", "5-step interactive walkthrough"),
-        ("apex doctor", "System diagnostics"),
+        ("apex doctor", "System diagnostics + auto-fix"),
         ("apex version", "Show version + check for updates"),
-        ("apex update", "Self-update to latest release"),
+        ("apex update", "Self-update to latest GitHub release"),
     ]
     for cmd_example, desc in examples:
-        formatter.write(f"    {cmd_example:<52s} {desc}\n")
+        formatter.write(f"  {cmd_example:<50s} {desc}\n")
     formatter.write("\n")
 
-    formatter.write("For more help on a command:\n")
-    formatter.write("    apex <command> --help\n")
+    formatter.write("Run 'apex <command> --help' for more on a specific command.\n")
     formatter.write("\n")
 
 
