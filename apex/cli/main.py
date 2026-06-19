@@ -269,11 +269,33 @@ def setup(quick: bool, check_mode: bool, model: Optional[str],
 # ════════════════════════════════════════════════════════════════
 
 @cli.command()
-@click.argument("name")
+@click.argument("name", default="my-project", required=False)
 @click.option("--dir", "-d", default=".", help="Project directory")
-def init(name: str, dir: str):
-    """🚀 Initialize a new Apex project"""
-    init_project(name, Path(dir).resolve(), console)
+@click.option("--quick", is_flag=True, help="Skip wizard, use smart defaults")
+@click.option("--type", "-t", "project_type", help="Project type (saas-dashboard, webapp-fullstack, etc.)")
+def init(name: str, dir: str, quick: bool, project_type: str):
+    """🚀 Initialize a new Apex project — interactive wizard or quick mode
+
+    8-step wizard: Identity → Type → Scale → Tech Stack → Agent Team
+    → Integrations → Roadmap → Create
+
+    Examples:
+
+      apex init                          Full interactive wizard
+
+      apex init my-saas                  Named project with wizard
+
+      apex init --quick                  Bypass wizard, auto-detect from cwd
+
+      apex init my-app --type cli-tool   Quick init as CLI tool project
+    """
+    if quick:
+        from apex.interface.project_factory import quick_init
+        quick_init(name, Path(dir).resolve(), console)
+    else:
+        from apex.interface.project_factory import ProjectFactory
+        factory = ProjectFactory(name, Path(dir).resolve(), console)
+        factory.run()
 
 
 @cli.command()
