@@ -255,18 +255,13 @@ def setup(quick: bool, check_mode: bool, model: Optional[str],
 
       apex setup --quick            Quick setup (all defaults)
 
-      apex setup --model deepseek-v4-pro --token-limit 8000 --input-lines 3
+      apex setup --model deepseek-v4-pro
 
       apex setup --check            Check installation status
     """
-    if check_mode:
-        setup_cmds.check_cmd()
-        return
-    setup_cmds.setup_cmd(
-        quick=quick, model=model,
-        token_limit=token_limit, token_budget=token_budget,
-        input_lines=input_lines,
-    )
+    from apex.interface.setup_wizard import run_setup
+    run_setup(quick=quick, check=check_mode, model=model or "",
+              interactive=not quick)
 
 
 # ════════════════════════════════════════════════════════════════
@@ -1836,6 +1831,69 @@ def quickstart():
 # ════════════════════════════════════════════════════════════════
 # VERSION & UPDATE
 # ════════════════════════════════════════════════════════════════
+
+@cli.group()
+def config():
+    """⚙️ Apex configuration — model, provider, theme, notifications"""
+
+
+@config.command(name="show")
+def config_show():
+    """📋 Show current configuration"""
+    from apex.core.config import get_config
+    import json
+    cfg = get_config()
+    console.print(Panel(json.dumps(cfg.to_dict(), indent=2, ensure_ascii=False),
+                        title="⚙️ Apex Config", border_style="cyan"))
+
+
+@config.command(name="set")
+@click.argument("key")
+@click.argument("value")
+def config_set(key: str, value: str):
+    """✏️ Set a config value (e.g. 'model.default deepseek-v4-pro')"""
+    from apex.core.config import get_config, save_config
+    parts = key.split(".", 1)
+    if len(parts) != 2:
+        console.print("[red]Format: apex config set <section>.<key> <value>[/]")
+        console.print("[dim]Example: apex config set model.default deepseek-v4-pro[/]")
+        return
+    cfg = get_config()
+    cfg.set(parts[0], parts[1], value)
+    console.print(f"[green]✅ {key} = {value}[/]")
+
+
+@config.command(name="model")
+@click.argument("action", default="show")
+@click.argument("model_name", default="")
+def config_model(action: str, model_name: str):
+    """🤖 Model management: show/list/set/detect"""
+    from apex.interface.model_selector import ModelSelector
+    ms = ModelSelector()
+    if action == "show":
+        ms.show_current()
+    elif action == "set" and model_name:
+        ms.set_default(model_name)
+    elif action == "detect":
+        result = ms.detect()
+        console.print(f"[green]Available: {len(result.available)}[/]")
+        for dp in result.available:
+            console.print(f"  {dp.emoji} {dp.name}: {dp.default_model}")
+    elif action == "list":
+        result = ms.detect()
+        for dp in result.available + result.unavailable:
+            icon = "✅" if dp.has_key else "❌"
+            console.print(f"  {icon} {dp.emoji} {dp.name}: {', '.join(dp.models)}")
+    else:
+        ms.show_current()
+
+
+@config.command(name="path")
+def config_path_cmd():
+    """📁 Show config file path"""
+    from apex.core.config import config_path
+    console.print(f"[cyan]{config_path()}[/]")
+
 
 @cli.command(name="version")
 def version_cmd():
