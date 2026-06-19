@@ -86,7 +86,7 @@ console = Console()
 
 
 @click.group()
-@click.version_option(version="0.1.0", message="Apex v0.1.0 — One person, infinite capacity.")
+@click.version_option(version="0.5.0", message="Apex v0.5.0 — 46 Agents, 30 commands, infinite capacity.")
 def cli():
     """⚓ Apex — One person, infinite capacity.
 
