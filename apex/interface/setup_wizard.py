@@ -162,7 +162,7 @@ def _run_tool_discovery():
         console.print(f"  [{cat}] {', '.join(tools)}")
 
     if summary["missing"]:
-        console.print(f"\n[dim]未安装: {', '.join(summary['missing'])}[/]")
+        console.print(f"\n[dim]未安装: {summary['missing']} 个[/]")
 
 
 def _init_fleet(interactive: bool = True):
