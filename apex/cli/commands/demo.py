@@ -83,7 +83,6 @@ def _check_environment(console: Console) -> dict:
         "dashboard": True,
         "kanban": False,
         "browser": False,
-        "gpu": False,
     }
     try:
         from apex.orchestration.kanban import Kanban
@@ -171,7 +170,8 @@ def run_demo(
 
     if flask_ok:
         try:
-            import threading
+            import threading, logging
+            logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
             def _serve():
                 app = create_app()
