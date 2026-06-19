@@ -235,11 +235,6 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
 .tbl td{padding:10px 12px;border-bottom:1px solid var(--line)}
 .tbl tr:hover td{background:var(--bg3)}
 
-/* GPU instances */
-.gpu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
-.gpu-card{background:var(--bg3);border:1px solid var(--line);border-radius:var(--r-s);padding:12px;display:flex;align-items:center;gap:10px}
-.gpu-card .gdot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-
 /* agent detail drawer */
 .st{width:7px;height:7px;border-radius:50%;display:inline-block}.st.run{background:var(--green)}.st.gate{background:var(--amber)}.st.idle{background:var(--tx3)}
 
@@ -390,10 +385,9 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
     <div class="nav-lbl">资源</div>
     <div class="nav" data-view="cost" onclick="go('cost')"><i class="ti ti-coins"></i>成本中心</div>
     <div class="nav" data-view="system" onclick="go('system')"><i class="ti ti-server"></i>系统状态</div>
-    <div class="nav" data-view="gpu" onclick="go('gpu')"><i class="ti ti-server-cog"></i>GPU 资源中心<span class="badge" id="navGpu"></span></div>
     <div class="grow"></div>
     <div class="crew">
-      <div class="nav-lbl" style="padding-top:0">董事会 · Hermes 活跃</div>
+      <div class="nav-lbl" style="padding-top:0">👤 已登录用户</div>
       <div id="crewList"></div>
     </div>
   </aside>
@@ -416,8 +410,6 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
         <div style="height:22px"></div>
         <div class="grid" style="grid-template-columns:2fr 1fr">
           <div class="card">
-            <div class="sec-h"><i class="ti ti-server-cog"></i>GPU 实例状态</div>
-            <div id="gpuGrid" class="gpu-grid"></div>
           </div>
           <div class="card">
             <div class="sec-h"><i class="ti ti-activity-heartbeat"></i>快速统计</div>
@@ -526,9 +518,8 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
             <div class="sec-h"><i class="ti ti-sitemap"></i>负载分布</div>
             <div id="loadSummary"></div>
             <div style="height:16px"></div>
-            <div class="sec-h"><i class="ti ti-users"></i>董事会</div>
-            <div id="boardMini"></div>
-            <button class="btn sm" style="margin-top:8px;width:100%" onclick="openBoardManager()"><i class="ti ti-user-plus"></i>管理董事会</button>
+            <div class="sec-h"><i class="ti ti-user-circle"></i>用户设置</div>
+            <div id="userSettings"><div style="padding:16px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div class="av" style="width:48px;height:48px;font-size:20px;background:var(--teal-d);color:var(--teal)">👤</div><div><b style="font-size:16px">用户</b><div style="color:var(--tx3);font-size:12px">已登录 · Hermes 活跃</div></div></div><button class="btn" onclick="openUserSettings()" style="width:100%"><i class="ti ti-settings"></i>用户设置</button></div></div>
           </div>
         </div>
       </section>
@@ -694,41 +685,7 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
         </div>
       </section>
 
-      <!-- GPU 资源中心 -->
-      <section class="view" id="v-gpu">
-        <div class="sec-h"><i class="ti ti-server-cog"></i>GPU 资源中心 · 实时监控与调度</div>
-        <div class="kpis" id="gpuKpis"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px">
-          <div class="card" style="padding:14px">
-            <h4 style="margin:0 0 10px"><i class="ti ti-chart-bar" style="color:var(--teal)"></i> GPU 实时状态</h4>
-            <div id="gpuLive"></div>
-          </div>
-          <div class="card" style="padding:14px">
-            <h4 style="margin:0 0 10px"><i class="ti ti-folders" style="color:var(--violet)"></i> 项目绑定</h4>
-            <div id="gpuProjects"></div>
-          </div>
-        </div>
-        <div class="card" style="padding:14px;margin-top:14px">
-          <h4 style="margin:0 0 10px"><i class="ti ti-settings" style="color:var(--amber)"></i> 操作面板</h4>
-          <div id="gpuControls" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></div>
-          <div id="gpuAuthMsg" style="margin-top:10px;padding:10px;border-radius:var(--r-s);display:none"></div>
-        </div>
-        <div class="card" style="padding:14px;margin-top:10px">
-          <h4 style="margin:0 0 6px"><i class="ti ti-clock" style="color:var(--tx3)"></i> 闲置检测规则</h4>
-          <div style="font-size:12px;color:var(--tx2);line-height:1.8">
-            <div><i class="ti ti-clock"></i> GPU 利用率 < 5% 且无推理连接 → 开始计时</div>
-            <div><i class="ti ti-alert-triangle"></i> 闲置 5 分钟 → Dashboard 黄色警告</div>
-            <div><i class="ti ti-hand-stop"></i> 闲置 15 分钟 → Dashboard 红色强提醒</div>
-            <div><i class="ti ti-key"></i> 关机操作 → 需授权确认码（双重确认）</div>
-          </div>
-        </div>
-      </section>
-
-    </div>
-  </main>
-</div>
-
-<!-- SCRIM -->
+      <!-- SCRIM -->
 <div class="scrim" id="scrim" onclick="closeAll()"></div>
 
 <!-- AI CHAT DRAWER -->
@@ -806,11 +763,11 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
   <div class="mcard">
     <div class="dh">
       <div class="ic" style="width:38px;height:38px;border-radius:10px;background:var(--violet-d);color:var(--violet);display:grid;place-items:center;font-size:20px"><i class="ti ti-users"></i></div>
-      <div><div style="font-family:var(--disp);font-size:16px;font-weight:600">董事会管理</div><div style="font-size:11px;color:var(--tx3)">管理真人董事与核心 Agent 角色</div></div>
+      <div><div style="font-family:var(--disp);font-size:16px;font-weight:600">用户管理</div><div style="font-size:11px;color:var(--tx3)">管理真人董事与核心 Agent 角色</div></div>
       <div class="x" onclick="closeAll()"><i class="ti ti-x"></i></div>
     </div>
     <div class="dbody" id="boardBody"></div>
-    <div class="df"><button class="btn ghost" onclick="closeAll()">关闭</button><button class="btn primary" style="margin-left:auto" onclick="saveBoard()"><i class="ti ti-check"></i>保存董事会</button></div>
+    <div class="df"><button class="btn ghost" onclick="closeAll()">关闭</button></div>
   </div>
 </div>
 
@@ -848,7 +805,6 @@ const VIEW_TITLES = {
   flow: ['数据流时序', 'Orchestration Flow'],
   cost: ['成本中心', 'Cost Center'],
   system: ['系统状态', 'System'],
-  gpu: ['GPU 资源中心', 'GPU Resource Center'],
   pipeline: ['Pipeline', 'Pipeline'],
   modules: ['模块市场', 'Module Store'],
   skills: ['SKILL进化', 'Skill Evolution']
@@ -882,7 +838,7 @@ async function loadAllData() {
   state.data = { profiles, tasks, cc, autonomous, knowledge, env, fleetProfiles, teams, workloads, ops };
   state.connected = true;
   updatePulse();
-  renderCrew();
+  renderCrew(); renderUserAvatar();
   renderActiveView();
 }
 
@@ -910,7 +866,6 @@ function renderActiveView() {
     case 'flow': renderFlow(); break;
     case 'cost': renderCost(); break;
     case 'system': renderSystem(); break;
-    case 'gpu': renderGPU(); break;
     case 'pipeline': loadPipeline(); break;
     case 'modules': renderModules(); break;
     case 'skills': renderSkills(); break;
@@ -924,11 +879,11 @@ async function fetchLiveRuntime() {
     state.liveRuntime = rt;
     state.connected = true;
     updatePulse();
-    renderCrew();
+    renderCrew(); renderUserAvatar();
   } else {
     // Fallback to existing data
     updatePulse();
-    renderCrew();
+    renderCrew(); renderUserAvatar();
   }
 }
 
@@ -956,7 +911,7 @@ function updatePulse() {
 }
 
 /* ========== Crew ========== */
-function renderCrew() {
+function renderCrew(); renderUserAvatar() {
   const board = state.board;
   const humans = board.humans || [];
   const colors = ['var(--violet-d)', 'var(--teal-d)', 'var(--blue-d)', 'var(--green-d)', 'var(--amber-d)'];
@@ -1074,36 +1029,6 @@ function renderDashboard() {
   const cc = d.cc || {};
   const hs = cc.hermes_sessions || {};
   const hprof = cc.hermes_profiles || {};
-  const gpu = cc.gpu || {};
-  const auto = d.autonomous || {};
-
-  const activeAgents = Object.values(hprof).filter(p => p && p.status === 'online').length || (d.profiles || []).length;
-  const totalTasks = (d.tasks || []).length;
-  const todayCost = (hs.today_cost || 0).toFixed(2);
-  const gpuOnline = (gpu.instances || []).filter(i => i.status === 'running').length;
-  const gpuTotal = (gpu.instances || []).length || 0;
-
-  $('#kpiRow').innerHTML =
-    kpiHTML('ti-robot', '活跃 Agent', activeAgents, 'Hermes + Apex 配置', '') +
-    kpiHTML('ti-checkbox', '总任务数', totalTasks, 'Kanban 看板', '') +
-    kpiHTML('ti-coin', 'Token 成本(今天)', '$' + todayCost, 'Hermes 会话统计', '') +
-    kpiHTML('ti-server-cog', 'GPU 状态', gpuOnline + '/' + gpuTotal, '在线/总数', gpuTotal > 0 && gpuOnline < gpuTotal ? 'warn' : '');
-
-  // GPU grid
-  const instances = gpu.instances || [];
-  if (instances.length) {
-    $('#gpuGrid').innerHTML = instances.map(i => {
-      const online = i.status === 'running';
-      return `<div class="gpu-card">
-        <span class="gdot" style="background:${online?'var(--green)':'var(--red)'}"></span>
-        <div><div style="font-weight:600;font-size:13px">${i.name||i.id||'GPU'}</div>
-        <div style="font-size:11px;color:var(--tx3);font-family:var(--mono)">${i.status||'unknown'} · ${i.gpu_type||''}</div></div>
-      </div>`;
-    }).join('');
-  } else {
-    $('#gpuGrid').innerHTML = '<div style="color:var(--tx3);font-size:12px;padding:12px">暂无 GPU 实例数据</div>';
-  }
-
   // Quick stats
   const cronCount = (cc.hermes_cron && cc.hermes_cron.jobs ? cc.hermes_cron.jobs.length : 0) || 0;
   const modelsCount = (cc.pricing && cc.pricing.models ? Object.keys(cc.pricing.models).length : 0) || 0;
@@ -1578,7 +1503,7 @@ function getReportingLine(agentName, projectName) {
   const cat = classifyAgent(agentName);
   if (cat.key === 'pm') return '↳ ⚓ Origin';
   // Audit reports to board
-  if (cat.key === 'audit') return '↳ 董事会';
+  if (cat.key === 'audit') return '↳ 用户';
   // Cron agents are autonomous
   if (cat.key === 'cron') return '⏰ 自主定时';
   // PM-managed agents
@@ -1938,7 +1863,7 @@ function renderSprintCard() {
 }
 
 /* =================================================================
-   VIEW 4: FLEET — AI舰队 + 董事会管理
+   VIEW 4: FLEET — AI舰队 + 用户管理
    ================================================================= */
 async function renderFleet() {
   const d = state.data;
@@ -1962,7 +1887,7 @@ async function renderFleet() {
     kpiHTML('ti-activity-heartbeat', '活跃会话', onlineCount, sessions.length + ' 运行中', '') +
     kpiHTML('ti-cpu', '进程/资源', procCount, cpuTotal + '% CPU · ' + memTotal + '% MEM', '') +
     kpiHTML('ti-robot', '工作中', working, idleCount + ' 空闲 · 共 ' + (workloads.length||apexP.length||0) + ' agent', '') +
-    kpiHTML('ti-users', '董事会', (board.humans||[]).length, 'CEO: ' + (board.ceoAgent||'--') + ' · 授权: ' + (board.authAgent||'--'), '');
+    kpiHTML('ti-users', '用户', (board.humans||[]).length, 'CEO: ' + (board.ceoAgent||'--') + ' · 授权: ' + (board.authAgent||'--'), '');
 
   // Build agent status cards combining all data sources
   const agentCards = [];
@@ -2102,11 +2027,11 @@ async function renderFleet() {
     <div class="kv"><span class="k">可接单</span><span class="vv" style="color:var(--green)">${agentCards.filter(a=>a.canAccept).length}</span></div>`;
 
   // Board mini
-  renderBoardMini();
+  renderUserMini();
 }
 
 /* ========== BOARD MANAGEMENT ========== */
-function renderBoardMini() {
+function renderUserMini() {
   const b = state.board;
   const humans = b.humans || [];
   let html = humans.map(h => `<div class="board-member">
@@ -2119,73 +2044,65 @@ function renderBoardMini() {
     <div class="kv" style="font-size:11px"><span class="k">授权 Agent</span><span class="vv" style="font-size:11px">${b.authAgent||'--'}</span></div>
     <div class="kv" style="font-size:11px"><span class="k">审计 Agent</span><span class="vv" style="font-size:11px">${b.auditAgent||'--'}</span></div>
   </div>`;
-  $('#boardMini').innerHTML = html;
+  $('#userSettings').innerHTML = html;
   // Update sidebar crew
-  renderCrew();
+  renderCrew(); renderUserAvatar();
 }
 
-function openBoardManager() {
+function openUserSettings() {
   $('#scrim').classList.add('on');
   $('#boardModal').classList.add('on');
-  renderBoardManager();
+  renderUserSettings();
 }
 
-function renderBoardManager() {
+function renderUserSettings() {
   const b = state.board;
   const humans = b.humans || [];
-  const fleetP = state.data.fleetProfiles || [];
-  const apexP = state.data.profiles || [];
-  const allAgents = [...new Set([...fleetP.map(p=>p.name), ...apexP.map(p=>p.name), 'ceo', 'auth', 'audit', 'frontend-dev'])];
 
   $('#boardBody').innerHTML = `
     <div class="board-grid">
       <div class="board-section">
-        <h4><i class="ti ti-users" style="color:var(--violet)"></i>真人董事会</h4>
+        <h4><i class="ti ti-user-circle" style="color:var(--teal)"></i>用户信息</h4>
         <div id="humanList">${humans.map((h,i) => `<div class="board-member">
-          <div class="bmav" style="background:var(--violet-d);color:var(--violet)">${h.init||h.name[0]}</div>
-          <div class="bminfo"><div class="bmname">${h.name}</div><div class="bmrole">${h.role||'董事'}</div></div>
-          <div class="bmremove" onclick="removeBoardHuman(${i})" title="移除">×</div>
-        </div>`).join('')||'<div style="color:var(--tx3);font-size:12px;padding:8px">点击下方添加真人董事</div>'}</div>
+          <div class="bmav" style="background:var(--teal-d);color:var(--teal)">${h.init||h.name[0]}</div>
+          <div class="bminfo"><div class="bmname">${h.name}</div><div class="bmrole">${h.role||'用户'}</div></div>
+          <div class="bmremove" onclick="removeUser(${i})" title="移除">×</div>
+        </div>`).join('')||'<div style="color:var(--tx3);font-size:12px;padding:8px">添加用户信息</div>'}</div>
         <div class="board-add">
-          <input id="newHumanName" placeholder="姓名" style="flex:1">
-          <input id="newHumanRole" placeholder="角色(如:CTO)" style="flex:1">
-          <button class="btn sm primary" onclick="addBoardHuman()"><i class="ti ti-plus"></i>添加</button>
+          <input id="newHumanName" placeholder="名称" style="flex:1">
+          <input id="newHumanRole" placeholder="角色" style="flex:1">
+          <button class="btn sm primary" onclick="addUser()"><i class="ti ti-plus"></i>添加</button>
         </div>
       </div>
       <div class="board-section">
-        <h4><i class="ti ti-robot" style="color:var(--teal)"></i>核心 Agent 角色</h4>
-        <div class="fld"><label>CEO 编排官</label><select id="bmCeo" style="background:var(--bg3);color:var(--tx)">${allAgents.map(a=>`<option value="${a}" ${a===b.ceoAgent?'selected':''}>${a}</option>`).join('')}</select></div>
-        <div class="fld"><label>授权审批 Agent</label><select id="bmAuth" style="background:var(--bg3);color:var(--tx)">${allAgents.map(a=>`<option value="${a}" ${a===b.authAgent?'selected':''}>${a}</option>`).join('')}</select></div>
-        <div class="fld"><label>审计追踪 Agent</label><select id="bmAudit" style="background:var(--bg3);color:var(--tx)">${allAgents.map(a=>`<option value="${a}" ${a===b.auditAgent?'selected':''}>${a}</option>`).join('')}</select></div>
+        <h4><i class="ti ti-settings" style="color:var(--violet)"></i>偏好设置</h4>
+        <div class="fld"><label>语言</label><select id="userLang" style="background:var(--bg3);color:var(--tx)">
+          <option value="zh">中文</option><option value="en">English</option>
+        </select></div>
+        <div class="fld"><label>主题</label><select id="userTheme" style="background:var(--bg3);color:var(--tx)" onchange="setTheme(this.value)">
+          <option value="dark">深色</option><option value="light">浅色</option>
+        </select></div>
+        <div class="fld"><label>通知</label><select id="userNotify" style="background:var(--bg3);color:var(--tx)">
+          <option value="all">全部</option><option value="important">仅重要</option><option value="none">关闭</option>
+        </select></div>
       </div>
     </div>`;
 }
 
-function addBoardHuman() {
+function addUser() {
   const name = $('#newHumanName') ? $('#newHumanName').value.trim() : '';
   const role = $('#newHumanRole') ? $('#newHumanRole').value.trim() : '';
-  if (!name) { toast('请输入姓名'); return; }
-  state.board.humans.push({ id: 'h' + Date.now(), name: name, role: role || '董事', init: name[0].toUpperCase() });
-  renderBoardManager();
-  renderBoardMini();
-  toast(name + ' 已加入董事会');
+  if (!name) { toast('请输入名称'); return; }
+  state.board.humans.push({ id: 'h' + Date.now(), name: name, role: role || '用户', init: name[0].toUpperCase() });
+  renderUserSettings();
+  toast(name + ' 已添加');
 }
 
-function removeBoardHuman(i) {
+function removeUser(i) {
   const removed = state.board.humans[i];
   state.board.humans.splice(i, 1);
-  renderBoardManager();
-  renderBoardMini();
-  toast((removed ? removed.name : '成员') + ' 已移出董事会');
-}
-
-function saveBoard() {
-  state.board.ceoAgent = $('#bmCeo') ? $('#bmCeo').value : state.board.ceoAgent;
-  state.board.authAgent = $('#bmAuth') ? $('#bmAuth').value : state.board.authAgent;
-  state.board.auditAgent = $('#bmAudit') ? $('#bmAudit').value : state.board.auditAgent;
-  closeAll();
-  renderBoardMini();
-  toast('董事会已保存 · CEO: ' + state.board.ceoAgent + ' · 授权: ' + state.board.authAgent + ' · 审计: ' + state.board.auditAgent);
+  renderUserSettings();
+  toast((removed ? removed.name : '用户') + ' 已移除');
 }
 
 // === HERMES PROFILE DRAWER: SOUL.md editor + config.yaml editor + model dropdown ===
@@ -2380,8 +2297,6 @@ function renderCost() {
   const hs = cc.hermes_sessions || {};
   const pricing = cc.pricing || {};
   const models = pricing.models || {};
-  const gpu = cc.gpu || {};
-
   const todayCost = hs.today_cost || 0;
   const todayTokens = hs.today_tokens || 0;
   const totalCost = hs.estimated_cost_usd || hs.total_cost || 0;
@@ -2391,7 +2306,6 @@ function renderCost() {
     kpiHTML('ti-coin', '今日成本', '$' + Number(todayCost).toFixed(3), todayTokens.toLocaleString() + ' tokens', '') +
     kpiHTML('ti-chart-line', '累计成本', '$' + Number(totalCost).toFixed(2), totalTokens.toLocaleString() + ' tokens', '') +
     kpiHTML('ti-cpu', '模型数量', Object.keys(models).length, '已配置定价模型', '') +
-    kpiHTML('ti-server', 'GPU 成本', '$' + (gpu.total_cost || '0'), gpu.instances ? gpu.instances.length + ' 实例' : '无数据', '');
 
   // Token gauge
   const maxTokens = 1000000; // 1M reference
@@ -4123,107 +4037,6 @@ function applyPlan(proj, steps) {
 }
 
 /* =================================================================
-   VIEW 9: GPU 资源中心
-   ================================================================= */
-async function renderGPU() {
-  const gpuStatus = await fetchJSON(API + '/gpu/status').catch(() => null);
-  const gpuProjects = await fetchJSON(API + '/gpu/projects').catch(() => null);
-  const gpu = gpuStatus || {};
-  const online = gpu.online;
-  const util = gpu.gpu_util_pct || 0;
-  const idleMin = gpu.idle_minutes || 0;
-  const alertLevel = gpu.alert_level || 'normal';
-  const utilColor = util > 80 ? 'var(--red)' : util > 50 ? 'var(--amber)' : 'var(--green)';
-  const idleColor = idleMin >= 15 ? 'var(--red)' : idleMin >= 5 ? 'var(--amber)' : 'var(--green)';
-
-  $('#gpuKpis').innerHTML =
-    kpiHTML('ti-server-cog', 'GPU 状态', online ? '<span class="st run"></span> 在线' : '<span class="st idle"></span> 离线', gpu.gpu_name||'--', '') +
-    kpiHTML('ti-chart-bar', '利用率', util + '%', '推理: '+(gpu.inference_busy?'活跃':'空闲'), '') +
-    kpiHTML('ti-clock', '闲置时长', idleMin + ' 分钟', alertLevel==='critical'?'<i class="ti ti-hand-stop"></i> 强提醒':alertLevel==='warn'?'<i class="ti ti-alert-triangle"></i> 警告':'<i class="ti ti-circle-check"></i> 正常', alertLevel!=='normal'?'warn':'') +
-    kpiHTML('ti-temperature', '温度/功耗', (gpu.temperature_c||'--')+'°C', (gpu.power_w||'--')+'W', '');
-
-  if (gpu.online) {
-    const memUsed = gpu.memory_used_mb || 0;
-    const memTotal = gpu.memory_total_mb || 1;
-    const memPct = Math.round(memUsed / Math.max(1, memTotal) * 100);
-    $('#gpuLive').innerHTML =
-      '<div class="kv"><span class="k">型号</span><span class="vv">'+(gpu.gpu_name||'--')+'</span></div>' +
-      '<div class="kv"><span class="k">利用率</span><span class="vv" style="color:'+utilColor+'">'+util+'%</span></div>' +
-      '<div class="kv"><span class="k">显存</span><span class="vv">'+memUsed+' / '+memTotal+' MB ('+memPct+'%)</span></div>' +
-      '<div class="kv"><span class="k">温度</span><span class="vv">'+(gpu.temperature_c||'--')+'°C</span></div>' +
-      '<div class="kv"><span class="k">推理连接</span><span class="vv"><span class="tag '+(gpu.inference_busy?'green':'gray')+'">'+(gpu.inference_busy?'活跃':'空闲')+'</span></span></div>' +
-      '<div class="kv"><span class="k">闲置周期</span><span class="vv" style="color:'+idleColor+'">'+idleMin+' 分钟 ('+(gpu.idle_cycles||0)+' 个周期)</span></div>' +
-      '<div class="kv"><span class="k">最后检查</span><span class="vv" style="font-size:10px">'+(gpu.last_check||'--')+'</span></div>';
-  } else {
-    $('#gpuLive').innerHTML = '<div style="color:var(--red);padding:12px;text-align:center"><span class="st idle"></span> GPU 离线 — 服务器可能已关机</div>';
-  }
-
-  const projects = gpuProjects ? (gpuProjects.projects||{}) : {};
-  const instances = gpuProjects ? (gpuProjects.instances||[]) : [];
-  let projHTML = '';
-  Object.entries(projects).forEach(([name, info]) => {
-    projHTML += '<div class="kv"><span class="k">'+name+'</span><span class="vv">'+(info.instance||'--')+' · '+(info.gpu||'')+'</span></div>';
-  });
-  projHTML += '<div style="margin-top:8px;font-size:11px;color:var(--tx3)">实例: '+instances.map(i=>i.id+'('+i.gpu_type+')').join(', ')+'</div>';
-  $('#gpuProjects').innerHTML = projHTML || '<div style="color:var(--tx3)">无项目绑定</div>';
-
-  let ctrlHTML = '';
-  if (gpu.online) {
-    ctrlHTML += '<button class="btn" onclick="refreshGPU()"><i class="ti ti-refresh"></i>刷新状态</button>';
-    if (gpu.auth_pending) {
-      ctrlHTML += ' <span style="color:var(--amber);font-family:var(--mono);font-size:13px"><i class="ti ti-clock"></i> 等待授权... 码: <b>'+(gpu.auth_code||'--')+'</b></span>';
-      ctrlHTML += ' <button class="btn primary" onclick="confirmGPUShutdown()"><i class="ti ti-check"></i>确认关机</button>';
-    } else {
-      ctrlHTML += ' <button class="btn warn" onclick="requestGPUShutdown()"><i class="ti ti-power"></i>请求关机</button>';
-    }
-    if (idleMin >= 15) {
-      $('#gpuAuthMsg').show().css({background:'var(--red-d)',color:'var(--red)'}).html('<i class="ti ti-hand-stop"></i> <b>GPU 已闲置 '+idleMin+' 分钟！</b> 建议立即关机节省成本。');
-    } else if (idleMin >= 5) {
-      $('#gpuAuthMsg').show().css({background:'var(--amber-d)',color:'var(--amber)'}).html('<i class="ti ti-alert-triangle"></i> GPU 已闲置 '+idleMin+' 分钟，如不再使用建议关机。');
-    }
-  } else {
-    ctrlHTML += '<span style="color:var(--tx3)">GPU 离线，无需操作</span>';
-  }
-  $('#gpuControls').innerHTML = ctrlHTML;
-
-  const badge = idleMin >= 5 ? (idleMin >= 15 ? '<i class="ti ti-hand-stop"></i>' : '<i class="ti ti-alert-triangle"></i>') : '';
-  const navBadge = $('#navGpu'); if (navBadge) navBadge.innerHTML = badge;
-}
-
-async function refreshGPU() { toast('刷新中...'); await renderGPU(); toast('<i class="ti ti-circle-check"></i> GPU 状态已刷新'); }
-
-async function requestGPUShutdown() {
-  const r = await fetch(API + '/gpu/shutdown/request', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({project:''}) });
-  const data = await r.json();
-  if (data.code) {
-    $('#gpuAuthMsg').show().css({background:'var(--violet-d)',color:'var(--violet)'}).html(
-      '<i class="ti ti-key"></i> <b>关机需授权</b><br>授权码: <b style="font-size:20px;font-family:var(--mono)">'+data.code+'</b><br>'+
-      '<small>有效 30 分钟 · 输入码完成确认</small>'+
-      '<div style="margin-top:8px"><input id="gpuAuthInput" placeholder="输入授权码" style="background:var(--bg3);color:var(--tx);border:1px solid var(--line);border-radius:var(--r-s);padding:6px 10px;font-family:var(--mono);font-size:14px;width:140px">'+
-      ' <button class="btn primary sm" onclick="confirmGPUShutdown()"><i class="ti ti-check"></i>确认关机</button></div>'
-    );
-    toast('授权码: ' + data.code);
-  } else {
-    toast('请求失败: ' + (data.error||'未知错误'));
-  }
-}
-
-async function confirmGPUShutdown() {
-  const code = document.getElementById('gpuAuthInput') ? document.getElementById('gpuAuthInput').value : '';
-  const r = await fetch(API + '/gpu/shutdown/confirm', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({code: code}) });
-  const data = await r.json();
-  if (data.ok) {
-    toast('🛑 ' + data.message);
-    $('#gpuAuthMsg').show().css({background:'var(--green-d)',color:'var(--green)'}).html('<i class="ti ti-circle-check"></i> 关机指令已发送！GPU 将在 30 秒后关闭');
-    setTimeout(renderGPU, 5000);
-  } else {
-    toast('❌ ' + (data.error||'关机失败'));
-  }
-}
-
-/* ========== Events ========== */
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
-$('#chatIn') && $('#chatIn').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
 });
 
