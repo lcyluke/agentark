@@ -889,25 +889,32 @@ async function fetchLiveRuntime() {
 
 /* ========== Pulse ========== */
 function updatePulse() {
-  const rt = state.liveRuntime;
-  if (rt) {
-    const sessions = rt.active_sessions || (rt.sessions ? rt.sessions.length : 0);
-    const processes = rt.running_processes || (rt.processes ? rt.processes.length : 0);
-    $('#pulseTxt').textContent = sessions + ' 会话 · ' + processes + ' 进程';
-    $('#pulseDot').style.background = 'var(--green)';
-  } else {
-    // Fallback to old data
-    const d = state.data;
-    const profiles = d.profiles || [];
-    const cc = d.cc || {};
-    const hprof = cc.hermes_profiles || {};
-    const online = Object.values(hprof).filter(p => p && p.status !== 'offline').length;
-    const total = Object.keys(hprof).length || profiles.length || 0;
-    const auto = d.autonomous;
-    const autoLvl = auto && auto.status === 'running' ? 'L2' : '--';
-    $('#pulseTxt').textContent = (online || '?') + ' / ' + (total || '?') + ' agent 在线 · 自治 ' + autoLvl;
-    $('#pulseDot').style.background = state.connected ? 'var(--green)' : 'var(--red)';
+  const dot = $('#pulseDot');
+  const txt = $('#pulseTxt');
+
+  if (!state.connected) {
+    txt.textContent = '连接中...';
+    dot.style.background = 'var(--amber)';
+    return;
   }
+
+  // Connected — show sync interval
+  dot.style.background = 'var(--green)';
+  const interval = state.refreshInterval || 15;
+  const secs = state._nextRefreshCountdown || interval;
+  txt.textContent = '连接成功 · ' + interval + 's 同步 · ' + secs + 's';
+  txt.title = '点击切换同步频率';
+  txt.style.cursor = 'pointer';
+  txt.onclick = function() {
+    const opts = [5, 10, 15, 30, 60];
+    const idx = opts.indexOf(state.refreshInterval);
+    const next = opts[(idx + 1) % opts.length];
+    state.refreshInterval = next;
+    stopAutoRefresh();
+    startAutoRefresh();
+    updatePulse();
+    toast('同步频率: ' + next + 's');
+  };
 }
 
 /* ========== Crew ========== */
@@ -1403,7 +1410,18 @@ function toggleAutoRefresh() {
 function startAutoRefresh() {
   stopAutoRefresh();
   if (!state.autoRefresh) return;
+  state._nextRefreshCountdown = state.refreshInterval;
+  // Countdown timer — decrement each second
+  state._countdownTimer = setInterval(() => {
+    if (state._nextRefreshCountdown > 0) {
+      state._nextRefreshCountdown--;
+      updatePulse();
+    }
+  }, 1000);
+  // Main refresh timer
   state._refreshTimer = setInterval(async () => {
+    state._nextRefreshCountdown = state.refreshInterval;
+    updatePulse();
     if (!state.autoRefresh || state.view !== 'project' || !state.selectedProject) return;
     // Silent refresh: re-fetch project tasks + pipeline without full reload
     try {
@@ -1435,6 +1453,7 @@ function startAutoRefresh() {
 
 function stopAutoRefresh() {
   if (state._refreshTimer) { clearInterval(state._refreshTimer); state._refreshTimer = null; }
+  if (state._countdownTimer) { clearInterval(state._countdownTimer); state._countdownTimer = null; }
 }
 
 function updateRefreshIndicator() {
@@ -2085,6 +2104,9 @@ function renderUserSettings() {
         <div class="fld"><label>通知</label><select id="userNotify" style="background:var(--bg3);color:var(--tx)">
           <option value="all">全部</option><option value="important">仅重要</option><option value="none">关闭</option>
         </select></div>
+        <div class="fld"><label>同步频率</label><select id="userSync" style="background:var(--bg3);color:var(--tx)" onchange="setSyncInterval(this.value)">
+          <option value="5">5 秒</option><option value="10">10 秒</option><option value="15" selected>15 秒</option><option value="30">30 秒</option><option value="60">60 秒</option>
+        </select></div>
       </div>
     </div>`;
 }
@@ -2103,6 +2125,14 @@ function removeUser(i) {
   state.board.humans.splice(i, 1);
   renderUserSettings();
   toast((removed ? removed.name : '用户') + ' 已移除');
+}
+
+function setSyncInterval(val) {
+  state.refreshInterval = parseInt(val);
+  stopAutoRefresh();
+  startAutoRefresh();
+  updatePulse();
+  toast('同步频率: ' + val + 's');
 }
 
 // === HERMES PROFILE DRAWER: SOUL.md editor + config.yaml editor + model dropdown ===
