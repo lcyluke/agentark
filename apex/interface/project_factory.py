@@ -699,6 +699,12 @@ class ProjectFactory:
                 f.write("# Apex project\n.apex/state.*\n*.pyc\n__pycache__/\n.env\n")
             progress.update(t8, completed=1)
 
+            # 9. AGENTS.md (Hermes project context injection)
+            t9 = progress.add_task("生成 AGENTS.md (Hermes 上下文)...", total=1)
+            from apex.interface.hermes_context import sync_agents_md
+            sync_agents_md(self.project_path)
+            progress.update(t9, completed=1)
+
     def _generate_tech_doc(self) -> str:
         preset = PROJECT_TEMPLATES[self.project_type]
         doc = f"# {self.name} — 技术栈\n\n"

@@ -341,6 +341,10 @@ def chat_launch_cmd(agent_name: str, context: str = "", query: str = ""):
         border_style="green",
     ))
 
+    # 2.5 Show project banner if in an Apex project
+    from apex.interface.hermes_context import show_project_banner
+    show_project_banner(console)
+
     # 3. Sync to Hermes if needed
     if not sync_agent_to_hermes(agent_name):
         console.print("[red]❌ Cannot launch — sync failed.[/]")
