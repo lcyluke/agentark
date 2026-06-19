@@ -186,19 +186,19 @@ def format_apex_help(self, ctx, formatter):
         all_cmds.extend(c for c in cmds if c in cmd_data)
 
     # ── Render ──
-    W = formatter.width if formatter.width else 80
+    # ANSI color helpers
+    B = "\033[1m"; D = "\033[2m"; C = "\033[36m"; G = "\033[32m"; Y = "\033[33m"; R = "\033[0m"
 
-    # Header — clean, no timestamp, like OpenClaw
     formatter.write("\n")
-    formatter.write("Apex 0.5.0 — Multi-Agent Operating System. One person, infinite capacity.\n")
+    formatter.write(f"{B}{C}Apex 0.5.0{R} — Multi-Agent Operating System. One person, infinite capacity.\n")
     formatter.write("\n")
 
     # Usage
-    formatter.write("Usage: apex [options] [command]\n")
+    formatter.write(f"{B}Usage:{R} apex [options] [command]\n")
     formatter.write("\n")
 
     # Options
-    formatter.write("Options:\n")
+    formatter.write(f"{B}Options:{R}\n")
     opts = [
         ("-m, --model <model>",
          "Model override (e.g. deepseek-v4-pro). Applies to run/chat/team start."),
@@ -218,47 +218,33 @@ def format_apex_help(self, ctx, formatter):
          "Output the version number"),
     ]
     for flag, desc in opts:
-        formatter.write(f"  {flag:<35s} {desc}\n")
+        formatter.write(f"  {G}{flag:<35s}{R} {D}{desc}{R}\n")
     formatter.write("\n")
 
     # Commands
-    formatter.write("Commands:\n")
-    hint = "  Hint: commands suffixed with * have subcommands. Run <command> --help for details.\n"
-    formatter.write(hint)
+    formatter.write(f"{B}Commands:{R}\n")
+    formatter.write(f"  {D}Hint: commands suffixed with * have subcommands. Run <command> --help for details.{R}\n")
 
     for group_name, cmd_names in groups:
         present = [n for n in cmd_names if n in cmd_data]
         if not present:
             continue
-        formatter.write(f"  {group_name}:\n")
+        formatter.write(f"  {B}{Y}{group_name}:{R}\n")
         for name in present:
             desc, is_group = cmd_data[name]
-            suffix = " *" if is_group else "  "
-            marker = f"  {name}{suffix}"
-            formatter.write(f"    {marker:<28s} {desc}\n")
-    formatter.write("\n")
-
-    # Built-in shortcuts
-    formatter.write("Shortcuts:\n")
-    shortcuts = [
-        ("s", "monitor status", "Agent status panel"),
-        ("p", "pm dashboard", "PM dashboard"),
-        ("fs", "fleet status", "Fleet overview"),
-        ("v", "version", "Show version"),
-        ("up", "update", "Self-update"),
-    ]
-    for alias, target, desc in shortcuts:
-        formatter.write(f"  apex {alias:<6s} → {target:<22s} {desc}\n")
+            suffix = f" {D}*{R}" if is_group else "  "
+            marker = f"  {C}{name}{R}{suffix}"
+            pad = 28 - len(name) - (2 if is_group else 0)
+            formatter.write(f"    {marker}{' ' * max(pad, 1)}{D}{desc}{R}\n")
     formatter.write("\n")
 
     # Examples
-    formatter.write("Examples:\n")
+    formatter.write(f"{B}Examples:{R}\n")
     examples = [
         ("apex init", "Interactive project wizard — 8 steps, agent matching, tech stack"),
         ("apex init --quick", "Quick project init with smart auto-detection"),
-        ("apex s", "Agent status panel (shortcut)"),
-        ("apex p", "PM dashboard (shortcut)"),
         ("apex fleet init", "Create agent profiles + launch tmux fleet"),
+        ("apex monitor status", "Agent heartbeat + task status panel"),
         ("apex chat backend-dev", "Chat with a specific agent"),
         ("apex run \"Add login\" -p frontend-dev", "Execute a task with an agent"),
         ("apex team template webapp", "Create a 4-agent development team"),
@@ -268,10 +254,10 @@ def format_apex_help(self, ctx, formatter):
         ("apex update", "Self-update to latest GitHub release"),
     ]
     for cmd_example, desc in examples:
-        formatter.write(f"  {cmd_example:<50s} {desc}\n")
+        formatter.write(f"  {G}{cmd_example:<52s}{R} {D}{desc}{R}\n")
     formatter.write("\n")
 
-    formatter.write("Run 'apex <command> --help' for more on a specific command.\n")
+    formatter.write(f"{D}Run 'apex <command> --help' for more on a specific command.{R}\n")
     formatter.write("\n")
 
 
