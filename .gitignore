@@ -36,8 +36,33 @@ superpowers/
 superpowers/
 fleet/fleet.json
 
-# Fleet profiles (generated at init time — NOT stored in git)
-fleet/profiles/
+# Fleet profiles — track only SOUL.md + config.yaml per agent
+# Skills, state, sessions, auth are generated at init/runtime
+fleet/profiles/*
+!fleet/profiles/*/
+fleet/profiles/*/*
+!fleet/profiles/*/SOUL.md
+!fleet/profiles/*/config.yaml
+fleet/profiles/*/skills/
+fleet/profiles/*/sessions/
+fleet/profiles/*/bin/
+fleet/profiles/*/memories/
+fleet/profiles/*/lsp/
+fleet/profiles/*/home/
+fleet/profiles/*/cache/
+fleet/profiles/*/pastes/
+fleet/profiles/*/profiles/
+fleet/profiles/*/SKILL.md
+fleet/profiles/*/auth.json
+fleet/profiles/*/auth.lock
+fleet/profiles/*/state.db*
+fleet/profiles/*/models_dev_cache.json
+fleet/profiles/*/.hermes_history
+fleet/profiles/*/.update_check
+fleet/profiles/*/.skills_prompt_snapshot.json
+fleet/profiles/*/.tirith-install-failed
+fleet/profiles/*/fleet_teams.json
+fleet/profiles/*/processes.json
 
 # Node modules
 node_modules/
