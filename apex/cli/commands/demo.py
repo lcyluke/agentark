@@ -177,7 +177,7 @@ def run_demo(
                 app = create_app()
                 app.run(host=host, port=port, debug=False, use_reloader=False)
 
-            server_thread = threading.Thread(target=_serve, daemon=True)
+            server_thread = threading.Thread(target=_serve, daemon=False)
             server_thread.start()
             time.sleep(2)
             console.print(f"  [green]✓[/green] Dashboard running at [cyan]{dashboard_url}[/cyan]")
@@ -224,5 +224,14 @@ def run_demo(
         border_style="green",
     ))
     console.print()
+
+    # Keep alive until interrupted
+    if flask_ok:
+        console.print("[dim]Press Ctrl+C to stop the dashboard[/]")
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            console.print("\n[dim]Demo finished. Dashboard stopped.[/]")
 
     return dashboard_url
