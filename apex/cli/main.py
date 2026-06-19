@@ -1895,6 +1895,70 @@ def config_path_cmd():
     console.print(f"[cyan]{config_path()}[/]")
 
 
+@config.command(name="profile")
+@click.argument("agent_name")
+def config_profile(agent_name: str):
+    """🔍 Show agent profile configuration"""
+    profile_dir = Path.home() / ".hermes" / "profiles" / agent_name
+    if not profile_dir.exists():
+        console.print(f"[red]Agent '{agent_name}' profile not found.[/]")
+        return
+
+    console.print()
+    console.print(Panel(f"[bold]Agent Profile: {agent_name}[/]", border_style="cyan"))
+
+    # SOUL.md
+    soul_file = profile_dir / "SOUL.md"
+    if soul_file.exists():
+        content = soul_file.read_text()
+        first_line = content.strip().split("\n")[0].replace("# ", "")
+        console.print(f"[bold]SOUL:[/] {first_line[:80]}")
+        console.print(f"[dim]  {soul_file}[/]")
+
+    # Config
+    config_file = profile_dir / "config.yaml"
+    if config_file.exists():
+        import yaml
+        with open(config_file) as f:
+            cfg = yaml.safe_load(f) or {}
+        model = cfg.get("model", {}).get("default", "?")
+        console.print(f"[bold]Model:[/] [green]{model}[/]")
+        console.print(f"  [dim]{config_file}[/]")
+
+    # Skills
+    skills_dir = profile_dir / "skills"
+    if skills_dir.exists():
+        count = len([f for f in skills_dir.rglob("SKILL.md") if f.is_file()])
+        console.print(f"[bold]Skills:[/] {count}")
+
+    # Wrapper
+    wrapper = Path.home() / ".local" / "bin" / agent_name
+    console.print(f"[bold]Wrapper:[/] {'✅' if wrapper.exists() else '❌'} [dim]{wrapper}[/]")
+
+    # .env
+    env_file = profile_dir / ".env"
+    console.print(f"[bold].env:[/] {'✅' if env_file.exists() else '❌'}")
+
+
+@cli.command(name="doctor")
+@click.option("--fix", is_flag=True, help="Auto-fix common issues")
+@click.option("--json", "json_output", is_flag=True, help="JSON output")
+def doctor_cmd(fix: bool, json_output: bool):
+    """🔍 System diagnostics — check environment, tools, config, fleet"""
+    from apex.interface.doctor import Doctor, render_diagnostic, render_json
+    d = Doctor()
+    if fix:
+        results = d.auto_fix()
+        for r in results:
+            console.print(f"  {r}")
+        return
+    report = d.run_all()
+    if json_output:
+        render_json(report)
+    else:
+        render_diagnostic(report)
+
+
 @cli.command(name="version")
 def version_cmd():
     """📋 Show version and check for updates"""
