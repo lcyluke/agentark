@@ -85,9 +85,47 @@ console = Console()
 # ════════════════════════════════════════════════════════════════
 
 
-@click.group()
+class AliasedGroup(click.Group):
+    """Click group that resolves command aliases before failing."""
+
+    def get_command(self, ctx, cmd_name):
+        # Try exact match first
+        cmd = super().get_command(ctx, cmd_name)
+        if cmd is not None:
+            return cmd
+        # Try alias resolution
+        from apex.interface.aliases import resolve_alias
+        alias_target = resolve_alias(cmd_name)
+        if alias_target:
+            # Split "monitor status" → ["monitor", "status"]
+            parts = alias_target.split()
+            # Walk into subcommands
+            current = self
+            for part in parts:
+                cmd = super(AliasedGroup, current).get_command(ctx, part)
+                if cmd is None:
+                    return None
+                current = cmd
+            return current
+        return None
+
+    def resolve_command(self, ctx, args):
+        # Try alias resolution for the first arg
+        if args:
+            cmd_name = args[0]
+            from apex.interface.aliases import resolve_alias
+            alias_target = resolve_alias(cmd_name)
+            if alias_target:
+                # Replace alias with expanded args
+                expanded = alias_target.split() + list(args[1:])
+                return super().resolve_command(ctx, expanded)
+        return super().resolve_command(ctx, args)
+
+
+@click.group(cls=AliasedGroup)
 @click.version_option(version="0.5.0", message="Apex v0.5.0 — 46 Agents, 30 commands, infinite capacity.")
-def cli():
+@click.pass_context
+def cli(ctx):
     """⚓ Apex — One person, infinite capacity.
 
     Manage agents, run tasks, and orchestrate your AI fleet.
@@ -95,8 +133,9 @@ def cli():
     Quick start:  apex setup --quick
     Help:         apex <command> --help
     Version:      apex --version
+
+    Shortcuts:    apex s (status)  apex p (pm)  apex fs (fleet status)
     """
-    # If --help is called, intercept to append quickstart
     pass
 
 
