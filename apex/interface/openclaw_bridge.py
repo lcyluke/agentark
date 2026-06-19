@@ -236,7 +236,7 @@ def get_status_summary() -> dict:
     
     return {
         "profiles": len(profiles),
-        "version": "0.1.0",
+        "version": "0.5.0",
         "status": "running",
         "economy": {
             "used": round(used, 4),

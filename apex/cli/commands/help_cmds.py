@@ -53,7 +53,8 @@ def help_list_cmd(status_filter: str = ""):
     tm = get_task_manager()
     requests = tm.list_help_requests(status=status_filter or None)
     if not requests:
-        console.print("[yellow]No help requests found.[/]")
+        console.print("[dim]No help requests found.[/]")
+        console.print("[dim]Create one: apex help request <agent> <title>[/]")
         return
     table = Table(title="📋 Help Requests", box=None)
     table.add_column("ID", style="dim", width=10)
