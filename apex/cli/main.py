@@ -161,7 +161,7 @@ def format_apex_help(self, ctx, formatter):
 
     groups = [
         ("🚀 SETUP & START", ["setup", "quickstart", "init", "demo", "model-detect"]),
-        ("💻 LOCAL MGMT", ["fleet", "monitor", "version", "update", "theme", "alias"]),
+        ("💻 LOCAL MGMT", ["fleet", "monitor", "version", "update", "theme", "alias", "tutorial", "doctor"]),
         ("📋 TASK MGMT", ["task", "run", "chat", "status"]),
         ("👥 TEAM & AGENTS", ["team", "mode"]),
         ("📊 PM & PROJECT", ["pm", "project", "survey", "dashboard"]),
@@ -1957,6 +1957,13 @@ def doctor_cmd(fix: bool, json_output: bool):
         render_json(report)
     else:
         render_diagnostic(report)
+
+
+@cli.command(name="tutorial")
+def tutorial_cmd():
+    """🎓 Interactive tutorial — 5-step guided walkthrough for new users"""
+    from apex.interface.tutorial import run_tutorial
+    run_tutorial()
 
 
 @cli.command(name="version")
