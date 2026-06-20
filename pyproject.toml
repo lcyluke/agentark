@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "apex-multiagent"
+name = "agentark"
 version = "0.5.0"
-description = "⚡ Apex — The world's most advanced Multi-Agent Operating System. One person, infinite capacity."
+description = "⚡ AgentArk — Multi-Agent Operating System. One person, infinite capacity."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -56,7 +56,7 @@ all = [
 ]
 
 [project.scripts]
-apex = "apex.cli.main:cli"
+agentark = "apex.cli.main:cli"
 
 [tool.hatch.build.targets.wheel]
 packages = ["apex"]

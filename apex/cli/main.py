@@ -123,14 +123,14 @@ class AliasedGroup(click.Group):
 
 
 @click.group(cls=AliasedGroup, context_settings={"help_option_names": ["-h", "--help"]})
-@click.version_option(version="0.5.0", message="Apex v0.5.0 — 46 Agents, 30 commands, infinite capacity.")
+@click.version_option(version="0.5.0", message="AgentArk v0.5.0 — 46 Agents, 30 commands, infinite capacity.")
 @click.pass_context
 def cli(ctx):
-    """⚓ Apex — One person, infinite capacity.
+    """⚓ AgentArk — One person, infinite capacity.
 
     Manage agents, run tasks, and orchestrate your AI fleet.
 
-    Quick start:  apex setup --quick
+    Quick start:  agentark setup --quick
     Help:         apex <command> --help
     Version:      apex --version
 
@@ -190,7 +190,7 @@ def format_apex_help(self, ctx, formatter):
     B = "\033[1m"; D = "\033[2m"; C = "\033[36m"; G = "\033[32m"; Y = "\033[33m"; R = "\033[0m"
 
     formatter.write("\n")
-    formatter.write(f"{B}{C}Apex 0.5.0{R} — Multi-Agent Operating System. One person, infinite capacity.\n")
+    formatter.write(f"{B}{C}AgentArk 0.5.0{R} — Multi-Agent Operating System. One person, infinite capacity.\n")
     formatter.write("\n")
 
     # Usage
@@ -241,23 +241,23 @@ def format_apex_help(self, ctx, formatter):
     # Examples
     formatter.write(f"{B}Examples:{R}\n")
     examples = [
-        ("apex init", "Interactive project wizard — 8 steps, agent matching, tech stack"),
-        ("apex init --quick", "Quick project init with smart auto-detection"),
-        ("apex fleet init", "Create agent profiles + launch tmux fleet"),
-        ("apex monitor status", "Agent heartbeat + task status panel"),
-        ("apex chat backend-dev", "Chat with a specific agent"),
-        ("apex run \"Add login\" -p frontend-dev", "Execute a task with an agent"),
-        ("apex team template webapp", "Create a 4-agent development team"),
-        ("apex tutorial", "5-step interactive walkthrough"),
-        ("apex doctor", "System diagnostics + auto-fix"),
-        ("apex version", "Show version + check for updates"),
-        ("apex update", "Self-update to latest GitHub release"),
+        ("agentark init", "Interactive project wizard — 8 steps, agent matching, tech stack"),
+        ("agentark init --quick", "Quick project init with smart auto-detection"),
+        ("agentark fleet init", "Create agent profiles + launch tmux fleet"),
+        ("agentark monitor status", "Agent heartbeat + task status panel"),
+        ("agentark chat backend-dev", "Chat with a specific agent"),
+        ("agentark run \"Add login\" -p frontend-dev", "Execute a task with an agent"),
+        ("agentark team template webapp", "Create a 4-agent development team"),
+        ("agentark tutorial", "5-step interactive walkthrough"),
+        ("agentark doctor", "System diagnostics + auto-fix"),
+        ("agentark version", "Show version + check for updates"),
+        ("agentark update", "Self-update to latest GitHub release"),
     ]
     for cmd_example, desc in examples:
         formatter.write(f"  {G}{cmd_example:<52s}{R} {D}{desc}{R}\n")
     formatter.write("\n")
 
-    formatter.write(f"{D}Run 'apex <command> --help' for more on a specific command.{R}\n")
+    formatter.write(f"{D}Run 'agentark <command> --help' for more on a specific command.{R}\n")
     formatter.write("\n")
 
 
@@ -284,7 +284,7 @@ def setup(quick: bool, check_mode: bool, model: Optional[str],
 
     Examples:
 
-      apex setup --quick            Quick setup (all defaults)
+      agentark setup --quick            Quick setup (all defaults)
 
       apex setup --model deepseek-v4-pro
 
@@ -1856,7 +1856,7 @@ def quickstart():
     panel = Panel.fit(
         "[bold cyan]🚀 Apex Quick Start Guide[/]\n\n"
         "[bold]FIRST-TIME SETUP[/]\n"
-        "  [green]apex setup --quick[/]         Quick setup with defaults\n"
+        "  [green]agentark setup --quick[/]         Quick setup with defaults\n"
         "  [green]apex setup --check[/]         Check installation status\n\n"
         "[bold]CREATE YOUR AI TEAM[/]\n"
         "  [green]apex team template webapp[/]  Create 4-agent dev team\n"
