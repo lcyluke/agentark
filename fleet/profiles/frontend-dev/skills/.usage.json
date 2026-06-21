@@ -1,0 +1,41 @@
+{
+  "command-center-dashboard": {
+    "archived_at": null,
+    "created_at": "2026-06-03T20:09:13.086858+00:00",
+    "created_by": "agent",
+    "last_patched_at": "2026-06-04T02:54:03.765158+00:00",
+    "last_used_at": "2026-06-04T02:55:09.390156+00:00",
+    "last_viewed_at": "2026-06-04T02:55:09.389566+00:00",
+    "patch_count": 3,
+    "pinned": false,
+    "state": "active",
+    "use_count": 3,
+    "view_count": 3
+  },
+  "frontend-uat-testing": {
+    "archived_at": null,
+    "created_at": "2026-06-03T20:29:01.161522+00:00",
+    "created_by": "agent",
+    "last_patched_at": "2026-06-04T02:54:32.064838+00:00",
+    "last_used_at": "2026-06-04T02:55:27.518877+00:00",
+    "last_viewed_at": "2026-06-04T02:55:27.518207+00:00",
+    "patch_count": 3,
+    "pinned": false,
+    "state": "active",
+    "use_count": 2,
+    "view_count": 2
+  },
+  "task-delegation-governance": {
+    "archived_at": null,
+    "created_at": "2026-06-04T23:24:25.228299+00:00",
+    "created_by": null,
+    "last_patched_at": "2026-06-05T19:36:35.510238+00:00",
+    "last_used_at": "2026-06-05T19:35:37.017630+00:00",
+    "last_viewed_at": "2026-06-05T19:35:37.016790+00:00",
+    "patch_count": 11,
+    "pinned": false,
+    "state": "active",
+    "use_count": 6,
+    "view_count": 6
+  }
+}
