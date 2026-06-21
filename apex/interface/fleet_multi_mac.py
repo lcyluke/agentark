@@ -397,13 +397,31 @@ def _probe_gpu() -> dict:
         return {}
 
 
+MAX_GPU_ALERTS_PER_DAY = 7
+
 def _gpu_alerts(gpu: dict, prev_state: dict) -> list[str]:
-    """Dual-threshold GPU alerts."""
+    """Dual-threshold GPU alerts with daily cap (MAX_GPU_ALERTS_PER_DAY)."""
     if not gpu:
         return []
     alerts = []
     util = gpu["util_pct"]
     pg = prev_state.get("gpu", {})
+
+    # ── Daily alert cap ──
+    today = str(__import__('datetime').date.today())
+    if pg.get("alert_date") != today:
+        pg["alert_date"] = today
+        pg["alert_count"] = 0
+        pg["alert_capped"] = False
+    count = pg.get("alert_count", 0)
+    if count >= MAX_GPU_ALERTS_PER_DAY:
+        if not pg.get("alert_capped"):
+            alerts.append(
+                f"🔇 GPU 告警已达每日上限 ({MAX_GPU_ALERTS_PER_DAY}次)，今天不再提醒"
+            )
+            pg["alert_capped"] = True
+        prev_state["gpu"] = pg
+        return alerts
 
     if util >= 90 and not pg.get("alert_sent_overload"):
         alerts.append(
@@ -433,6 +451,11 @@ def _gpu_alerts(gpu: dict, prev_state: dict) -> list[str]:
         pg["idle_minutes"] = 0
         pg["alert_sent_idle_warn"] = False
         pg["alert_sent_idle_crit"] = False
+
+    # ── Increment daily alert count ──
+    if alerts:
+        pg["alert_count"] = count + len(alerts)
+
     prev_state["gpu"] = pg
     return alerts
 
