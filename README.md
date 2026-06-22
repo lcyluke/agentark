@@ -21,35 +21,72 @@
     21|
     22|---
     23|
-    24|## ⚡ Quick Start
-    25|
-    26|```bash
-    27|# Install
-    28|brew install lcyluke/homebrew-apex/agentark
-    29|
-    30|# Or via pip
-    31|pip install agentark-multiagent
-    32|
-    33|# Interactive project wizard (8 steps)
-    34|agentark init my-project
-    35|
-    36|# 5-minute demo — opens Command Center
-    37|agentark demo
-    38|
-    39|# Interactive walkthrough
-    40|agentark tutorial
-    41|```
-    42|
-    43|---
-    44|
-    45|## 📋 Installation
-    46|
-    47|### macOS (Homebrew)
-    48|
-    49|```bash
-    50|brew tap lcyluke/apex
-    51|brew install agentark
-    52|```
+## ⚡ Quick Start
+
+```bash
+# 🍺 Homebrew (macOS)
+brew install lcyluke/homebrew-apex/agentark
+
+# 🐍 pip (any OS)
+pip install git+https://github.com/lcyluke/agentark.git
+
+# 📡 One-liner (curl)
+curl -sSL https://raw.githubusercontent.com/lcyluke/agentark/main/scripts/install.sh | bash
+
+# Interactive project wizard (8 steps)
+agentark init my-project
+
+# 5-minute demo — opens Command Center
+agentark demo
+
+# Interactive walkthrough
+agentark tutorial
+```
+
+---
+
+## 📋 Installation
+
+### 🍺 macOS (Homebrew)
+
+```bash
+brew tap lcyluke/apex
+brew install agentark
+```
+
+Verify:
+```bash
+agentark --version
+# AgentArk v0.5.0 — 46 Agents, 30 commands, infinite capacity.
+agentark doctor
+# ✅ 一切正常
+```
+
+### 🐍 pip (Any OS)
+
+```bash
+# Direct from GitHub (always latest)
+pip install git+https://github.com/lcyluke/agentark.git
+
+# Or from PyPI (coming soon)
+pip install agentark-multiagent
+```
+
+### 📡 One-liner (curl)
+
+```bash
+curl -sSL https://raw.githubusercontent.com/lcyluke/agentark/main/scripts/install.sh | bash
+```
+
+This auto-detects Python 3.10+, creates a venv at `~/.agentark/`, installs, and symlinks to `~/.local/bin/agentark`.
+
+### 🔧 From Source
+
+```bash
+git clone https://github.com/lcyluke/agentark.git && cd agentark
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+```
     53|
     54|Verify:
     55|```bash

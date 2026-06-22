@@ -1,10 +1,10 @@
-class Apex < Formula
+class Agentark < Formula
   include Language::Python::Virtualenv
 
-  desc "⚡ Multi-Agent Operating System — one person, infinite capacity"
-  homepage "https://github.com/lcyluke/apex"
-  url "https://github.com/lcyluke/apex/archive/refs/tags/v0.3.2.tar.gz"
-  sha256 "1095ebc57f814198146540580a78d1a1393aa91115a0e3023ed77be3461d2cc7"
+  desc "⚡ AgentArk — Multi-Agent Operating System. One person, infinite capacity."
+  homepage "https://github.com/lcyluke/agentark"
+  url "https://github.com/lcyluke/agentark/archive/refs/tags/v0.5.0.tar.gz"
+  sha256 "REPLACE_WITH_ACTUAL_SHA256"  # Run: curl -sL URL | shasum -a 256
   license "MIT"
 
   depends_on "python@3.12"
@@ -12,45 +12,50 @@ class Apex < Formula
 
   def install
     venv = virtualenv_create(libexec, "python3.12")
-    # Upgrade pip first to get latest wheel resolution
     system libexec/"bin/pip", "install", "--upgrade", "pip"
-    # Install purely from pre-built wheels — zero compilation
     system libexec/"bin/pip", "install", "--only-binary", ":all:", "."
   end
 
   def post_install
-    ohai "🚀 Apex Fleet Quickstart"
+    ohai "⚓ AgentArk Fleet Quickstart"
     puts ""
     puts "  Initialize your fleet (one-time):"
-    puts "    apex fleet init"
+    puts "    agentark fleet init"
     puts ""
     puts "  Start all agents:"
-    puts "    apex fleet start"
+    puts "    agentark fleet start"
     puts ""
     puts "  Monitor your fleet:"
-    puts "    apex monitor status"
-    puts "    apex monitor skills"
+    puts "    agentark fleet status"
+    puts "    agentark fleet probe"
     puts ""
-    puts "Docs: https://github.com/lcyluke/apex"
+    puts "  LAN discovery:"
+    puts "    agentark fleet lan scan"
+    puts "    agentark fleet lan discover"
+    puts ""
+    puts "  Resource-aware dispatch:"
+    puts "    agentark fleet dispatch \"task\" --gpu"
+    puts ""
+    puts "Docs: https://github.com/lcyluke/agentark"
     puts ""
   end
 
   test do
-    output = shell_output("#{bin}/apex --version 2>&1 || true")
-    assert_match "Apex", output
+    output = shell_output("#{bin}/agentark --version 2>&1 || true")
+    assert_match "AgentArk", output
   end
 
   def caveats
     <<~EOS
-      ⚡ Apex — Multi-Agent Operating System
+      ⚓ AgentArk — Multi-Agent Operating System
+      46 agents, 30 commands, one CLI.
 
       Quickstart:
-        apex fleet init      Create profiles + launch fleet (one-time)
-        apex fleet start     Start 7 dev agents in tmux windows
-        apex monitor status  Agent status + badminton pipeline
+        agentark fleet init          Create profiles + launch fleet
+        agentark fleet lan discover  Find other Macs on LAN
+        agentark fleet dispatch -h   Resource-aware task dispatch
 
-      Works on macOS, Linux, and Windows (WSL).
-      Docs: https://github.com/lcyluke/apex
+      Docs: https://github.com/lcyluke/agentark
     EOS
   end
 end

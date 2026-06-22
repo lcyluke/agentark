@@ -1172,3 +1172,375 @@ def fleet_tmux_broadcast(message: str):
     fm.broadcast(message)
     state = fm.status()
     console.print(f"[green]✅ Broadcast sent to {state.total_windows} agents[/]")
+
+
+# ════════════════════════════════════════════════════════════════
+# LAN Discovery Commands — mDNS peer discovery + SSH connectivity
+# ════════════════════════════════════════════════════════════════
+
+def fleet_lan_scan_cmd(live: bool = False):
+    """Scan LAN for AgentArk fleet peers via mDNS (Bonjour).
+
+    Discovers other Macs on the local network running AgentArk,
+    tests SSH connectivity, and shows GPU/resources per peer.
+    """
+    from apex.fleet.lan_discovery import LANFleetDiscovery
+    from rich.table import Table
+
+    console.print(Panel(
+        "[bold]🔍 LAN Fleet Discovery[/]\n\n"
+        "Scanning local network for AgentArk peers...",
+        title="LAN Scan", border_style="cyan",
+    ))
+
+    # Quick probe first
+    try:
+        import zeroconf
+    except ImportError:
+        console.print()
+        console.print("[yellow]⚠️ python-zeroconf not installed.[/]")
+        console.print("[dim]Run: pip install zeroconf[/]")
+        return
+
+    lan = LANFleetDiscovery()
+
+    peers_found = []
+
+    def on_peer(peer):
+        peers_found.append(peer)
+        console.print(f"  [green]✓[/] Found: [cyan]{peer.machine_id}[/] "
+                      f"@ {peer.ip_address} [{peer.role}] "
+                      f"SSH={'✅' if peer.ssh_reachable else '❌'} "
+                      f"GPU={'🖥 ' + ','.join(peer.gpu_names) if peer.has_gpu else '—'}")
+
+    lan.start(on_peer_discovered=on_peer)
+
+    import time
+    # Scan for 4 seconds
+    for i in range(4):
+        time.sleep(1)
+
+    lan.stop()
+
+    if not peers_found:
+        console.print("\n[yellow]No LAN peers found.[/]")
+        console.print("[dim]Make sure other Macs are on the same network and running AgentArk.[/]")
+        console.print("[dim]On each Mac, run: agentark fleet lan discover[/]")
+        return
+
+    # Show results table
+    console.print()
+    t = Table(title="🖥 LAN Fleet Peers", box=None)
+    t.add_column("Machine", style="cyan")
+    t.add_column("Role", style="bold")
+    t.add_column("IP", style="dim")
+    t.add_column("SSH", style="green")
+    t.add_column("GPU", style="yellow")
+    t.add_column("Profiles", justify="right")
+    t.add_column("Skills", justify="right")
+
+    for p in peers_found:
+        t.add_row(
+            p.machine_id[:24],
+            p.role.upper(),
+            p.ip_address,
+            f"✅ {p.latency_ms:.0f}ms" if p.ssh_reachable else "❌",
+            ", ".join(p.gpu_names[:2]) if p.has_gpu else "—",
+            str(p.profiles),
+            str(p.skills),
+        )
+
+    console.print(t)
+    console.print(f"\n[dim]Total: {len(peers_found)} peer(s) on LAN[/]")
+
+    # Save for future reference
+    lan.save_peers()
+    console.print("[dim]Peers saved to ~/.apex/lan_peers.json[/]")
+
+
+def fleet_lan_discover_cmd():
+    """Start continuous LAN discovery (mDNS broadcast + listen)."""
+    from apex.fleet.lan_discovery import LANFleetDiscovery
+
+    try:
+        import zeroconf
+    except ImportError:
+        console.print("[yellow]⚠️ python-zeroconf not installed. Run: pip install zeroconf[/]")
+        return
+
+    lan = LANFleetDiscovery()
+
+    def on_peer(peer):
+        gpu_str = f" GPU={'✅' if peer.has_gpu else '—'}"
+        ssh_str = f" SSH={'OK' if peer.ssh_reachable else 'NO'}"
+        console.print(f"[green]+[/] {peer.machine_id:28s} {peer.role:8s} "
+                      f"@{peer.ip_address}{ssh_str}{gpu_str}")
+
+    def on_lost(peer):
+        console.print(f"[red]-[/] {peer.machine_id}")
+
+    console.print(Panel(
+        f"[bold]📡 LAN Fleet Discovery — Continuous[/]\n\n"
+        f"Broadcasting as: [cyan]{lan.machine_id}[/]\n"
+        f"Service: [dim]_agentark-fleet._tcp[/]",
+        title="LAN Discovery", border_style="cyan",
+    ))
+    console.print("[dim]Press Ctrl+C to stop[/]\n")
+
+    lan.start(on_peer_discovered=on_peer, on_peer_lost=on_lost)
+
+    try:
+        import time as _time
+        while True:
+            _time.sleep(5)
+    except KeyboardInterrupt:
+        console.print("\n[dim]Stopping LAN discovery...[/]")
+        lan.stop()
+        lan.save_peers()
+        console.print("[green]✅ Peers saved. Stopped.[/]")
+
+
+# ════════════════════════════════════════════════════════════════
+# Resource-Aware Dispatch Commands
+# ════════════════════════════════════════════════════════════════
+
+def fleet_probe_cmd():
+    """Show local machine capabilities (CPU/GPU/RAM/Disk)."""
+    from apex.fleet.scheduler import NodeProber
+    from rich.table import Table
+
+    cap = NodeProber.probe_all()
+
+    console.print(Panel(
+        f"[bold]🖥 Machine Capability Probe[/]\n\n"
+        f"Machine: [cyan]{cap.machine_id}[/]\n"
+        f"Hostname: [dim]{cap.hostname}[/]\n"
+        f"OS: {cap.os} | Python: {cap.python_version}",
+        title="Probe", border_style="cyan",
+    ))
+
+    console.print()
+
+    # CPU
+    t = Table(title="💻 Resources", box=None)
+    t.add_column("Resource", style="bold")
+    t.add_column("Total", justify="right")
+    t.add_column("Used/Avail", justify="right")
+    t.add_column("Usage", style="bold")
+
+    t.add_row("CPU", f"{cap.cpu_cores} cores", f"{cap.cpu_free_cores:.1f} free",
+              f"{cap.cpu_usage_pct:.0f}%")
+    t.add_row("RAM", f"{cap.ram_total_mb:,} MB", f"{cap.ram_free_mb:,} MB free",
+              f"{(1-cap.ram_free_mb/max(1,cap.ram_total_mb))*100:.0f}%")
+    t.add_row("Disk", f"{cap.disk_total_gb:.0f} GB", f"{cap.disk_free_gb:.0f} GB free",
+              "")
+    t.add_row("Docker", "✅" if cap.has_docker else "❌", "", "")
+
+    console.print(t)
+
+    # GPU
+    if cap.has_gpu:
+        console.print()
+        gt = Table(title="🖥 GPU", box=None)
+        gt.add_column("GPU", style="yellow")
+        gt.add_column("Util", style="bold")
+        gt.add_column("Memory", style="green")
+        gt.add_column("Temp", style="red")
+
+        for name in cap.gpu_names:
+            gt.add_row(
+                name,
+                f"{cap.gpu_util_pct:.0f}%",
+                f"{cap.gpu_mem_used_mb:,}/{cap.gpu_mem_total_mb:,} MB",
+                f"{cap.temp_c:.0f}°C",
+            )
+        console.print(gt)
+    else:
+        console.print("\n[yellow]No GPU detected on this machine.[/]")
+
+
+def fleet_dispatch_cmd(
+    task_description: str,
+    gpu: bool = False,
+    gpu_memory_mb: int = 0,
+    cpu_cores: int = 1,
+    ram_mb: int = 512,
+    target: str = "",
+    profile: str = "",
+    timeout: int = 600,
+    dry_run: bool = False,
+):
+    """Resource-aware task dispatch to the best fleet node.
+
+    Matches task requirements against all fleet nodes' capabilities
+    and dispatches to the best match via SSH (LAN) or task queue.
+
+    Examples:
+      apex fleet dispatch "Train VideoMAE model" --gpu --gpu-memory-mb 16000
+      apex fleet dispatch "Rebuild dashboard" --cpu-cores 4 --ram-mb 4096
+      apex fleet dispatch "Scrape data" --target MacBook-Pro-2.local
+    """
+    from apex.fleet.scheduler import (
+        FleetScheduler, TaskRegistration, ResourceRequirement
+    )
+    from rich.table import Table
+
+    # ── Build task ──
+    req = ResourceRequirement(
+        gpu=gpu,
+        gpu_memory_mb=gpu_memory_mb,
+        cpu_cores=cpu_cores,
+        ram_mb=ram_mb,
+    )
+
+    task_id = f"TASK-{int(time.time())}"
+    task = TaskRegistration(
+        task_id=task_id,
+        title=task_description[:60],
+        description=task_description,
+        command=task_description,
+        profile=profile,
+        required=req,
+        target_machine=target,
+        timeout=timeout,
+    )
+
+    console.print(Panel(
+        f"[bold]🚀 Fleet Dispatch[/]\n\n"
+        f"Task: [cyan]{task_description[:60]}[/]\n"
+        f"Requirements: "
+        f"{'🖥 GPU' if gpu else ''}"
+        f"{f' {gpu_memory_mb}MB' if gpu_memory_mb else ''}"
+        f"{' 💻 CPU' if cpu_cores > 1 else ''}"
+        f"{f' {cpu_cores}core' if cpu_cores > 1 else ''}"
+        f"{f' 🧠 {ram_mb}MB' if ram_mb > 512 else ''}"
+        f"\nTarget: [dim]{target or 'auto (best match)'}[/]",
+        title="Dispatch", border_style="cyan",
+    ))
+
+    # ── Schedule ──
+    sched = FleetScheduler()
+    sched.update_nodes()
+
+    # Show available nodes
+    console.print()
+    console.print(f"[bold]Available nodes: {len(sched.nodes)}[/]")
+    nt = Table(box=None)
+    nt.add_column("Node", style="cyan")
+    nt.add_column("GPU", style="yellow")
+    nt.add_column("CPU Free", justify="right")
+    nt.add_column("RAM Free", justify="right")
+    nt.add_column("LAN", style="green")
+
+    for mid, node in sched.nodes.items():
+        local_mark = " ◀" if mid == sched._local.machine_id else ""
+        nt.add_row(
+            mid[:28] + local_mark,
+            f"{node.gpu_util_pct:.0f}%" if node.has_gpu else "—",
+            f"{node.cpu_free_cores:.0f} core",
+            f"{node.ram_free_mb:,}MB" if node.ram_free_mb else "?",
+            "✅" if node.lan_reachable else "—",
+        )
+
+    console.print(nt)
+    console.print()
+
+    # ── Match ──
+    match = sched.find_best_node(task)
+
+    if not match:
+        console.print("[red]❌ No node meets the requirements![/]")
+        # Show why each node failed
+        for mid, node in sched.nodes.items():
+            if mid == sched._local.machine_id:
+                continue
+            score = sched.score_node(task, node)
+            if score > 0:
+                console.print(f"  [dim]{mid}: score={score:.0f} (below threshold)[/]")
+            else:
+                reasons = []
+                if task.required.gpu and not node.has_gpu:
+                    reasons.append("no GPU")
+                if task.required.cpu_cores > node.cpu_cores:
+                    reasons.append(f"CPU insufficient ({node.cpu_cores}<{task.required.cpu_cores})")
+                console.print(f"  [dim]{mid}: ❌ {' | '.join(reasons)}[/]")
+        return
+
+    # ── Show match result ──
+    console.print(Panel(
+        f"[bold green]✅ Best Match: {match.node.machine_id}[/]\n\n"
+        f"Score: [bold]{match.score:.0f}/100[/]\n"
+        f"Reason: [dim]{match.reason}[/]\n"
+        f"Method: [bold]{'LAN SSH' if match.node.lan_reachable else 'Task Queue'}[/]",
+        title="Match Result", border_style="green",
+    ))
+
+    if match.alternatives:
+        console.print("[dim]Alternatives:[/]")
+        for alt_node, alt_score in match.alternatives:
+            console.print(f"  [dim]{alt_node.machine_id:28s} score={alt_score:.0f}[/]")
+
+    if dry_run:
+        console.print("\n[yellow]🔍 Dry run — no task dispatched.[/]")
+        return match
+
+    # ── Dispatch ──
+    console.print(f"\n[bold]Dispatching to {match.node.machine_id}...[/]")
+    ok, output = sched.dispatch(task, match.node, timeout=timeout)
+
+    if ok:
+        console.print(f"[green]✅ Task dispatched successfully![/]")
+        if output:
+            console.print(Panel(output[:500], title="Output", border_style="dim"))
+    else:
+        console.print(f"[red]❌ Dispatch failed: {output[:300]}[/]")
+
+    return match
+
+
+def fleet_queue_cmd():
+    """Show current task dispatch queue."""
+    from apex.fleet.scheduler import TaskQueue
+    from rich.table import Table
+
+    tasks = TaskQueue.list_all()
+    pending = [t for t in tasks if t.get("status") != "done"]
+
+    console.print(Panel(
+        f"[bold]📋 Fleet Task Queue[/]\n\n"
+        f"Total: [yellow]{len(tasks)}[/] | Pending: [cyan]{len(pending)}[/]",
+        title="Task Queue", border_style="blue",
+    ))
+
+    if not tasks:
+        console.print("[dim]No tasks in queue. Use 'apex fleet dispatch' to add.[/]")
+        return
+
+    t = Table(box=None)
+    t.add_column("ID", style="dim")
+    t.add_column("Title", style="cyan")
+    t.add_column("Assigned To", style="green")
+    t.add_column("Status", style="bold")
+    t.add_column("Requirements", style="dim")
+
+    for task in tasks[-10:]:  # last 10
+        req = task.get("required", {})
+        req_str = ""
+        if req.get("gpu"):
+            req_str += f"GPU({req.get('gpu_memory_mb', 0)}MB) "
+        if req.get("cpu_cores", 1) > 1:
+            req_str += f"CPU:{req['cpu_cores']} "
+
+        status = task.get("status", "?")
+        color = {"done": "green", "failed": "red", "dispatched": "yellow",
+                 "pending": "dim"}.get(status, "white")
+
+        t.add_row(
+            task.get("task_id", "?")[:16],
+            task.get("title", "?")[:36],
+            task.get("assigned_to", "—")[:20],
+            f"[{color}]{status}[/]",
+            req_str.strip() or "—",
+        )
+
+    console.print(t)

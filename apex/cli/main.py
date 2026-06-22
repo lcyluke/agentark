@@ -902,6 +902,62 @@ def fleet_tmux_broadcast(message: str):
     fleet_cmds.fleet_tmux_broadcast(message)
 
 
+# ─── LAN Discovery ─────────────────────────────────────────
+
+@fleet.group(name="lan")
+def fleet_lan():
+    """🔍 LAN Discovery — find fleet peers on local network"""
+
+@fleet_lan.command(name="scan")
+def fleet_lan_scan():
+    """🔍 Quick scan for LAN peers (4s timeout)"""
+    fleet_cmds.fleet_lan_scan_cmd()
+
+@fleet_lan.command(name="discover")
+def fleet_lan_discover():
+    """📡 Continuous LAN discovery (Ctrl+C to stop)"""
+    fleet_cmds.fleet_lan_discover_cmd()
+
+
+# ─── Resource-Aware Dispatch ───────────────────────────────
+
+@fleet.command(name="probe")
+def fleet_probe():
+    """🖥 Probe local machine capabilities (CPU/GPU/RAM)"""
+    fleet_cmds.fleet_probe_cmd()
+
+@fleet.command(name="dispatch")
+@click.argument("task")
+@click.option("--gpu", is_flag=True, help="Requires GPU")
+@click.option("--gpu-memory-mb", type=int, default=0, help="Minimum GPU memory (MB)")
+@click.option("--cpu-cores", type=int, default=1, help="Minimum CPU cores")
+@click.option("--ram-mb", type=int, default=512, help="Minimum RAM (MB)")
+@click.option("--target", "-t", default="", help="Target specific machine")
+@click.option("--profile", "-p", default="", help="Hermes profile to use")
+@click.option("--timeout", type=int, default=600, help="Task timeout (seconds)")
+@click.option("--dry-run", is_flag=True, help="Preview match without dispatching")
+def fleet_dispatch(task: str, gpu: bool, gpu_memory_mb: int, cpu_cores: int,
+                   ram_mb: int, target: str, profile: str, timeout: int, dry_run: bool):
+    """🚀 Resource-aware task dispatch to best fleet node
+
+    \b
+    Examples:
+      apex fleet dispatch "Train model" --gpu --gpu-memory-mb 16000
+      apex fleet dispatch "Scrape data" --target MacBook-Pro-2.local
+      apex fleet dispatch "Build UI" --profile frontend-dev --dry-run
+    """
+    fleet_cmds.fleet_dispatch_cmd(
+        task_description=task, gpu=gpu, gpu_memory_mb=gpu_memory_mb,
+        cpu_cores=cpu_cores, ram_mb=ram_mb, target=target,
+        profile=profile, timeout=timeout, dry_run=dry_run,
+    )
+
+@fleet.command(name="queue")
+def fleet_queue():
+    """📋 View fleet task dispatch queue"""
+    fleet_cmds.fleet_queue_cmd()
+
+
 # ════════════════════════════════════════════════════════════════
 # MODE — 🔧 协作模式
 # ════════════════════════════════════════════════════════════════

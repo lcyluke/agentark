@@ -10,9 +10,32 @@ Architecture:
     apex fleet destroy    → kills tmux session entirely
     apex fleet attach     → attaches to the tmux session
     apex fleet log <agent> → shows recent output from an agent window
+
+New in v2:
+    apex fleet lan        → LAN peer discovery (mDNS + SSH)
+    apex fleet dispatch   → Resource-aware task dispatch
+    apex fleet probe      → Show local machine capabilities
 """
 
 from .tmux_manager import TmuxFleetManager
 from .profiles import ProfileBundler
+from .lan_discovery import LANFleetDiscovery, LANPeer
+from .scheduler import (
+    FleetScheduler, NodeProber, TaskQueue,
+    TaskRegistration, ResourceRequirement,
+    NodeCapability, DispatchMatch,
+)
 
-__all__ = ["TmuxFleetManager", "ProfileBundler"]
+__all__ = [
+    "TmuxFleetManager",
+    "ProfileBundler",
+    "LANFleetDiscovery",
+    "LANPeer",
+    "FleetScheduler",
+    "NodeProber",
+    "TaskQueue",
+    "TaskRegistration",
+    "ResourceRequirement",
+    "NodeCapability",
+    "DispatchMatch",
+]
