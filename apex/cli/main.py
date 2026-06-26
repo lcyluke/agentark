@@ -2079,7 +2079,7 @@ def tutorial_cmd():
 def version_cmd():
     """📋 Show version and check for updates"""
     from apex.interface.logo import render_mini
-render_mini(console, "0.5.1")
+    render_mini(console, "0.5.1")
     from apex.interface.version import cmd_version
     cmd_version()
 
