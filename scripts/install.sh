@@ -60,7 +60,6 @@ source .venv/bin/activate
 echo -e "${CYAN}📥 Installing dependencies...${NC}"
 pip install --quiet --upgrade pip
 pip install --quiet --only-binary ":all:" .
-pip install --quiet zeroconf  # LAN peer discovery
 
 # ── Create symlink ──
 mkdir -p "$BIN_DIR"
