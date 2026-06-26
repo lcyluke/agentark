@@ -123,7 +123,7 @@ class AliasedGroup(click.Group):
 
 
 @click.group(cls=AliasedGroup, context_settings={"help_option_names": ["-h", "--help"]})
-@click.version_option(version="0.5.0", message="AgentArk v0.5.0 — 46 Agents, 30 commands, infinite capacity.")
+@click.version_option(version="0.5.1", message="AgentArk v0.5.0 — 46 Agents, 30 commands, infinite capacity.")
 @click.pass_context
 def cli(ctx):
     """⚓ AgentArk — One person, infinite capacity.
@@ -2079,7 +2079,7 @@ def tutorial_cmd():
 def version_cmd():
     """📋 Show version and check for updates"""
     from apex.interface.logo import render_mini
-    render_mini(console, "0.5.0")
+render_mini(console, "0.5.1")
     from apex.interface.version import cmd_version
     cmd_version()
 

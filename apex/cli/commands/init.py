@@ -176,7 +176,7 @@ def init_project(name: str, project_dir: Path, console: Console):
         "project": name,
         "description": desc or f"{preset['label']} 项目",
         "type": ptype,
-        "apex_version": "0.5.0",
+        "apex_version": "0.5.1",
         "default_provider": provider,
         "default_model": model,
         "team": [agent_id for agent_id, _ in selected_agents],

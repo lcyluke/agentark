@@ -102,7 +102,7 @@ def create_app():
     @request_logger
     def api_version():
         return jsonify({
-            "version": "0.5.0",
+            "version": "0.5.1",
             "name": "Apex",
             "description": "Multi-Agent Operating System",
             "python": __import__("sys").version,
@@ -143,7 +143,7 @@ def create_app():
 
         return jsonify({
             "profiles": len(profiles),
-            "version": "0.5.0",
+            "version": "0.5.1",
             "status": "running",
             "uptime_seconds": time.time() - app._start_time if hasattr(app, "_start_time") else 0,
             "tasks": [{"id": t.id, "title": t.title[:50], "assignee": t.assignee,
@@ -1296,7 +1296,7 @@ def create_app():
             from apex import __version__ as av
             info["apex_version"] = av
         except:
-            info["apex_version"] = "0.5.0"
+            info["apex_version"] = "0.5.1"
         # Installed tools
         tools = {}
         for tool in ["git", "node", "npm", "docker", "tmux", "curl"]:

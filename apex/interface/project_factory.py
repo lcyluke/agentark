@@ -641,7 +641,7 @@ class ProjectFactory:
                 "description": self.description or PROJECT_TEMPLATES[self.project_type]["description"],
                 "type": self.project_type,
                 "scale": self.scale,
-                "apex_version": "0.5.0",
+                "apex_version": "0.5.1",
                 "default_provider": self.provider,
                 "default_model": self.model,
                 "team": [aid for aid, _, _ in self.selected_agents],
