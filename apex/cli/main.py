@@ -123,7 +123,7 @@ class AliasedGroup(click.Group):
 
 
 @click.group(cls=AliasedGroup, context_settings={"help_option_names": ["-h", "--help"]})
-@click.version_option(version="0.5.1", message="AgentArk v0.5.0 — 46 Agents, 30 commands, infinite capacity.")
+@click.version_option(version="0.5.1", message="AgentArk v0.5.1 — 46 Agents, 30 commands, infinite capacity.")
 @click.pass_context
 def cli(ctx):
     """⚓ AgentArk — One person, infinite capacity.
@@ -190,7 +190,7 @@ def format_apex_help(self, ctx, formatter):
     B = "\033[1m"; D = "\033[2m"; C = "\033[36m"; G = "\033[32m"; Y = "\033[33m"; R = "\033[0m"
 
     formatter.write("\n")
-    formatter.write(f"{B}{C}AgentArk 0.5.0{R} — Multi-Agent Operating System. One person, infinite capacity.\n")
+    formatter.write(f"{B}{C}AgentArk 0.5.1{R} — Multi-Agent Operating System. One person, infinite capacity.\n")
     formatter.write("\n")
 
     # Usage
