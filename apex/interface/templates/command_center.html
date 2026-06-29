@@ -450,7 +450,16 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
 .drag-handle{cursor:grab;color:var(--tx3);font-size:14px;user-select:none;padding:0 4px}
 .drag-handle:active{cursor:grabbing}
 .agent-row.drag-over td{border-top:2px solid var(--teal)}
+
+/* ═══ D3 TREE CHART ═══ */
+.d3-tree-container{width:100%;overflow:auto;min-height:400px;padding:10px 0}
+.d3-tree-container svg{display:block;margin:0 auto}
+.d3-node rect{stroke-width:2px;rx:8px;ry:8px;transition:all .25s ease}
+.d3-node text{font-family:var(--body);font-size:11px;fill:var(--tx);pointer-events:none;text-anchor:middle}
+.d3-link{fill:none;stroke:var(--line2);stroke-width:2px}
+
 </style>
+<script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
 <div class="app">
@@ -4570,177 +4579,106 @@ function renderGanttTimeline(containerId) {
   document.getElementById(containerId).innerHTML = html;
 }
 
-/* ========== ORG BOX CHART (Project→Module→Agent) ========== */
+/* ========== D3 TREE CHART ========== */
 function renderOrgChart(containerId) {
   var el = document.getElementById(containerId);
   if (!el) return;
   var tasks = state.data.tasks || [];
   var profiles = state.data.profiles || [];
   
-  // Build Project → Module → Agent hierarchy
-  var tree = {};
+  var tree = {name:'🚀 AgentArk 舰队',children:[]};
+  var pjMap = {};
   tasks.forEach(function(t) {
     var m = (t.title||'').match(/^\[([^\]]+)\]/);
-    var pj = m ? m[1] : '默认项目';
+    var pjName = m ? m[1] : '默认项目';
     var title = t.title||'';
-    var mod = '通用模块';
-    if (title.includes('需求')||title.includes('PRD')||title.includes('分析')) mod = '需求分析';
-    else if (title.includes('设计')||title.includes('架构')) mod = '设计架构';
-    else if (title.includes('开发')||title.includes('API')||title.includes('后端')) mod = '后端开发';
-    else if (title.includes('前端')||title.includes('UI')||title.includes('页面')) mod = '前端开发';
-    else if (title.includes('测试')||title.includes('部署')||title.includes('发布')) mod = '测试部署';
-    else if (title.includes('支付')||title.includes('订单')) mod = '支付交易';
-    else if (title.includes('评估')||title.includes('诊断')) mod = 'AI评估';
+    var modName = '通用模块';
+    if (title.includes('需求')||title.includes('PRD')||title.includes('分析')) modName = '需求分析';
+    else if (title.includes('设计')||title.includes('架构')) modName = '设计架构';
+    else if (title.includes('开发')||title.includes('API')||title.includes('后端')) modName = '后端开发';
+    else if (title.includes('前端')||title.includes('UI')||title.includes('页面')) modName = '前端开发';
+    else if (title.includes('测试')||title.includes('部署')||title.includes('发布')) modName = '测试部署';
+    else if (title.includes('支付')||title.includes('订单')) modName = '支付交易';
+    else if (title.includes('评估')||title.includes('诊断')) modName = 'AI评估';
     
-    if (!tree[pj]) tree[pj] = {modules:{}};
-    if (!tree[pj].modules[mod]) tree[pj].modules[mod] = {agents:{}};
-    if (t.assignee) tree[pj].modules[mod].agents[t.assignee] = true;
+    if (!pjMap[pjName]) { pjMap[pjName] = {name:pjName,type:'project',children:[],modMap:{}}; tree.children.push(pjMap[pjName]); }
+    var pj = pjMap[pjName];
+    if (!pj.modMap[modName]) { pj.modMap[modName] = {name:modName,type:'module',children:[],agentSet:{}}; pj.children.push(pj.modMap[modName]); }
+    var mod = pj.modMap[modName];
+    if (t.assignee && !mod.agentSet[t.assignee]) {
+      mod.agentSet[t.assignee] = true;
+      var prof = profiles.find(function(p){return (p.name||p.agent_id)===t.assignee;});
+      mod.children.push({name:t.assignee,type:'agent',role:(prof&&prof.role)||(prof&&prof.soul&&prof.soul.role)||'Worker',load:prof?Math.round((prof.load_pct||prof.load||0)*100):0});
+    }
   });
   
-  var pjNames = Object.keys(tree).sort();
-  if (!pjNames.length) { el.innerHTML = '<div style="color:var(--tx3);padding:20px;text-align:center">暂无项目数据</div>'; return; }
+  if (!tree.children.length) { el.innerHTML = '<div style="color:var(--tx3);padding:40px;text-align:center">暂无项目数据</div>'; return; }
   
-  // Render: Project row → Connector → Module row → Connector → Agent row
-  var html = '<div class="org-chart" style="position:relative">';
+  el.innerHTML = '<div class="d3-tree-container" id="'+containerId+'-d3"></div>';
+  var container = document.getElementById(containerId+'-d3');
+  var W = Math.max(900, el.clientWidth - 20);
+  var H = Math.max(tree.children.length * 200, 500);
   
-  // ── ROW 1: Projects ──
-  html += '<div class="org-row" id="org-pj-row">';
-  pjNames.forEach(function(pjName, pi) {
-    var pj = tree[pjName];
-    var modCount = Object.keys(pj.modules).length;
-    var agCount = 0;
-    Object.values(pj.modules).forEach(function(m){ agCount += Object.keys(m.agents).length; });
-    html += '<div class="org-box project" onclick="toggleOrgChildren(\'org-pj-'+pi+'\')" title="点击展开/收缩">'+
-      '<span class="bstatus online"></span>'+
-      '<div class="bicon">📁</div>'+
-      '<div class="bname">'+pjName+'</div>'+
-      '<div class="bcount">'+modCount+'模块 · '+agCount+' Agent</div></div>';
-  });
-  html += '</div>';
+  var svg = d3.select('#'+containerId+'-d3').append('svg').attr('width',W).attr('height',H).append('g').attr('transform','translate(40,'+H/2+')');
+  var root = d3.hierarchy(tree);
+  var treeLayout = d3.tree().size([H-80, W-160]);
+  treeLayout(root);
   
-  // ── For each project: modules row + connector ──
-  pjNames.forEach(function(pjName, pi) {
-    var pj = tree[pjName];
-    var modNames = Object.keys(pj.modules).sort();
-    var pjId = 'org-pj-' + pi;
-    
-    html += '<div class="org-children" id="'+pjId+'">';
-    
-    // Connector SVG from project to its modules
-    html += '<div class="org-connector" style="position:relative;height:30px">'+
-      '<svg class="org-svg"><line x1="50%" y1="0" x2="50%" y2="15"/></svg></div>';
-    
-    // ── ROW 2: Modules ──
-    html += '<div class="org-row" id="'+pjId+'-mods">';
-    modNames.forEach(function(modName, mi) {
-      var mod = pj.modules[modName];
-      var agCount = Object.keys(mod.agents).length;
-      var mid = pjId + '-m' + mi;
-      html += '<div class="org-box module" onclick="toggleOrgChildren(\''+mid+'\')" title="点击展开/收缩">'+
-        '<div class="bicon">📦</div>'+
-        '<div class="bname">'+modName+'</div>'+
-        '<div class="bcount">'+agCount+' Agent</div></div>';
-      
-      // ── ROW 3: Agents under each module ──
-      var agents = Object.keys(mod.agents).sort();
-      html += '<div class="org-children" id="'+mid+'" style="display:block">';
-      html += '<div class="org-connector" style="position:relative;height:24px">'+
-        '<svg class="org-svg"><line x1="50%" y1="0" x2="50%" y2="12"/></svg></div>';
-      html += '<div class="org-row">';
-      agents.forEach(function(agentId) {
-        var prof = profiles.find(function(p){ return (p.name||p.agent_id) === agentId; });
-        var role = (prof&&prof.role) || (prof&&prof.soul&&prof.soul.role) || 'Worker';
-        var load = prof ? Math.round((prof.load_pct||prof.load||0)*100) : 0;
-        var ad = JSON.stringify({agent_id:agentId,role:role,name:agentId,load_pct:load/100}).replace(/"/g,'&quot;');
-        html += '<div class="org-box agent" data-agent="'+ad+'" onclick="openDetailPanelEl(this)" style="cursor:pointer">'+
-          '<span class="bstatus '+(load>50?'busy':'online')+'"></span>'+
-          '<div class="bicon">🤖</div>'+
-          '<div class="bname">'+agentId+'</div>'+
-          '<div class="bcount">'+role+' · '+load+'%</div></div>';
-      });
-      html += '</div></div>';
+  // Links
+  svg.selectAll('.d3-link').data(root.links()).join('path').attr('class','d3-link')
+    .attr('d', d3.linkHorizontal().x(function(d){return d.y;}).y(function(d){return d.x;}));
+  
+  // Nodes
+  var node = svg.selectAll('.d3-node').data(root.descendants()).join('g').attr('class','d3-node')
+    .attr('transform',function(d){return 'translate('+d.y+','+d.x+')';}).style('cursor','pointer')
+    .on('click',function(e,d){e.stopPropagation();
+      if(d.data.type==='agent'){var ad=JSON.stringify({agent_id:d.data.name,role:d.data.role,name:d.data.name,load_pct:(d.data.load||0)/100}).replace(/"/g,'&quot;');var el2=document.createElement('div');el2.setAttribute('data-agent',ad);openDetailPanelEl(el2);}
+      else{toggleD3Node(d);updateD3Tree(containerId,root);}
     });
-    
-    html += '</div></div>';
-  });
   
-  html += '</div>';
-  el.innerHTML = html;
+  node.append('rect').attr('x',function(d){var w=getNodeWidth(d);return -w/2;}).attr('y',-24).attr('width',function(d){return getNodeWidth(d);}).attr('height',48)
+    .attr('fill',function(d){return d.data.type==='project'?'var(--teal-d)':d.data.type==='module'?'var(--violet-d)':'var(--blue-d)';})
+    .attr('stroke',function(d){return d.data.type==='project'?'var(--teal)':d.data.type==='module'?'var(--violet)':'var(--blue)';});
   
-  // Draw SVG connectors between rows
-  setTimeout(function(){ drawOrgConnectors(); }, 100);
+  node.append('text').attr('y',-7).style('font-weight','600').style('font-size','12px').style('fill','var(--tx)')
+    .text(function(d){return (d.data.type==='project'?'📁':d.data.type==='module'?'📦':'🤖')+' '+(d.data.name||'').substring(0,16);});
+  node.append('text').attr('y',9).style('font-size','10px').style('fill','var(--tx3)')
+    .text(function(d){if(d.data.type==='agent')return(d.data.role||'')+' · '+(d.data.load||0)+'%';var c=d.children?d.children.length:(d._children?d._children.length:0);return d.data.type==='project'?c+' 模块':c+' Agent';});
+  
+  // Collapse circles
+  node.filter(function(d){return d.children||d._children;}).append('circle').attr('cx',function(d){return getNodeWidth(d)/2+14;}).attr('cy',-24).attr('r',8).attr('fill','var(--bg2)').attr('stroke','var(--line2)');
+  node.filter(function(d){return d.children||d._children;}).append('text').attr('x',function(d){return getNodeWidth(d)/2+14;}).attr('y',-20).attr('text-anchor','middle').style('font-size','10px').style('fill','var(--tx2)').text(function(d){return d.children?'−':'+';});
+  
+  container._d3Root = root;
+  container._d3Svg = svg;
+  container._d3TreeLayout = treeLayout;
 }
 
-function drawOrgConnectors() {
-  var chart = document.getElementById('dashboardOrgChart');
-  if (!chart) return;
-  var chartRect = chart.getBoundingClientRect();
-  
-  // Remove old SVGs
-  chart.querySelectorAll('.org-connector-svg').forEach(function(s){s.remove();});
-  
-  // Create one big SVG overlay
-  var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svg.classList.add('org-connector-svg');
-  svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0';
-  chart.style.position = 'relative';
-  
-  var pjBoxes = chart.querySelectorAll('.org-box.project');
-  pjBoxes.forEach(function(pjBox, pi) {
-    var pjId = 'org-pj-' + pi;
-    var pjChildren = document.getElementById(pjId);
-    if (!pjChildren || pjChildren.classList.contains('collapsed')) return;
-    
-    var pjRect = pjBox.getBoundingClientRect();
-    var pjCX = pjRect.left - chartRect.left + pjRect.width/2;
-    var pjCY = pjRect.top - chartRect.top + pjRect.height;
-    
-    var modBoxes = pjChildren.querySelectorAll('.org-box.module');
-    modBoxes.forEach(function(modBox, mi) {
-      var modRect = modBox.getBoundingClientRect();
-      var modCX = modRect.left - chartRect.left + modRect.width/2;
-      var modCY = modRect.top - chartRect.top;
-      
-      // Vertical down from project, then horizontal to module
-      var midY = pjCY + (modCY - pjCY) / 2;
-      var path = document.createElementNS('http://www.w3.org/2000/svg','path');
-      path.setAttribute('d', 'M'+pjCX+','+pjCY+' L'+pjCX+','+midY+' L'+modCX+','+midY+' L'+modCX+','+modCY);
-      path.setAttribute('stroke', 'var(--line2)');
-      path.setAttribute('stroke-width', '1.5');
-      path.setAttribute('fill', 'none');
-      svg.appendChild(path);
-      
-      // Now from module to its agents
-      var mid = pjId + '-m' + mi;
-      var modChildren = document.getElementById(mid);
-      if (!modChildren || modChildren.classList.contains('collapsed')) return;
-      var agentBoxes = modChildren.querySelectorAll('.org-box.agent');
-      agentBoxes.forEach(function(agentBox) {
-        var agRect = agentBox.getBoundingClientRect();
-        var agCX = agRect.left - chartRect.left + agRect.width/2;
-        var agCY = agRect.top - chartRect.top;
-        var modBotY = modRect.top - chartRect.top + modRect.height;
-        var path2 = document.createElementNS('http://www.w3.org/2000/svg','line');
-        path2.setAttribute('x1', modCX);
-        path2.setAttribute('y1', modBotY);
-        path2.setAttribute('x2', agCX);
-        path2.setAttribute('y2', agCY);
-        path2.setAttribute('stroke', 'var(--line2)');
-        path2.setAttribute('stroke-width', '1');
-        path2.setAttribute('stroke-dasharray', '3,3');
-        svg.appendChild(path2);
-      });
-    });
-  });
-  
-  chart.appendChild(svg);
-}
+function getNodeWidth(d) { var len = (d.data.name||'').length; return Math.max(80, Math.min(200, len * 9 + 50)); }
+function toggleD3Node(d) { if(d.children){d._children=d.children;d.children=null;}else{d.children=d._children;d._children=null;} }
 
-function toggleOrgChildren(id) {
-  var el = document.getElementById(id);
-  if (!el) return;
-  el.classList.toggle('collapsed');
-  setTimeout(drawOrgConnectors, 100);
+function updateD3Tree(containerId, root) {
+  var c = document.getElementById(containerId+'-d3'); if(!c||!c._d3Svg) return;
+  var svg = c._d3Svg; var tl = c._d3TreeLayout;
+  tl(root);
+  
+  var link = svg.selectAll('.d3-link').data(root.links(),function(d){return d.target.data.name+d.target.data.type;});
+  link.transition().duration(400).attr('d',d3.linkHorizontal().x(function(d){return d.y;}).y(function(d){return d.x;}));
+  link.enter().append('path').attr('class','d3-link').attr('d',d3.linkHorizontal().x(function(d){return d.y;}).y(function(d){return d.x;})).style('opacity',0).transition().duration(400).style('opacity',1);
+  link.exit().transition().duration(300).style('opacity',0).remove();
+  
+  var node = svg.selectAll('.d3-node').data(root.descendants(),function(d){return d.data.name+d.data.type;});
+  node.transition().duration(400).attr('transform',function(d){return 'translate('+d.y+','+d.x+')';});
+  var ne = node.enter().append('g').attr('class','d3-node').attr('transform',function(d){return 'translate('+d.y+','+d.x+')';}).style('opacity',0);
+  ne.on('click',function(e,d){e.stopPropagation();if(d.data.type==='agent'){var ad=JSON.stringify({agent_id:d.data.name,role:d.data.role,name:d.data.name,load_pct:(d.data.load||0)/100}).replace(/"/g,'&quot;');var el2=document.createElement('div');el2.setAttribute('data-agent',ad);openDetailPanelEl(el2);}else{toggleD3Node(d);updateD3Tree(containerId,root);}});
+  ne.append('rect').attr('x',function(d){var w=getNodeWidth(d);return -w/2;}).attr('y',-24).attr('width',function(d){return getNodeWidth(d);}).attr('height',48).attr('fill',function(d){return d.data.type==='project'?'var(--teal-d)':d.data.type==='module'?'var(--violet-d)':'var(--blue-d)';}).attr('stroke',function(d){return d.data.type==='project'?'var(--teal)':d.data.type==='module'?'var(--violet)':'var(--blue)';});
+  ne.append('text').attr('y',-7).style('font-weight','600').style('font-size','12px').style('fill','var(--tx)').text(function(d){return (d.data.type==='project'?'📁':d.data.type==='module'?'📦':'🤖')+' '+(d.data.name||'').substring(0,16);});
+  ne.append('text').attr('y',9).style('font-size','10px').style('fill','var(--tx3)').text(function(d){if(d.data.type==='agent')return(d.data.role||'')+' · '+(d.data.load||0)+'%';var c2=d.children?d.children.length:(d._children?d._children.length:0);return d.data.type==='project'?c2+' 模块':c2+' Agent';});
+  ne.filter(function(d){return d.children||d._children;}).append('circle').attr('cx',function(d){return getNodeWidth(d)/2+14;}).attr('cy',-24).attr('r',8).attr('fill','var(--bg2)').attr('stroke','var(--line2)');
+  ne.filter(function(d){return d.children||d._children;}).append('text').attr('x',function(d){return getNodeWidth(d)/2+14;}).attr('y',-20).attr('text-anchor','middle').style('font-size','10px').style('fill','var(--tx2)').text(function(d){return d.children?'−':'+';});
+  ne.transition().duration(400).style('opacity',1);
+  node.exit().transition().duration(300).style('opacity',0).remove();
+  svg.selectAll('.d3-node').filter(function(d){return d.children||d._children;}).select('text:last-child').text(function(d){return d.children?'−':'+';});
 }
 /* ========== DRAG & DROP — Agent → Project ========== */
 function initDragDrop() {
