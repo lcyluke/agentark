@@ -918,7 +918,7 @@ function updatePulse() {
 }
 
 /* ========== Crew ========== */
-function renderCrew(); renderUserAvatar() {
+function renderCrew() {
   const board = state.board;
   const humans = board.humans || [];
   const colors = ['var(--violet-d)', 'var(--teal-d)', 'var(--blue-d)', 'var(--green-d)', 'var(--amber-d)'];
@@ -965,6 +965,18 @@ function renderCrew(); renderUserAvatar() {
   }
 
   $('#crewList').innerHTML = crewHtml || '<div style="font-size:11px;color:var(--tx3);padding:8px">等待连接...</div>';
+}
+
+function renderUserAvatar() {
+  // reserved for user avatar rendering
+  const el = $('#userAvatar');
+  if (el) {
+    const h = (state.board?.humans || [])[0];
+    el.innerHTML = h 
+      ? `<span class="av" style="background:var(--teal-d);color:var(--teal);width:32px;height:32px;font-size:14px">${h.init||'?'}</span>
+         <span style="font-size:12px;color:var(--tx2);margin-left:8px">${h.name}</span>`
+      : '';
+  }
 }
 
 /* ========== Toast ========== */
@@ -2335,7 +2347,7 @@ function renderCost() {
   $('#costKpis').innerHTML =
     kpiHTML('ti-coin', '今日成本', '$' + Number(todayCost).toFixed(3), todayTokens.toLocaleString() + ' tokens', '') +
     kpiHTML('ti-chart-line', '累计成本', '$' + Number(totalCost).toFixed(2), totalTokens.toLocaleString() + ' tokens', '') +
-    kpiHTML('ti-cpu', '模型数量', Object.keys(models).length, '已配置定价模型', '') +
+    kpiHTML('ti-cpu', '模型数量', Object.keys(models).length, '已配置定价模型', '')
 
   // Token gauge
   const maxTokens = 1000000; // 1M reference
