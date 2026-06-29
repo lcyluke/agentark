@@ -1,18 +1,21 @@
 {
   "machine_id": "MacBook-Pro-2.local-root",
   "hostname": "MacBook-Pro-2.local",
-  "ip": "192.168.21.107",
-  "os": "macos",
-  "timestamp": "2026-06-29T14:20:34.263841",
-  "cpu_cores": 8,
-  "cpu_usage_pct": 28.0,
-  "ram_total_mb": 16384,
-  "ram_free_mb": 1848,
-  "disk_total_gb": 494.4,
-  "disk_free_gb": 8.2,
+  "display_name": "",
+  "role": "origin",
+  "fleet_name": "老卢舰队",
+  "projects": [
+    "badminton-coach-ai",
+    "apex",
+    "finopsai",
+    "shenzhen-badminton"
+  ],
+  "joined_at": "2026-06-15T03:01:36.450694",
+  "last_sync": null,
+  "git_status": "1 files modified",
   "profiles": 46,
   "skills": 136,
-  "lan_peers": [],
-  "lan_peer_count": 0,
-  "lan_ssh_peers": 0
+  "gpu": {},
+  "gpu_alerts": [],
+  "reported_at": "2026-06-29T16:56:01.307655"
 }
