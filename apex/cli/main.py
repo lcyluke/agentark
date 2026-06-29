@@ -60,6 +60,8 @@ from .commands import ops as ops_cmds
 from .commands import task_mgmt as task_cmds
 from .commands import skill_mgmt as skill_cmds
 from .commands import fleet_cmds
+from .commands import prune as prune_cmds
+from .commands import project_team as pt_cmds
 from .commands import schedule_cmds
 from .commands import squad_cmds
 from .commands import sprint as sprint_cmds
@@ -722,6 +724,69 @@ def team_hermes(profile_name: str, query: str, input_lines: int,
     start_hermes_profile(profile_name, query)
 
 
+# ── Project Team Builder ──
+
+@team.command(name="create-project")
+@click.argument("project_name")
+@click.option("--roles", "-r", default="", help="Comma-separated role keys (e.g. 'arch,backend,frontend')")
+@click.option("--preset", "-p", default="", help="Quick preset name (webapp, saas, ai-agent, etc.)")
+@click.option("--quick", "-q", is_flag=True, help="Skip confirmation, use defaults")
+@click.option("--model", "-m", default="deepseek-v4-pro", help="Default model for agents")
+def team_create_project(project_name: str, roles: str, preset: str,
+                         quick: bool, model: str):
+    """👥 Create project team with <project>-<role> naming
+
+    Creates multiple agents following the naming convention:
+    <project_name>-<role>  (e.g. finops-backend, finops-frontend)
+
+    Examples:
+
+      agentark team create-project finops --preset saas
+
+      agentark team create-project myapp --roles pm,backend,frontend,qa
+
+      agentark team create-project badminton --preset ai-agent
+    """
+    pt_cmds.create_project_cmd(project_name, roles_str=roles, preset=preset,
+                               quick=quick, model=model)
+
+
+@team.command(name="add-role")
+@click.argument("project_name")
+@click.argument("role_key")
+@click.option("--model", "-m", default="deepseek-v4-pro", help="Default model")
+def team_add_role(project_name: str, role_key: str, model: str):
+    """➕ Add a role to existing project team
+
+    Creates a new agent named <project>-<role> for an existing project.
+
+    Examples:
+
+      agentark team add-role finops security
+
+      agentark team add-role myapp designer
+    """
+    pt_cmds.add_role_cmd(project_name, role_key, model=model)
+
+
+@team.command(name="list-roles")
+def team_list_roles():
+    """🎭 List all available agent roles for project teams"""
+    pt_cmds.list_roles_cmd()
+
+
+@team.command(name="project-roles")
+@click.argument("project_name")
+def team_project_roles(project_name: str):
+    """📋 List all agents in a project team
+
+    Example:
+
+      agentark team project-roles finops
+    """
+    pt_cmds.project_roles_cmd(project_name)
+
+
 # ════════════════════════════════════════════════════════════════
 # FLEET — 🤖 舰队监控
 # ════════════════════════════════════════════════════════════════
@@ -749,6 +814,30 @@ def fleet_show(agent_name: str):
 def fleet_refresh():
     """Force refresh all agent states"""
     fleet_cmds.refresh_cmd()
+
+
+@fleet.command(name="prune")
+@click.option("--dry-run", is_flag=True, help="Preview only, no deletion")
+@click.option("--force", "-f", is_flag=True, help="Delete without confirmation")
+@click.option("--older", "-o", type=int, default=7, help="Idle threshold in days (default: 7)")
+@click.option("--yes", "-y", is_flag=True, help="Auto-confirm each deletion")
+def fleet_prune(dry_run: bool, force: bool, older: int, yes: bool):
+    """🧹 Prune idle agents — no SKILLs, no project, idle ≥ 7d
+
+    Detects agents that are idle (no skills, no project assignment,
+    no tasks for N days) and removes them after confirmation.
+
+    Examples:
+
+      agentark fleet prune               Dry-run preview + confirm
+
+      agentark fleet prune --dry-run     Preview only
+
+      agentark fleet prune --force       Delete all without asking
+
+      agentark fleet prune --older 14    Idle threshold 14 days
+    """
+    prune_cmds.prune_cmd(dry_run=dry_run, force=force, older=older, yes=yes)
 
 
 @fleet.command(name="history")

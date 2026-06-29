@@ -19,8 +19,8 @@ from rich.panel import Panel
 from rich.table import Table
 
 console = Console()
-GITHUB_API = "https://api.github.com/repos/lcyluke/apex/releases/latest"
-GITHUB_TAGS = "https://api.github.com/repos/lcyluke/apex/tags"
+GITHUB_API = "https://api.github.com/repos/lcyluke/agentark/releases/latest"
+GITHUB_TAGS = "https://api.github.com/repos/lcyluke/agentark/tags"
 
 
 def get_current_version() -> str:
@@ -135,7 +135,7 @@ def cmd_update():
     try:
         result = subprocess.run(
             [str(pip_path), "install", "--force-reinstall", "--no-deps",
-             f"git+https://github.com/lcyluke/apex.git@v{latest['version']}"],
+             f"git+https://github.com/lcyluke/agentark.git@v{latest['version']}"],
             capture_output=True, text=True, timeout=60,
         )
         if result.returncode == 0:
