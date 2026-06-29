@@ -360,6 +360,88 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
 }
 
 @media(max-width:920px){.app{grid-template-columns:1fr}.side{display:none}.kpis,.kanban,.ladder,.board-grid{grid-template-columns:repeat(1,1fr)}.fleet-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}}
+/* ═══ RIGHT DETAIL PANEL ═══ */
+.detail-panel{position:fixed;top:0;right:-440px;width:420px;height:100vh;background:var(--bg2);
+  border-left:1px solid var(--line);z-index:200;transition:right .3s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;overflow-y:auto;box-shadow:-8px 0 30px rgba(0,0,0,.4)}
+.detail-panel.on{right:0}
+.detail-panel .dp-header{padding:18px 20px 12px;border-bottom:1px solid var(--line);
+  display:flex;align-items:flex-start;gap:12px;background:var(--bg3);position:sticky;top:0;z-index:5}
+.detail-panel .dp-icon{width:44px;height:44px;border-radius:var(--r);display:grid;place-items:center;
+  font-size:22px;flex-shrink:0}
+.detail-panel .dp-close{position:absolute;right:16px;top:16px;cursor:pointer;color:var(--tx3);
+  font-size:18px;width:28px;height:28px;display:grid;place-items:center;border-radius:6px}
+.detail-panel .dp-close:hover{background:var(--bg4);color:var(--tx)}
+.detail-panel .dp-body{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+.detail-panel .dp-section{}
+.detail-panel .dp-section h4{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--tx3);
+  margin-bottom:8px;font-family:var(--disp);font-weight:600}
+.detail-panel .dp-kv{display:flex;justify-content:space-between;align-items:center;padding:7px 0;
+  border-bottom:1px solid var(--line);font-size:12.5px}
+.detail-panel .dp-kv .k{color:var(--tx2)} .detail-panel .dp-kv .v{font-family:var(--mono);font-size:12px}
+.detail-panel .dp-tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:10px;
+  font-weight:600;font-family:var(--mono)}
+.detail-panel .dp-tag.done{background:var(--green-d);color:var(--green)}
+.detail-panel .dp-tag.prog{background:var(--amber-d);color:var(--amber)}
+.detail-panel .dp-tag.todo{background:var(--bg4);color:var(--tx3)}
+.detail-panel .dp-agent-card{display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg3);
+  border-radius:var(--r-s);cursor:pointer;margin:4px 0}
+.detail-panel .dp-agent-card:hover{background:var(--bg4)}
+.detail-panel .dp-task-item{display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer;
+  border-radius:4px;font-size:12px;margin:2px 0}
+.detail-panel .dp-task-item:hover{background:var(--bg3)}
+
+/* ═══ GANTT TIMELINE ═══ */
+.gantt-wrap{overflow-x:auto;padding:8px 0}
+.gantt-phase{margin-bottom:14px}
+.gantt-phase-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;
+  padding:8px 10px;background:var(--bg3);border-radius:var(--r-s);font-size:13px;font-weight:600}
+.gantt-phase-header .chev{transition:transform .2s;font-size:12px}
+.gantt-phase-header.open .chev{transform:rotate(90deg)}
+.gantt-phase-tasks{display:none;padding-left:20px}
+.gantt-phase-tasks.open{display:block}
+.gantt-row{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:12px}
+.gantt-row .gantt-label{width:160px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:var(--tx)}
+.gantt-row .gantt-track{flex:1;height:22px;background:var(--bg4);border-radius:4px;position:relative;
+  min-width:100px}
+.gantt-row .gantt-bar{position:absolute;top:3px;height:16px;border-radius:3px;
+  background:linear-gradient(90deg,var(--teal),var(--green));opacity:.85}
+.gantt-row .gantt-bar.phase2{background:linear-gradient(90deg,var(--violet),var(--blue))}
+.gantt-row .gantt-bar.phase3{background:linear-gradient(90deg,var(--amber),#f97316)}
+.gantt-row .gantt-bar.done{opacity:.5}
+.gantt-row .gantt-bar.todo{background:var(--bg4);border:1px dashed var(--line2)}
+.gantt-row .gantt-dates{width:130px;flex-shrink:0;font-size:10px;color:var(--tx3);font-family:var(--mono);
+  text-align:right}
+.gantt-timeline{display:flex;font-size:9px;color:var(--tx3);padding-left:170px;margin-bottom:4px;
+  font-family:var(--mono)}
+.gantt-timeline span{flex:1;text-align:center}
+
+/* ═══ ORG CHART ═══ */
+.org-tree{display:flex;flex-direction:column;align-items:center;gap:0;padding:20px 0}
+.org-level{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;position:relative}
+.org-level::after{content:'';position:absolute;top:-12px;left:50%;width:2px;height:12px;background:var(--line2)}
+.org-level:first-child::after{display:none}
+.org-node{background:var(--bg3);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;
+  text-align:center;min-width:140px;transition:.15s;position:relative}
+.org-node:hover{border-color:var(--teal);box-shadow:0 0 16px rgba(45,212,191,.1)}
+.org-node .on-icon{font-size:28px;margin-bottom:4px}
+.org-node .on-name{font-family:var(--disp);font-size:13px;font-weight:600;margin-bottom:2px}
+.org-node .on-role{font-size:10px;color:var(--tx3);margin-bottom:4px}
+.org-node .on-meta{font-size:10px;color:var(--tx2);display:flex;gap:8px;justify-content:center}
+.org-node.origin{border-color:var(--teal);background:var(--teal-d)}
+.org-node.pm{border-color:var(--violet)}
+.org-node.worker{border-color:var(--blue)}
+.org-connector{width:2px;height:16px;background:var(--line2);margin:0 auto}
+
+/* ═══ DRAG & DROP ═══ */
+.agent-card[draggable]{cursor:grab;user-select:none}
+.agent-card[draggable]:active{cursor:grabbing;opacity:.7}
+.drop-zone{border:2px dashed var(--line2);border-radius:var(--r);padding:12px;min-height:60px;
+  transition:.2s;display:flex;align-items:center;justify-content:center;color:var(--tx3);font-size:12px}
+.drop-zone.active{border-color:var(--teal);background:var(--teal-d);color:var(--teal)}
+.drop-zone.hover{border-color:var(--green);background:var(--green-d);box-shadow:0 0 20px rgba(52,211,153,.15)}
+.drag-ghost{opacity:.6}
 </style>
 </head>
 <body>
@@ -787,6 +869,19 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
   </div>
 </div>
 
+<!-- ═══ RIGHT DETAIL PANEL ═══ -->
+<div class="detail-panel" id="detailPanel">
+  <div class="dp-header">
+    <div class="dp-icon" id="dpIcon">📋</div>
+    <div style="flex:1">
+      <div style="font-family:var(--disp);font-size:15px;font-weight:600" id="dpTitle">详情</div>
+      <div style="font-size:11px;color:var(--tx3)" id="dpSub"></div>
+    </div>
+    <div class="dp-close" onclick="closeDetailPanel()"><i class="ti ti-x"></i></div>
+  </div>
+  <div class="dp-body" id="dpBody"></div>
+</div>
+
 <script>
 /* ============ Apex Command Center — Application Logic ============ */
 window.__jsErrors = [];
@@ -1009,6 +1104,7 @@ function closeAll() {
   $$('.drawer').forEach(d => d.classList.remove('on'));
   $$('.modal').forEach(m => m.classList.remove('on'));
   $('#scrim').classList.remove('on');
+  closeDetailPanel();
 }
 function openDrawer(title, sub, iconHtml, bodyHtml) {
   $('#ddTitle').textContent = title;
@@ -4327,6 +4423,287 @@ Promise.all([
   renderDashboard();
   toast('Apex 指挥中心已就绪');
 });
+/* ========== RIGHT DETAIL PANEL ========== */
+function openDetailPanel(type, data) {
+  var icon, title, sub, body = '';
+  
+  if (type === 'agent') {
+    icon = '🤖'; title = data.name || data.agent_id || 'Agent';
+    sub = (data.role || 'Worker') + ' · ' + (data.model || '?');
+    var tasks = (state.data.tasks || []).filter(function(t){return t.assignee === data.name || t.assignee === data.agent_id;});
+    body = '<div class="dp-section"><h4>📊 基本信息</h4>'+
+      '<div class="dp-kv"><span class="k">Agent ID</span><span class="v">'+(data.agent_id||data.name||'?')+'</span></div>'+
+      '<div class="dp-kv"><span class="k">角色</span><span class="v">'+(data.role||'Worker')+'</span></div>'+
+      '<div class="dp-kv"><span class="k">模型</span><span class="v">'+(data.model||'?')+'</span></div>'+
+      '<div class="dp-kv"><span class="k">负载</span><span class="v">'+Math.round((data.load_pct||data.load||0)*100)+'%</span></div>'+
+      '<div class="dp-kv"><span class="k">技能数</span><span class="v">'+(data.skills||0)+'</span></div>'+
+      '<div class="dp-kv"><span class="k">状态</span><span class="v">'+(data.canAccept!==false?'<span class="dp-tag prog">可接单</span>':'<span class="dp-tag done">忙碌</span>')+'</span></div>'+
+      '</div>'+
+      '<div class="dp-section"><h4>📋 任务列表 ('+tasks.length+')</h4>'+
+      tasks.slice(0,10).map(function(t){
+        return '<div class="dp-task-item" onclick="openDetailPanel(\'task\',{id:\''+t.id+'\',title:\''+(t.title||'').replace(/'/g,"\\'")+'\',status:\''+t.status+'\',assignee:\''+(t.assignee||'')+'\',priority:'+(t.priority||0)+'})">'+
+          '<span class="dp-tag '+(t.status==='done'?'done':t.status==='in_progress'?'prog':'todo')+'">'+(t.status||'todo')+'</span>'+
+          '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(t.title||'')+'</span>'+
+          '</div>';
+      }).join('')+
+      (tasks.length>10?'<div style="font-size:11px;color:var(--tx3);padding:4px">+ '+(tasks.length-10)+' 更多...</div>':'')+
+      '</div>';
+  } else if (type === 'task') {
+    icon = '📋'; title = (data.title||'').substring(0,50); sub = '#'+data.id;
+    var statusTag = '<span class="dp-tag '+(data.status==='done'?'done':data.status==='in_progress'?'prog':'todo')+'">'+(data.status||'todo')+'</span>';
+    var phase = data.phase || (data.title||'').includes('需求')?'Phase 1 · 需求定义':(data.title||'').includes('设计')?'Phase 2 · 设计开发':(data.title||'').includes('测试')?'Phase 3 · 测试部署':'Phase 2 · 设计开发';
+    var startDate = data.created_at ? new Date(data.created_at).toLocaleDateString() : '?';
+    var endDate = data.completed_at ? new Date(data.completed_at).toLocaleDateString() : (data.status==='done'?startDate:'进行中');
+    var duration = data.created_at && data.completed_at ? Math.round((new Date(data.completed_at)-new Date(data.created_at))/86400000)+' 天' : '?';
+    
+    body = '<div class="dp-section"><h4>📊 任务信息</h4>'+
+      '<div class="dp-kv"><span class="k">ID</span><span class="v">'+data.id+'</span></div>'+
+      '<div class="dp-kv"><span class="k">状态</span><span class="v">'+statusTag+'</span></div>'+
+      '<div class="dp-kv"><span class="k">阶段</span><span class="v">'+phase+'</span></div>'+
+      '<div class="dp-kv"><span class="k">负责人</span><span class="v">'+(data.assignee||'未分配')+'</span></div>'+
+      '<div class="dp-kv"><span class="k">优先级</span><span class="v">'+(data.priority===1?'🔴 高':data.priority===2?'🟡 中':'🟢 低')+'</span></div>'+
+      '<div class="dp-kv"><span class="k">开始</span><span class="v">'+startDate+'</span></div>'+
+      '<div class="dp-kv"><span class="k">完成</span><span class="v">'+endDate+'</span></div>'+
+      '<div class="dp-kv"><span class="k">工期</span><span class="v">'+duration+'</span></div>'+
+      '</div>'+
+      '<div class="dp-section"><h4>📝 描述</h4><div style="font-size:12px;color:var(--tx2);line-height:1.6">'+(data.description||data.title||'无描述')+'</div></div>';
+  } else if (type === 'project') {
+    icon = '📁'; title = data.name||'Project'; sub = (data.modules||[]).length+' 模块 · '+(data.agents||[]).length+' Agent';
+    var mods = data.modules||[];
+    var agents = data.agents||[];
+    body = '<div class="dp-section"><h4>📊 项目概览</h4>'+
+      '<div class="dp-kv"><span class="k">模块数</span><span class="v">'+mods.length+'</span></div>'+
+      '<div class="dp-kv"><span class="k">Agent数</span><span class="v">'+agents.length+'</span></div>'+
+      '</div>'+
+      '<div class="dp-section"><h4>🧩 模块列表</h4>'+
+      mods.map(function(m){return '<div class="dp-task-item"><span style="color:var(--violet)">📦</span> '+(m.name||'?')+'</div>';}).join('')+
+      '</div>'+
+      '<div class="dp-section"><h4>🤖 Agent编队</h4>'+
+      agents.map(function(a){return '<div class="dp-agent-card" onclick="openDetailPanel(\'agent\','+JSON.stringify(a)+')"><span class="av" style="width:24px;height:24px;font-size:10px;background:var(--teal-d);color:var(--teal)">'+(a.agent_id||'A')[0].toUpperCase()+'</span><span style="font-size:12px">'+(a.agent_id||'?')+'</span><span style="margin-left:auto;font-size:10px;color:var(--tx3)">'+Math.round((a.load_pct||0)*100)+'%</span></div>';}).join('')+
+      '</div>';
+  }
+  
+  document.getElementById('dpIcon').textContent = icon;
+  document.getElementById('dpTitle').textContent = title;
+  document.getElementById('dpSub').textContent = sub;
+  document.getElementById('dpBody').innerHTML = body;
+  document.getElementById('detailPanel').classList.add('on');
+}
+function closeDetailPanel() {
+  document.getElementById('detailPanel').classList.remove('on');
+}
+function openDetailPanelEl(el) {
+  var d = JSON.parse(el.getAttribute('data-agent')||'{}');
+  openDetailPanel('agent', d);
+}
+
+
+/* ========== PROJECT GANTT TIMELINE ========== */
+function openDetailPanelTask(el) {
+  var d = JSON.parse(el.getAttribute('data-task')||'{}');
+  openDetailPanel('task', d);
+}
+
+function renderGanttTimeline(containerId) {
+  var tasks = state.data.tasks || [];
+  if (!tasks.length) { document.getElementById(containerId).innerHTML = '<div style="color:var(--tx3);font-size:12px;padding:20px;text-align:center">暂无任务数据</div>'; return; }
+  
+  // Group tasks by phase based on title keywords
+  var phases = {
+    'Phase 1 · 需求定义': [],
+    'Phase 2 · 设计开发': [],
+    'Phase 3 · 测试部署': []
+  };
+  
+  tasks.forEach(function(t) {
+    var title = t.title||'';
+    if (title.includes('需求')||title.includes('PRD')||title.includes('分析')) phases['Phase 1 · 需求定义'].push(t);
+    else if (title.includes('测试')||title.includes('部署')||title.includes('上线')||title.includes('发布')) phases['Phase 3 · 测试部署'].push(t);
+    else phases['Phase 2 · 设计开发'].push(t);
+  });
+  
+  // Calculate date range
+  var allDates = [];
+  tasks.forEach(function(t){
+    if (t.created_at) allDates.push(new Date(t.created_at).getTime());
+    if (t.completed_at) allDates.push(new Date(t.completed_at).getTime());
+  });
+  if (!allDates.length) allDates = [Date.now() - 7*86400000, Date.now()];
+  var minDate = Math.min.apply(null, allDates);
+  var maxDate = Math.max.apply(null, allDates);
+  var range = maxDate - minDate || 86400000;
+  
+  var phaseColors = ['', 'phase2', 'phase3'];
+  var html = '<div class="gantt-wrap">';
+  
+  Object.keys(phases).forEach(function(phaseName, pi){
+    var pt = phases[phaseName];
+    var doneCount = pt.filter(function(t){return t.status==='done';}).length;
+    html += '<div class="gantt-phase">'+
+      '<div class="gantt-phase-header" onclick="this.classList.toggle(\'open\');this.nextElementSibling.classList.toggle(\'open\')">'+
+        '<span class="chev">▶</span> '+phaseName+' · '+
+        '<span style="color:var(--green)">'+doneCount+'/'+pt.length+' 完成</span>'+
+        '<span style="margin-left:auto;font-size:10px;color:var(--tx3)">▼</span>'+
+      '</div>'+
+      '<div class="gantt-phase-tasks">';
+    
+    pt.forEach(function(t){
+      var start = t.created_at ? new Date(t.created_at).getTime() : minDate;
+      var end = t.completed_at ? new Date(t.completed_at).getTime() : (t.status==='done'?start+86400000:maxDate);
+      var leftPct = Math.round((start - minDate) / range * 100);
+      var widthPct = Math.max(3, Math.round((end - start) / range * 100));
+      var done = t.status === 'done';
+      var startStr = t.created_at ? new Date(t.created_at).toLocaleDateString() : '?';
+      var endStr = t.completed_at ? new Date(t.completed_at).toLocaleDateString() : (done?startStr:'?');
+      
+      var td = {id:t.id,title:t.title||'',status:t.status||'todo',assignee:t.assignee||'',priority:t.priority||2,created_at:t.created_at||'',completed_at:t.completed_at||'',description:t.description||''};
+      html += '<div class="gantt-row" style="cursor:pointer" data-task="'+JSON.stringify(td).replace(/"/g,'&quot;')+'" onclick="openDetailPanelTask(this)">'+
+        '<span class="gantt-label" title="'+(t.title||'')+'">'+(t.title||'').substring(0,25)+'</span>'+
+        '<div class="gantt-track">'+
+          '<div class="gantt-bar'+(done?' done':'')+' '+(phaseColors[pi]||'')+'" style="left:'+leftPct+'%;width:'+widthPct+'%"></div>'+
+        '</div>'+
+        '<span class="gantt-dates">'+startStr+' → '+endStr+'</span>'+
+      '</div>';
+    });
+    
+    html += '</div></div>';
+  });
+  
+  html += '</div>';
+  document.getElementById(containerId).innerHTML = html;
+}
+
+/* ========== ORG CHART ========== */
+function renderOrgChart(containerId) {
+  var profiles = state.data.profiles || [];
+  var workloads = (state.data.workloads?.agents) || [];
+  
+  // Categorize agents
+  var originAgents = profiles.filter(function(p){var n=(p.name||'').toLowerCase();return n.includes('origin')||n.includes('admiral')||n.includes('始祖');});
+  var pmAgents = profiles.filter(function(p){var n=(p.name||'').toLowerCase();return n.includes('pm')||n.includes('manager')||n.includes('commander');});
+  var workers = profiles.filter(function(p){var n=(p.name||'').toLowerCase();return !n.includes('pm')&&!n.includes('manager')&&!n.includes('origin')&&!n.includes('admiral')&&!n.includes('始祖')&&!n.includes('commander');});
+  
+  if (!originAgents.length) originAgents = [{name:'Origin Agent',role:'舰队总司令'}];
+  if (!pmAgents.length) pmAgents = workers.splice(0, Math.min(3, workers.length));
+  if (!workers.length && profiles.length > 4) workers = profiles.slice(4);
+  
+  var nodeHTML = function(a, cls){
+    var d = {agent_id:a.name||a.agent_id,role:a.role||(a.soul&&a.soul.role)||'Agent',name:a.name||a.agent_id,model:a.model||(a.model&&a.model.default)||'',load_pct:(a.load||0),skills:((a.skills||[]).length||0)};
+    var esc = JSON.stringify(d).replace(/"/g,'&quot;');
+    return '<div class="org-node '+cls+'" data-agent="'+esc+'" onclick="openDetailPanelEl(this)">'+
+      '<div class="on-icon">'+(cls==='origin'?'⚓':cls==='pm'?'🎯':'🔧')+'</div>'+
+      '<div class="on-name">'+(a.name||a.agent_id||'?')+'</div>'+
+      '<div class="on-role">'+(a.role||(a.soul&&a.soul.role)||'Agent')+'</div>'+
+      '</div>';
+  };
+  
+  var html = '<div class="org-tree">'+
+    '<div class="org-level">'+originAgents.map(function(a){return nodeHTML(a,'origin');}).join('')+'</div>'+
+    '<div class="org-connector"></div>'+
+    '<div class="org-level">'+pmAgents.map(function(a){return nodeHTML(a,'pm');}).join('')+'</div>'+
+    '<div class="org-connector"></div>'+
+    '<div class="org-level">'+workers.slice(0,12).map(function(a){return nodeHTML(a,'worker');}).join('')+'</div>'+
+    (workers.length>12?'<div style="font-size:11px;color:var(--tx3);padding:4px">+ '+(workers.length-12)+' 更多...</div>':'')+
+    '</div>';
+  
+  document.getElementById(containerId).innerHTML = html;
+}
+
+/* ========== DRAG & DROP — Agent → Project ========== */
+function initDragDrop() {
+  // Make agent cards draggable in fleet view
+  setTimeout(function(){
+    var cards = document.querySelectorAll('#fleetGrid .fleet-card');
+    cards.forEach(function(card){
+      card.setAttribute('draggable','true');
+      card.addEventListener('dragstart', function(e){
+        e.dataTransfer.setData('text/plain', card.getAttribute('data-agent-id')||'');
+        card.classList.add('drag-ghost');
+      });
+      card.addEventListener('dragend', function(e){ card.classList.remove('drag-ghost'); });
+    });
+    
+    // Set up drop zones in project view
+    var dropZones = document.querySelectorAll('.drop-zone');
+    dropZones.forEach(function(zone){
+      zone.addEventListener('dragover', function(e){ e.preventDefault(); zone.classList.add('hover'); });
+      zone.addEventListener('dragleave', function(e){ zone.classList.remove('hover'); });
+      zone.addEventListener('drop', function(e){
+        e.preventDefault();
+        zone.classList.remove('hover');
+        var agentId = e.dataTransfer.getData('text/plain');
+        var project = zone.getAttribute('data-project')||'';
+        if (agentId && project) {
+          assignAgentToProject(agentId, project);
+        }
+      });
+    });
+  }, 500);
+}
+
+async function assignAgentToProject(agentId, projectName) {
+  toast('正在将 '+agentId+' 分配到 '+projectName+'...');
+  try {
+    var res = await fetch(API + '/projects/subfunction', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({project:projectName, module_name:'默认模块', func_name:'Agent '+agentId, assigned_agent:agentId})
+    }).then(function(r){return r.json();});
+    if (res && !res.error) {
+      toast('<i class="ti ti-circle-check"></i> '+agentId+' 已加入 '+projectName);
+      loadAllData();
+      setTimeout(function(){ renderProject(); renderFleet(); }, 500);
+    } else {
+      toast('<i class="ti ti-alert-triangle"></i> '+(res?.error||'分配失败'));
+    }
+  } catch(e) {
+    toast('<i class="ti ti-alert-triangle"></i> 网络错误');
+  }
+}
+
+// Hook into renderFleet to add drag-drop and org chart
+var _origRenderFleet = renderFleet;
+renderFleet = async function() {
+  await _origRenderFleet();
+  // Add org chart below fleet grid
+  var fleetGrid = document.getElementById('fleetGrid');
+  if (fleetGrid && !document.getElementById('orgChartContainer')) {
+    var orgDiv = document.createElement('div');
+    orgDiv.id = 'orgChartContainer';
+    orgDiv.innerHTML = '<div style="height:16px"></div><div class="sec-h"><i class="ti ti-sitemap"></i>🪜 组织架构</div><div id="orgChart"></div>';
+    fleetGrid.parentNode.insertBefore(orgDiv, fleetGrid.nextSibling);
+    renderOrgChart('orgChart');
+  }
+  initDragDrop();
+};
+
+// Hook into renderProject to add Gantt timeline
+var _origRenderProject = renderProject;
+renderProject = async function() {
+  await _origRenderProject();
+  // Add Gantt timeline
+  var pjModTree = document.getElementById('pjModTree');
+  if (pjModTree && !document.getElementById('ganttTimeline')) {
+    var ganttDiv = document.createElement('div');
+    ganttDiv.id = 'ganttTimeline';
+    ganttDiv.innerHTML = '<div style="height:20px"></div><div class="sec-h"><i class="ti ti-timeline"></i>📅 任务时间线</div><div id="ganttChart"></div>';
+    pjModTree.parentNode.appendChild(ganttDiv);
+    renderGanttTimeline('ganttChart');
+  }
+  // Add drop zone for agent reassignment
+  var agentList = document.getElementById('pjAgentList');
+  if (agentList && !document.getElementById('agentDropZone')) {
+    var dropDiv = document.createElement('div');
+    dropDiv.id = 'agentDropZone';
+    dropDiv.className = 'drop-zone active';
+    dropDiv.setAttribute('data-project', state.selectedProject||'');
+    dropDiv.innerHTML = '<i class="ti ti-robot"></i> 拖拽Agent卡片到此处以加入项目';
+    agentList.parentNode.insertBefore(dropDiv, agentList);
+    initDragDrop();
+  }
+};
+
+
 </script>
 </body>
 </html>
