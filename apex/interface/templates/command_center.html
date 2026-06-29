@@ -503,6 +503,16 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
           <div class="sec-h"><i class="ti ti-activity"></i>活动流与警报</div>
           <div id="feed"></div>
         </div>
+        <div style="height:22px"></div>
+        <div class="card">
+          <div class="sec-h"><i class="ti ti-sitemap"></i>🪜 Agent 组织架构 <span style="font-size:10px;color:var(--tx3);font-weight:400">— 点击节点查看详情</span></div>
+          <div id="dashboardOrgChart"></div>
+        </div>
+        <div style="height:22px"></div>
+        <div class="card">
+          <div class="sec-h"><i class="ti ti-timeline"></i>📅 项目任务时间线 <span style="font-size:10px;color:var(--tx3);font-weight:400">— 点击任务条查看详情</span></div>
+          <div id="dashboardGantt"></div>
+        </div>
       </section>
 
       <!-- VIEW 2: 项目作战室 V2 — 5层布局 -->
@@ -4419,9 +4429,9 @@ setInterval(async () => {
 Promise.all([
   loadAllData(),
   fetchLiveRuntime()
-]).then(() => {
+]).then(function() {
   renderDashboard();
-  toast('Apex 指挥中心已就绪');
+  toast('AgentArk 指挥中心已就绪');
 });
 /* ========== RIGHT DETAIL PANEL ========== */
 function openDetailPanel(type, data) {
@@ -4578,14 +4588,30 @@ function renderOrgChart(containerId) {
   var profiles = state.data.profiles || [];
   var workloads = (state.data.workloads?.agents) || [];
   
-  // Categorize agents
-  var originAgents = profiles.filter(function(p){var n=(p.name||'').toLowerCase();return n.includes('origin')||n.includes('admiral')||n.includes('始祖');});
-  var pmAgents = profiles.filter(function(p){var n=(p.name||'').toLowerCase();return n.includes('pm')||n.includes('manager')||n.includes('commander');});
-  var workers = profiles.filter(function(p){var n=(p.name||'').toLowerCase();return !n.includes('pm')&&!n.includes('manager')&&!n.includes('origin')&&!n.includes('admiral')&&!n.includes('始祖')&&!n.includes('commander');});
+  // Categorize agents by role/expertise heuristics
+  var originAgents = [], pmAgents = [], workers = [];
+  profiles.forEach(function(p){
+    var n = (p.name||'').toLowerCase();
+    var r = (p.role||p.soul?.role||'').toLowerCase();
+    var e = Array.isArray(p.expertise) ? p.expertise.join(' ').toLowerCase() : ((p.expertise||'')+'').toLowerCase();
+    if (n.includes('origin')||n.includes('admiral')||n.includes('始祖')||r.includes('origin')||r.includes('admiral')||r.includes('总司令')||r.includes('总指挥')) {
+      originAgents.push(p);
+    } else if (n.includes('pm')||n.includes('manager')||n.includes('commander')||r.includes('pm')||r.includes('manager')||r.includes('项目经理')||r.includes('总管')) {
+      pmAgents.push(p);
+    } else {
+      workers.push(p);
+    }
+  });
   
-  if (!originAgents.length) originAgents = [{name:'Origin Agent',role:'舰队总司令'}];
-  if (!pmAgents.length) pmAgents = workers.splice(0, Math.min(3, workers.length));
-  if (!workers.length && profiles.length > 4) workers = profiles.slice(4);
+  // If no origin found, make the first profile the origin
+  if (!originAgents.length && profiles.length) {
+    originAgents = [profiles[0]];
+    profiles[0]._forceRole = '舰队总司令';
+  }
+  // If no PMs, promote some workers
+  if (!pmAgents.length && workers.length > 2) {
+    pmAgents = workers.splice(0, Math.min(3, workers.length));
+  }
   
   var nodeHTML = function(a, cls){
     var d = {agent_id:a.name||a.agent_id,role:a.role||(a.soul&&a.soul.role)||'Agent',name:a.name||a.agent_id,model:a.model||(a.model&&a.model.default)||'',load_pct:(a.load||0),skills:((a.skills||[]).length||0)};
@@ -4593,7 +4619,7 @@ function renderOrgChart(containerId) {
     return '<div class="org-node '+cls+'" data-agent="'+esc+'" onclick="openDetailPanelEl(this)">'+
       '<div class="on-icon">'+(cls==='origin'?'⚓':cls==='pm'?'🎯':'🔧')+'</div>'+
       '<div class="on-name">'+(a.name||a.agent_id||'?')+'</div>'+
-      '<div class="on-role">'+(a.role||(a.soul&&a.soul.role)||'Agent')+'</div>'+
+      '<div class="on-role">'+(a._forceRole||a.role||(a.soul&&a.soul.role)||'Agent')+'</div>'+
       '</div>';
   };
   
@@ -4702,6 +4728,29 @@ renderProject = async function() {
     initDragDrop();
   }
 };
+
+// ── Dashboard enrich: wait for state.data then render ──
+(function enrichDashboard() {
+  function tryEnrich() {
+    try {
+      var hasData = state && state.data && (state.data.profiles||[]).length > 0 && (state.data.tasks||[]).length > 0;
+      if (!hasData) {
+        setTimeout(tryEnrich, 300);
+        return;
+      }
+      if (document.getElementById('dashboardOrgChart') && !document.querySelector('#dashboardOrgChart .org-node')) {
+        renderOrgChart('dashboardOrgChart');
+      }
+      if (document.getElementById('dashboardGantt') && !document.querySelector('#dashboardGantt .gantt-row')) {
+        renderGanttTimeline('dashboardGantt');
+      }
+    } catch(e) {
+      console.warn('Enrich retry error:', e);
+      setTimeout(tryEnrich, 500);
+    }
+  }
+  setTimeout(tryEnrich, 500);
+})();
 
 
 </script>
