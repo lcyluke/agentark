@@ -490,18 +490,10 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
       <section class="view on" id="v-dashboard">
         <div class="grid kpis" id="kpiRow"></div>
         <div style="height:22px"></div>
-        <div class="grid" style="grid-template-columns:2fr 1fr">
-          <div class="card">
-          </div>
-          <div class="card">
-            <div class="sec-h"><i class="ti ti-activity-heartbeat"></i>快速统计</div>
-            <div id="quickStats"></div>
-          </div>
-        </div>
-        <div style="height:22px"></div>
+        <!-- 项目群管理 -->
         <div class="card">
-          <div class="sec-h"><i class="ti ti-activity"></i>活动流与警报</div>
-          <div id="feed"></div>
+          <div class="sec-h"><i class="ti ti-folders"></i>📁 项目群管理 <span style="font-size:10px;color:var(--tx3);font-weight:400">— 点击展开查看Agent编队</span></div>
+          <div id="dashboardProjects"></div>
         </div>
         <div style="height:22px"></div>
         <div class="card">
@@ -510,7 +502,16 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
         </div>
         <div style="height:22px"></div>
         <div class="card">
-          <div class="sec-h"><i class="ti ti-timeline"></i>📅 项目任务时间线 <span style="font-size:10px;color:var(--tx3);font-weight:400">— 点击任务条查看详情</span></div>
+          <div class="sec-h" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <i class="ti ti-timeline"></i>📅 项目任务时间线
+            <span style="font-size:10px;color:var(--tx3);font-weight:400">— 点击任务条查看详情</span>
+            <span style="flex:1"></span>
+            <span style="display:flex;align-items:center;gap:4px;background:var(--bg3);border-radius:6px;padding:3px">
+              <button class="btn sm" onclick="ganttZoom(-1)" style="padding:2px 8px;font-size:11px" title="缩小时间单位">🔍−</button>
+              <span id="ganttScaleLabel" style="font-size:11px;color:var(--tx2);min-width:30px;text-align:center;font-family:var(--mono)">日</span>
+              <button class="btn sm" onclick="ganttZoom(1)" style="padding:2px 8px;font-size:11px" title="放大时间单位">🔍+</button>
+            </span>
+          </div>
           <div id="dashboardGantt"></div>
         </div>
       </section>
@@ -1166,34 +1167,16 @@ function kpiHTML(icon, label, num, sub, cls) {
    VIEW 1: DASHBOARD
    ================================================================= */
 function renderDashboard() {
+  // KPI row — keep it lightweight
   const d = state.data;
   const cc = d.cc || {};
-  const hs = cc.hermes_sessions || {};
-  const hprof = cc.hermes_profiles || {};
-  // Quick stats
   const cronCount = (cc.hermes_cron && cc.hermes_cron.jobs ? cc.hermes_cron.jobs.length : 0) || 0;
-  const modelsCount = (cc.pricing && cc.pricing.models ? Object.keys(cc.pricing.models).length : 0) || 0;
   const kgNodes = (d.knowledge && d.knowledge.nodes) || 0;
-  $('#quickStats').innerHTML = `
-    <div class="kv"><span class="k">Cron 任务</span><span class="vv">${cronCount}</span></div>
-    <div class="kv"><span class="k">模型数量</span><span class="vv">${modelsCount}</span></div>
-    <div class="kv"><span class="k">知识节点</span><span class="vv">${kgNodes}</span></div>
-    <div class="kv"><span class="k">Profile 数</span><span class="vv">${(d.profiles||[]).length}</span></div>
-    <div class="kv"><span class="k">引擎状态</span><span class="vv"><span class="tag ${auto.status==='running'?'green':'amber'}">${auto.status||'未启动'}</span></span></div>`;
-
-  // Feed
-  const alerts = (auto.alerts || []).slice(0, 5);
-  const feedItems = alerts.length ? alerts.map(a => {
-    return `<div class="li">
-      <div class="ic" style="background:var(--amber-d);color:var(--amber)"><i class="ti ti-alert-triangle"></i></div>
-      <div style="flex:1"><div class="t">${typeof a === 'string' ? a : a.message || JSON.stringify(a)}</div><div class="d">自治引擎警报</div></div>
-    </div>`;
-  }).join('') : `<div class="li">
-      <div class="ic" style="background:var(--green-d);color:var(--green)"><i class="ti ti-check"></i></div>
-      <div style="flex:1"><div class="t">系统运行正常,无警报</div><div class="d">实时</div></div>
-    </div>`;
-  $('#feed').innerHTML = feedItems;
-
+  $('#kpiRow').innerHTML = 
+    kpiHTML('ti-clock', 'Cron 任务', cronCount, '活跃定时任务', '') +
+    kpiHTML('ti-brain', '知识节点', kgNodes, '知识图谱', '') +
+    kpiHTML('ti-users', 'Profile', (d.profiles||[]).length, 'Agent 总数', '') +
+    kpiHTML('ti-list-check', 'Tasks', (d.tasks||[]).length, '总任务数', '');
   updatePulse();
 }
 
@@ -4750,6 +4733,212 @@ renderProject = async function() {
     }
   }
   setTimeout(tryEnrich, 500);
+})();
+
+/* ========== PROJECT MANAGEMENT ========== */
+state.ganttScale = state.ganttScale || 'day'; // hour | day | week | month
+var ganttScales = ['hour', 'day', 'week', 'month'];
+var ganttScaleLabels = {hour:'时', day:'日', week:'周', month:'月'};
+
+function renderProjects() {
+  var projects = state.liveProjects || [];
+  var profiles = state.data.profiles || [];
+  var tasks = state.data.tasks || [];
+  var container = document.getElementById('dashboardProjects');
+  if (!container) return;
+
+  // Auto-discover projects from tasks if liveProjects is empty
+  if (!projects.length) {
+    var pjNames = {};
+    tasks.forEach(function(t) {
+      var m = (t.title||'').match(/^\[([^\]]+)\]/);
+      var name = m ? m[1] : '默认项目';
+      if (!pjNames[name]) pjNames[name] = {name:name, tasks:[], agents:{}};
+      pjNames[name].tasks.push(t);
+      if (t.assignee) pjNames[name].agents[t.assignee] = true;
+    });
+    projects = Object.values(pjNames).map(function(p) {
+      return {
+        name: p.name,
+        task_count: p.tasks.length,
+        agent_count: Object.keys(p.agents).length,
+        agents: Object.keys(p.agents).map(function(a) {
+          var prof = profiles.find(function(pr) { return (pr.name||pr.agent_id) === a; });
+          return { agent_id: a, role: (prof&&prof.role)||'Worker' };
+        }),
+        modules: []
+      };
+    });
+  }
+
+  if (!projects.length) {
+    container.innerHTML = '<div style="color:var(--tx3);font-size:12px;padding:20px;text-align:center">暂无项目数据</div>';
+    return;
+  }
+
+  container.innerHTML = projects.map(function(pj, i) {
+    var agents = pj.agents || [];
+    var pjId = 'pj-expand-' + i;
+    return '<div style="border:1px solid var(--line);border-radius:var(--r-s);margin-bottom:8px;overflow:hidden">' +
+      '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);cursor:pointer" onclick="toggleProject(\''+pjId+'\')">' +
+        '<i class="ti ti-chevron-right" id="'+pjId+'-chev" style="transition:transform .2s;font-size:12px;color:var(--tx3)"></i>' +
+        '<span style="font-family:var(--disp);font-size:14px;font-weight:600;color:var(--tx)">'+(pj.name||'项目')+'</span>' +
+        '<span class="tag teal" style="font-size:10px">'+(pj.task_count||0)+' 任务</span>' +
+        '<span class="tag violet" style="font-size:10px">'+agents.length+' Agent</span>' +
+        '<span style="margin-left:auto;font-size:10px;color:var(--tx3)">点击展开</span>' +
+      '</div>' +
+      '<div id="'+pjId+'" style="display:none;padding:12px 14px;border-top:1px solid var(--line)">' +
+        (agents.length ? agents.map(function(a) {
+          return '<div class="dp-agent-card" style="cursor:pointer" onclick="openDetailPanel(\'agent\','+JSON.stringify({agent_id:a.agent_id||a.name,role:a.role,name:a.agent_id||a.name})+')">' +
+            '<span class="av" style="width:26px;height:26px;font-size:10px;background:var(--blue-d);color:var(--blue)">'+(a.agent_id||'A')[0].toUpperCase()+'</span>' +
+            '<div><div style="font-size:12px;font-weight:500">'+(a.agent_id||a.name||'?')+'</div>' +
+            '<div style="font-size:10px;color:var(--tx3)">'+(a.role||'Agent')+'</div></div>' +
+            '<span class="tag" style="margin-left:auto;font-size:9px">查看</span>' +
+          '</div>';
+        }).join('') : '<div style="color:var(--tx3);font-size:12px">暂无 Agent 分配</div>') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleProject(id) {
+  var el = document.getElementById(id);
+  var chev = document.getElementById(id+'-chev');
+  if (!el || !chev) return;
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    chev.style.transform = 'rotate(90deg)';
+  } else {
+    el.style.display = 'none';
+    chev.style.transform = 'rotate(0deg)';
+  }
+}
+
+/* ========== ZOOMABLE GANTT ========== */
+function ganttZoom(dir) {
+  var idx = ganttScales.indexOf(state.ganttScale);
+  var newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= ganttScales.length) return;
+  state.ganttScale = ganttScales[newIdx];
+  document.getElementById('ganttScaleLabel').textContent = ganttScaleLabels[state.ganttScale] || state.ganttScale;
+  // Re-render Gantt on dashboard and project view
+  if (document.getElementById('dashboardGantt')) renderGanttTimeline('dashboardGantt');
+  if (document.getElementById('ganttChart')) renderGanttTimeline('ganttChart');
+}
+
+// Patch renderGanttTimeline to use scale
+var _origRenderGantt = renderGanttTimeline;
+renderGanttTimeline = function(containerId) {
+  var scale = state.ganttScale || 'day';
+  var tasks = state.data.tasks || [];
+  var el = document.getElementById(containerId);
+  if (!el || !tasks.length) {
+    if (el) el.innerHTML = '<div style="color:var(--tx3);font-size:12px;padding:20px;text-align:center">暂无任务数据</div>';
+    return;
+  }
+
+  // Scale setup
+  var scaleMs = {hour:3600000, day:86400000, week:604800000, month:2592000000};
+  var scaleUnit = scaleMs[scale] || 86400000;
+  var dateFmt = scale === 'hour' ? function(d){return d.toLocaleString();} :
+                scale === 'day' ? function(d){return d.toLocaleDateString();} :
+                scale === 'week' ? function(d){return d.toLocaleDateString();} :
+                function(d){return (d.getMonth()+1)+'/'+d.getFullYear();};
+
+  // Group tasks by phase
+  var phases = {'Phase 1 · 需求定义':[], 'Phase 2 · 设计开发':[], 'Phase 3 · 测试部署':[]};
+  tasks.forEach(function(t) {
+    var title = t.title||'';
+    if (title.includes('需求')||title.includes('PRD')||title.includes('分析')) phases['Phase 1 · 需求定义'].push(t);
+    else if (title.includes('测试')||title.includes('部署')||title.includes('上线')||title.includes('发布')) phases['Phase 3 · 测试部署'].push(t);
+    else phases['Phase 2 · 设计开发'].push(t);
+  });
+
+  // Calculate date range
+  var allDates = [];
+  tasks.forEach(function(t) {
+    if (t.created_at) allDates.push(new Date(t.created_at).getTime());
+    if (t.completed_at) allDates.push(new Date(t.completed_at).getTime());
+  });
+  if (!allDates.length) allDates = [Date.now() - 7*86400000, Date.now()];
+  var minDate = Math.min.apply(null, allDates);
+  var maxDate = Math.max.apply(null, allDates);
+  var range = maxDate - minDate || scaleUnit;
+  var totalUnits = Math.ceil(range / scaleUnit);
+  if (totalUnits < 3) totalUnits = 3;
+  if (totalUnits > 100) totalUnits = 100;
+
+  // Timeline header
+  var tlHeader = '<div class="gantt-timeline" style="padding-left:160px">';
+  for (var u = 0; u < totalUnits; u++) {
+    var d = new Date(minDate + u * scaleUnit);
+    var label = scale === 'hour' ? d.getHours()+':00' :
+                scale === 'day' ? (d.getMonth()+1)+'/'+d.getDate() :
+                scale === 'week' ? 'W'+(Math.ceil(d.getDate()/7)) :
+                (d.getMonth()+1)+'月';
+    tlHeader += '<span style="width:'+(100/totalUnits)+'%">'+label+'</span>';
+  }
+  tlHeader += '</div>';
+
+  var phaseColors = ['', 'phase2', 'phase3'];
+  var html = '<div class="gantt-wrap">' + tlHeader;
+
+  Object.keys(phases).forEach(function(phaseName, pi) {
+    var pt = phases[phaseName];
+    if (!pt.length) return;
+    var doneCount = pt.filter(function(t){return t.status==='done';}).length;
+    html += '<div class="gantt-phase">'+
+      '<div class="gantt-phase-header" onclick="this.classList.toggle(\'open\');this.nextElementSibling.classList.toggle(\'open\')">'+
+        '<span class="chev">▶</span> '+phaseName+' · '+
+        '<span style="color:var(--green)">'+doneCount+'/'+pt.length+' 完成</span>'+
+        '<span style="margin-left:auto;font-size:10px;color:var(--tx3)">▼</span>'+
+      '</div>'+
+      '<div class="gantt-phase-tasks">';
+
+    pt.forEach(function(t) {
+      var start = t.created_at ? new Date(t.created_at).getTime() : minDate;
+      var end = t.completed_at ? new Date(t.completed_at).getTime() : (t.status==='done'?start+scaleUnit:maxDate);
+      var leftPct = Math.round((start - minDate) / range * 100);
+      var widthPct = Math.max(2, Math.round((end - start) / range * 100));
+      var done = t.status === 'done';
+      var startStr = t.created_at ? dateFmt(new Date(t.created_at)) : '?';
+      var endStr = t.completed_at ? dateFmt(new Date(t.completed_at)) : (done?startStr:'?');
+
+      var td = {id:t.id,title:t.title||'',status:t.status||'todo',assignee:t.assignee||'',priority:t.priority||2,created_at:t.created_at||'',completed_at:t.completed_at||'',description:t.description||''};
+      html += '<div class="gantt-row" style="cursor:pointer" data-task="'+JSON.stringify(td).replace(/\"/g,'&quot;')+'" onclick="openDetailPanelTask(this)">'+
+        '<span class="gantt-label" title="'+(t.title||'')+'">'+(t.title||'').substring(0,22)+'</span>'+
+        '<div class="gantt-track">'+
+          '<div class="gantt-bar'+(done?' done':'')+' '+(phaseColors[pi]||'')+'" style="left:'+leftPct+'%;width:'+widthPct+'%"></div>'+
+        '</div>'+
+        '<span class="gantt-dates">'+startStr+' → '+endStr+'</span>'+
+      '</div>';
+    });
+    html += '</div></div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+  // Update scale label
+  var lbl = document.getElementById('ganttScaleLabel');
+  if (lbl) lbl.textContent = ganttScaleLabels[state.ganttScale] || state.ganttScale;
+};
+
+// Update enrichDashboard to include renderProjects
+var _origTryEnrich = undefined;
+(function patchEnrich() {
+  var script = document.querySelector('script:not([src])');
+  if (!script) return;
+  var code = script.textContent;
+  // Add renderProjects call after renderOrgChart in tryEnrich
+  var oldCheck = "if (document.getElementById('dashboardGantt') && !document.querySelector('#dashboardGantt .gantt-row'))";
+  var newCheck = "if (document.getElementById('dashboardProjects') && !document.querySelector('#dashboardProjects .dp-agent-card')) { renderProjects(); }\n      " + oldCheck;
+  // Can't easily patch the IIFE from here, so just call renderProjects in the enrich flow
+  // Instead, add a simple interval that calls renderProjects once data is ready
+  var projectInterval = setInterval(function() {
+    if (state && state.data && (state.data.tasks||[]).length > 0) {
+      try { renderProjects(); } catch(e) {}
+      clearInterval(projectInterval);
+    }
+  }, 800);
 })();
 
 
