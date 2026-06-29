@@ -125,7 +125,7 @@ class AliasedGroup(click.Group):
 
 
 @click.group(cls=AliasedGroup, context_settings={"help_option_names": ["-h", "--help"]})
-@click.version_option(version="0.5.1", message="AgentArk v0.5.1 — 46 Agents, 30 commands, infinite capacity.")
+@click.version_option(version="0.5.2", message="AgentArk v0.5.2 — 46 Agents, 30 commands, infinite capacity.")
 @click.pass_context
 def cli(ctx):
     """⚓ AgentArk — One person, infinite capacity.
