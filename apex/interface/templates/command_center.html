@@ -522,6 +522,22 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
             <div id="userSettings"><div style="padding:16px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div class="av" style="width:48px;height:48px;font-size:20px;background:var(--teal-d);color:var(--teal)">👤</div><div><b style="font-size:16px">用户</b><div style="color:var(--tx3);font-size:12px">已登录 · Hermes 活跃</div></div></div><button class="btn" onclick="openUserSettings()" style="width:100%"><i class="ti ti-settings"></i>用户设置</button></div></div>
           </div>
         </div>
+        <div style="height:22px"></div>
+        <div class="sec-h" style="display:flex;align-items:center;gap:10px">
+          <i class="ti ti-network"></i>🖥️ 远程舰队节点
+          <button class="btn sm" onclick="openAddNodeDialog()" style="margin-left:auto"><i class="ti ti-plus"></i>添加节点</button>
+        </div>
+        <div id="remoteNodesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-top:10px">
+          <div style="color:var(--tx3);font-size:12px;padding:20px;text-align:center">加载中...</div>
+        </div>
+        <!-- 舰队配置 -->
+        <div style="height:16px"></div>
+        <div class="sec-h"><i class="ti ti-shield-lock"></i>安全配置</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px" id="fleetSecurityBar">
+          <span style="font-size:12px;color:var(--tx2)">IP 白名单:</span>
+          <span id="whitelistBadge" style="font-size:11px"></span>
+          <button class="btn sm" onclick="openFleetConfig()"><i class="ti ti-settings"></i>配置</button>
+        </div>
       </section>
 
       <!-- VIEW 5: 自治引擎 -->
@@ -2059,9 +2075,219 @@ async function renderFleet() {
 
   // Board mini
   renderUserMini();
+  // Fetch remote fleet nodes
+  loadRemoteNodes();
 }
 
-/* ========== BOARD MANAGEMENT ========== */
+/* ========== REMOTE FLEET NODES ========== */
+async function loadRemoteNodes() {
+  const data = await fetchJSON(API + '/fleet/nodes');
+  const nodes = data?.nodes || [];
+  renderRemoteNodes(nodes);
+  renderFleetSecurity();
+}
+
+function renderRemoteNodes(nodes) {
+  const grid = $('#remoteNodesGrid');
+  if (!grid) return;
+
+  if (!nodes.length) {
+    grid.innerHTML = '<div style="color:var(--tx3);font-size:12px;padding:20px;text-align:center;border:1px dashed var(--line);border-radius:var(--r-s)"><i class="ti ti-network-off" style="font-size:28px;display:block;margin-bottom:8px"></i>暂无远程节点<br><span style="font-size:11px">点击「添加节点」连接局域网或互联网上的其他 Mac</span></div>';
+    return;
+  }
+
+  grid.innerHTML = nodes.map(n => {
+    const probe = n._probe || {};
+    const online = n.status === 'online';
+    const statusColor = online ? 'var(--green)' : 'var(--red)';
+    const statusText = online ? '🟢 已连接' : (probe.error ? '🔴 ' + probe.error : '⚫ 未连接');
+    const version = n.remote_version || probe.version || '?';
+    const name = n.remote_name || probe.name || 'AgentArk';
+
+    return `<div class="fleet-card" style="border-left:3px solid ${statusColor}">
+      <span class="fcan" style="background:${online?'var(--green-d)':'var(--red-d)'};color:${statusColor}">${statusText}</span>
+      <div class="fh">
+        <span class="av" style="background:var(--blue-d);color:var(--blue);width:32px;height:32px;font-size:14px">🖥️</span>
+        <div>
+          <div class="fname">${n.nickname||n.host}</div>
+          <div class="frole">${n.host}:${n.port} · ${name} v${version}</div>
+        </div>
+      </div>
+      <div class="fmeta">
+        <span><i class="ti ti-clock"></i>${n.last_seen ? new Date(n.last_seen).toLocaleTimeString() : '从未'}</span>
+        <span><i class="ti ti-key"></i>${n.token ? 'Token 认证' : '无认证'}</span>
+      </div>
+      <div class="fbtns">
+        <button class="btn sm" onclick="testRemoteNode('${n.id}')"><i class="ti ti-refresh"></i>测试</button>
+        <button class="btn sm" onclick="viewRemoteNode('${n.id}')"><i class="ti ti-eye"></i>详情</button>
+        <button class="btn sm danger" onclick="removeRemoteNode('${n.id}')"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function testRemoteNode(nodeId) {
+  toast('正在测试连接...');
+  const res = await fetchJSON(API + '/fleet/nodes/' + nodeId + '/test', { method: 'POST' });
+  if (res && res.probe?.reachable) {
+    toast('<i class="ti ti-circle-check"></i> 连接成功！' + (res.probe.version ? ' v' + res.probe.version : ''));
+  } else {
+    toast('<i class="ti ti-alert-triangle"></i> 连接失败: ' + ((res && res.probe?.error) || '未知错误'));
+  }
+  loadRemoteNodes();
+}
+
+async function viewRemoteNode(nodeId) {
+  const data = await fetchJSON(API + '/fleet/nodes/' + nodeId + '/status');
+  if (!data) { toast('无法获取节点详情'); return; }
+
+  const rs = data.remote_status || {};
+  const tasks = rs.recent_tasks || [];
+  const taskHTML = tasks.length ? tasks.map(t => 
+    `<div class="dt"><span class="dtag ${t.status==='done'?'done':t.status==='in_progress'?'prog':'todo'}">${t.status||'?'}</span><span style="font-size:11px">${t.title||''}</span></div>`
+  ).join('') : '<div style="font-size:11px;color:var(--tx3)">无任务</div>';
+
+  const body = `<div class="fld">
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px">
+      <div><b>${rs.profiles||0}</b> Agents</div>
+      <div><b>${rs.tasks||0}</b> Tasks</div>
+      <div><b>${Math.round((rs.uptime_seconds||0)/3600)}h</b> 运行</div>
+    </div>
+    <div class="fld"><label>最近任务</label>${taskHTML}</div>
+  </div>`;
+
+  openDrawer(
+    data.nickname + ' · 远程节点详情',
+    data.host + ':' + data.port + ' · ' + (data.version||'?'),
+    '<i class="ti ti-server" style="font-size:22px;color:var(--blue)"></i>',
+    body
+  );
+}
+
+function openAddNodeDialog() {
+  const body = `<div class="fld"><label><i class="ti ti-network"></i> 主机地址 (IP 或域名)</label>
+      <input id="newNodeHost" placeholder="例如: 192.168.1.100 或 mac-studio.local" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:10px;font-size:13px">
+    </div>
+    <div class="fld"><label><i class="ti ti-plug"></i> 端口</label>
+      <input id="newNodePort" value="8080" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:10px;font-size:13px">
+    </div>
+    <div class="fld"><label><i class="ti ti-tag"></i> 昵称 (可选)</label>
+      <input id="newNodeNick" placeholder="如: Mac Studio" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:10px;font-size:13px">
+    </div>
+    <div class="fld"><label><i class="ti ti-key"></i> 认证 Token (可选, 若远程开启了 Token 认证)</label>
+      <input id="newNodeToken" placeholder="远程机器上设置的 Fleet Token" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:10px;font-size:13px">
+    </div>
+    <div style="font-size:11px;color:var(--tx3);margin-top:8px;padding:8px;background:var(--bg3);border-radius:var(--r-s)">
+      <b>💡 提示:</b> 远程 Mac 需运行 <code style="background:var(--bg4);padding:2px 6px;border-radius:4px">agentark demo</code> 并确保防火墙允许端口访问。
+      <br>局域网: 使用 IP 地址 · 互联网: 使用公网 IP/域名 + 端口转发
+    </div>`;
+
+  openDrawerEdit(
+    '添加远程舰队节点',
+    '连接局域网或互联网上的其他 Mac',
+    '<i class="ti ti-network" style="font-size:22px;color:var(--teal)"></i>',
+    body,
+    async () => {
+      const host = document.getElementById('newNodeHost')?.value?.trim();
+      const port = parseInt(document.getElementById('newNodePort')?.value) || 8080;
+      const nickname = document.getElementById('newNodeNick')?.value?.trim();
+      const token = document.getElementById('newNodeToken')?.value?.trim();
+
+      if (!host) { toast('请输入主机地址'); return; }
+
+      const res = await fetch(API + '/fleet/nodes', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ host, port, nickname, token: token || undefined })
+      }).then(r => r.json());
+
+      if (res.error) {
+        toast('<i class="ti ti-alert-triangle"></i> ' + res.error);
+      } else {
+        toast('<i class="ti ti-circle-check"></i> 节点已添加' + (res._probe?.reachable ? ' · 连接成功！' : ' · 无法连接'));
+        closeAll();
+        loadRemoteNodes();
+      }
+    },
+    null, '🔗 添加并测试', ''
+  );
+}
+
+async function removeRemoteNode(nodeId) {
+  if (!confirm('确定移除此节点？')) return;
+  const res = await fetch(API + '/fleet/nodes/' + nodeId, { method: 'DELETE' }).then(r => r.json());
+  if (res.deleted) {
+    toast('节点已移除');
+    loadRemoteNodes();
+  }
+}
+
+async function fetchFleetConfig() {
+  return await fetchJSON(API + '/fleet/config');
+}
+
+function renderFleetSecurity() {
+  fetchFleetConfig().then(cfg => {
+    if (!cfg) return;
+    const badge = $('#whitelistBadge');
+    if (badge) {
+      badge.innerHTML = cfg.whitelist_enabled
+        ? '<span style="color:var(--green);font-weight:600">🟢 已启用</span> · ' + cfg.allowed_ips.join(', ')
+        : '<span style="color:var(--tx3)">⚫ 已禁用 (允许所有 IP)</span>';
+    }
+  });
+}
+
+function openFleetConfig() {
+  fetchFleetConfig().then(cfg => {
+    if (!cfg) return;
+    const body = `<div class="fld"><label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="cfgWhitelist" ${cfg.whitelist_enabled?'checked':''} onchange="this.checked ? $('#cfgIps').style.display='' : $('#cfgIps').style.display='none'">
+        <span>启用 IP 白名单</span>
+      </label></div>
+      <div class="fld" id="cfgIps" style="${cfg.whitelist_enabled?'':'display:none'}">
+        <label>允许的 IP/CIDR (每行一个)</label>
+        <textarea id="cfgIpsInput" style="width:100%;min-height:80px;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:10px;font-size:12px;font-family:var(--mono)">${(cfg.allowed_ips||[]).join('\\n')}</textarea>
+        <div style="font-size:10px;color:var(--tx3);margin-top:4px">示例: 192.168.1.0/24 · 10.0.0.1 · 0.0.0.0/0 (允许所有)</div>
+      </div>
+      <div class="fld"><label>本机 Fleet Token (远程节点连接本机时使用)</label>
+        <input id="cfgToken" placeholder="${cfg.local_token_set ? '(已设置，留空保持不变)' : '设置 Token'}" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:10px;font-size:13px">
+        <div style="font-size:10px;color:var(--tx3);margin-top:4px">留空则不启用 Token 认证</div>
+      </div>`;
+
+    openDrawerEdit(
+      '舰队安全配置',
+      '白名单 + Token 双重保护',
+      '<i class="ti ti-shield-lock" style="font-size:22px;color:var(--amber)"></i>',
+      body,
+      async () => {
+        const whitelistEnabled = document.getElementById('cfgWhitelist')?.checked;
+        const ipsText = document.getElementById('cfgIpsInput')?.value || '';
+        const tokenVal = document.getElementById('cfgToken')?.value?.trim();
+        const ips = ipsText.split('\\n').map(s => s.trim()).filter(Boolean);
+
+        const payload = { whitelist_enabled: whitelistEnabled, allowed_ips: ips };
+        if (tokenVal) payload.local_token = tokenVal;
+
+        const res = await fetch(API + '/fleet/config', {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        }).then(r => r.json());
+
+        if (res.saved) {
+          toast('<i class="ti ti-circle-check"></i> 安全配置已保存');
+          closeAll();
+          renderFleetSecurity();
+        }
+      },
+      null, '💾 保存', ''
+    );
+  });
+}
+
+
+
 function renderUserMini() {
   const b = state.board;
   const humans = b.humans || [];

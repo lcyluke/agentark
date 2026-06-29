@@ -20,6 +20,7 @@ from apex.interface.middleware import (
     register_error_handlers, log_event, get_log_buffer,
 )
 from apex.interface.event_stream import push_event, get_recent_events, format_sse
+from apex.interface.fleet_api import fleet_bp
 
 
 def create_app():
@@ -2533,6 +2534,9 @@ def create_app():
             "requires_hermes": False,
             "note": "Apex runs standalone. Hermes integration enables real-time session tracking and token analytics." if not hermes_ok else "Hermes integrated — full analytics available.",
         })
+
+    # ── Register Fleet Blueprint ────────────────────────────
+    app.register_blueprint(fleet_bp)
 
     return app
 
