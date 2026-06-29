@@ -1,4 +1,4 @@
-"""Apex Demo — 5-minute wow experience
+"""AgentArk Demo — 5-minute wow experience
 
 Creates a swarm demo with 3 agents working in parallel,
 opens the 7-tab Command Center, and guides the user through
@@ -22,19 +22,19 @@ from rich.text import Text
 
 DEMO_TASKS = [
     {
-        "title": "[Apex Demo] Frontend — Build Welcome Dashboard",
+        "title": "[AgentArk Demo] Frontend — Build Welcome Dashboard",
         "assignee": "frontend-dev",
         "description": "Create a responsive dark-theme welcome page with stats cards and agent fleet grid",
         "priority": 1,
     },
     {
-        "title": "[Apex Demo] Backend — API Health Check System",
+        "title": "[AgentArk Demo] Backend — API Health Check System",
         "assignee": "devops",
         "description": "Build a health check endpoint and monitoring pipeline with alert rules",
         "priority": 1,
     },
     {
-        "title": "[Apex Demo] PM — Sprint Plan & Task Breakdown",
+        "title": "[AgentArk Demo] PM — Sprint Plan & Task Breakdown",
         "assignee": "default",
         "description": "Analyze the project scope and create a 2-week sprint plan with task assignments",
         "priority": 1,
@@ -118,7 +118,7 @@ def run_demo(
     # ═══ BANNER ═══
     console.print()
     console.print(Panel(
-        Text("⚡  Apex Demo — Your Multi-Agent Command Center", style="bold cyan"),
+        Text("⚡  AgentArk Demo — Your Multi-Agent Command Center", style="bold cyan"),
         subtitle="5 minutes to your AI fleet",
         border_style="cyan",
     ))

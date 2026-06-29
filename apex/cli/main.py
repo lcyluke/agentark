@@ -1,4 +1,4 @@
-"""Apex — CLI main framework
+"""AgentArk — CLI main framework
 
 Designed with 7±2 group principle for intuitive command discovery.
 
@@ -412,7 +412,7 @@ def dashboard(host: str, port: int):
 @click.option("--skip-tasks", is_flag=True, help="Don't create demo tasks")
 @click.option("--overwrite", is_flag=True, help="Kill existing process on port and restart")
 def demo(port: int, host: str, no_browser: bool, skip_tasks: bool, overwrite: bool):
-    """🎮 Run Apex demo — create AI fleet and open Command Center"""
+    """🎮 Run AgentArk demo — create AI fleet and open Command Center"""
     try:
         from apex.cli.commands.demo import run_demo
         run_demo(console=console, port=port, host=host,

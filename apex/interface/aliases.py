@@ -1,4 +1,4 @@
-"""Apex Command Aliases — short aliases for frequent commands.
+"""AgentArk Command Aliases — short aliases for frequent commands.
 
 Stored in ~/.apex/aliases.yaml, editable via `apex alias add/remove/list`.
 

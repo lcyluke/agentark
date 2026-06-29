@@ -1,1 +1,1 @@
-"""Apex — The most popular multi-Agent operating system"""
+"""AgentArk — The most popular multi-Agent operating system"""

@@ -1,4 +1,4 @@
-"""Apex — Web dashboard: REST API + SSE + OpenClaw + Hermes integration."""
+"""AgentArk — Web dashboard: REST API + SSE + OpenClaw + Hermes integration."""
 
 from __future__ import annotations
 
@@ -73,7 +73,7 @@ def create_app():
 
     @app.route("/")
     def index():
-        """Apex Command Center — 多Agent指挥中心"""
+        """AgentArk Command Center — 多Agent指挥中心"""
         return render_template("command_center.html")
 
     # ══════════════════════════════════════════════════════════
@@ -103,7 +103,7 @@ def create_app():
     def api_version():
         return jsonify({
             "version": "0.5.1",
-            "name": "Apex",
+            "name": "AgentArk",
             "description": "Multi-Agent Operating System",
             "python": __import__("sys").version,
         })
@@ -2540,7 +2540,7 @@ def create_app():
 def run_dashboard(host: str = "127.0.0.1", port: int = 8080, debug: bool = False):
     """Start Dashboard with all enhancements."""
     app = create_app()
-    print(f"📊 Apex Dashboard: http://{host}:{port}")
+    print(f"📊 AgentArk Dashboard: http://{host}:{port}")
     print(f"   API:   http://{host}:{port}/api/status")
     print(f"   SSE:   http://{host}:{port}/api/stream/logs")
     print(f"   OpenClaw: http://{host}:{port}/api/openclaw/status")
