@@ -442,6 +442,14 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
 .drop-zone.active{border-color:var(--teal);background:var(--teal-d);color:var(--teal)}
 .drop-zone.hover{border-color:var(--green);background:var(--green-d);box-shadow:0 0 20px rgba(52,211,153,.15)}
 .drag-ghost{opacity:.6}
+
+/* ═══ AGENT TABLE ═══ */
+.agent-row{transition:opacity .15s;border-bottom:1px solid var(--line)}
+.agent-row:hover{background:var(--bg3)}
+.agent-row td{padding:6px 4px;vertical-align:middle}
+.drag-handle{cursor:grab;color:var(--tx3);font-size:14px;user-select:none;padding:0 4px}
+.drag-handle:active{cursor:grabbing}
+.agent-row.drag-over td{border-top:2px solid var(--teal)}
 </style>
 </head>
 <body>
@@ -4485,10 +4493,6 @@ function openDetailPanel(type, data) {
 function closeDetailPanel() {
   document.getElementById('detailPanel').classList.remove('on');
 }
-function openDetailPanelEl(el) {
-  var d = JSON.parse(el.getAttribute('data-agent')||'{}');
-  openDetailPanel('agent', d);
-}
 
 
 /* ========== PROJECT GANTT TIMELINE ========== */
@@ -4566,58 +4570,149 @@ function renderGanttTimeline(containerId) {
   document.getElementById(containerId).innerHTML = html;
 }
 
-/* ========== ORG CHART ========== */
+/* ========== TREE ORG CHART (Project→Module→Agent) ========== */
 function renderOrgChart(containerId) {
-  var profiles = state.data.profiles || [];
-  var workloads = (state.data.workloads?.agents) || [];
+  var el = document.getElementById(containerId);
+  if (!el) return;
   
-  // Categorize agents by role/expertise heuristics
-  var originAgents = [], pmAgents = [], workers = [];
-  profiles.forEach(function(p){
-    var n = (p.name||'').toLowerCase();
-    var r = (p.role||p.soul?.role||'').toLowerCase();
-    var e = Array.isArray(p.expertise) ? p.expertise.join(' ').toLowerCase() : ((p.expertise||'')+'').toLowerCase();
-    if (n.includes('origin')||n.includes('admiral')||n.includes('始祖')||r.includes('origin')||r.includes('admiral')||r.includes('总司令')||r.includes('总指挥')) {
-      originAgents.push(p);
-    } else if (n.includes('pm')||n.includes('manager')||n.includes('commander')||r.includes('pm')||r.includes('manager')||r.includes('项目经理')||r.includes('总管')) {
-      pmAgents.push(p);
-    } else {
-      workers.push(p);
-    }
+  var tasks = state.data.tasks || [];
+  var profiles = state.data.profiles || [];
+  
+  var tree = {};
+  tasks.forEach(function(t) {
+    var m = (t.title||'').match(/^\[([^\]]+)\]/);
+    var pjName = m ? m[1] : '默认项目';
+    var title = t.title||'';
+    var modName = '通用模块';
+    if (title.includes('需求')||title.includes('PRD')||title.includes('分析')) modName = '需求分析';
+    else if (title.includes('设计')||title.includes('架构')) modName = '设计架构';
+    else if (title.includes('开发')||title.includes('API')||title.includes('后端')) modName = '后端开发';
+    else if (title.includes('前端')||title.includes('UI')||title.includes('页面')) modName = '前端开发';
+    else if (title.includes('测试')||title.includes('部署')||title.includes('发布')) modName = '测试部署';
+    else if (title.includes('支付')||title.includes('订单')) modName = '支付交易';
+    else if (title.includes('评估')||title.includes('诊断')) modName = 'AI评估';
+    
+    if (!tree[pjName]) tree[pjName] = {modules:{}};
+    if (!tree[pjName].modules[modName]) tree[pjName].modules[modName] = {agents:{}};
+    if (t.assignee) tree[pjName].modules[modName].agents[t.assignee] = true;
   });
   
-  // If no origin found, make the first profile the origin
-  if (!originAgents.length && profiles.length) {
-    originAgents = [profiles[0]];
-    profiles[0]._forceRole = '舰队总司令';
-  }
-  // If no PMs, promote some workers
-  if (!pmAgents.length && workers.length > 2) {
-    pmAgents = workers.splice(0, Math.min(3, workers.length));
-  }
+  var html = '<div style="font-size:12px">';
+  Object.keys(tree).sort().forEach(function(pjName, pi) {
+    var pj = tree[pjName];
+    var mods = Object.keys(pj.modules);
+    var totalAgents = 0;
+    mods.forEach(function(m){ totalAgents += Object.keys(pj.modules[m].agents).length; });
+    var id = 'tree-pj-' + pi;
+    
+    html += '<div class="tree-item">' +
+      '<div class="tree-toggle" onclick="toggleTreeNode(\''+id+'\')">' +
+        '<span class="chev" id="'+id+'-chev">▶</span>' +
+        '<span class="icon">📁</span>' +
+        '<span class="label">' + pjName + '</span>' +
+        '<span class="badge" style="background:var(--teal-d);color:var(--teal)">' + mods.length + ' 模块</span>' +
+        '<span class="badge" style="background:var(--violet-d);color:var(--violet)">' + totalAgents + ' Agent</span>' +
+      '</div>' +
+      '<div class="tree-children" id="'+id+'">';
+    
+    mods.sort().forEach(function(modName, mi) {
+      var mod = pj.modules[modName];
+      var agents = Object.keys(mod.agents).sort();
+      var mid = id + '-m' + mi;
+      
+      html += '<div class="tree-item">' +
+        '<div class="tree-toggle" onclick="toggleTreeNode(\''+mid+'\')">' +
+          '<span class="chev" id="'+mid+'-chev">▶</span>' +
+          '<span class="icon">📦</span>' +
+          '<span class="label">' + modName + '</span>' +
+          '<span class="badge" style="background:var(--bg4);color:var(--tx2)">' + agents.length + '</span>' +
+        '</div>' +
+        '<div class="tree-children" id="'+mid+'">';
+      
+      agents.forEach(function(agentId) {
+        var prof = profiles.find(function(p){ return (p.name||p.agent_id) === agentId; });
+        var role = (prof&&prof.role) || (prof&&prof.soul&&prof.soul.role) || 'Worker';
+        var ad = JSON.stringify({agent_id:agentId,role:role,name:agentId}).replace(/"/g,'&quot;');
+        
+        html += '<div class="tree-leaf" data-agent="'+ad+'" onclick="openDetailPanelEl(this)" draggable="true"' +
+          ' ondragstart="treeLeafDragStart(event,this)" ondragover="treeLeafDragOver(event)" ondrop="treeLeafDrop(event,this)" ondragend="treeLeafDragEnd(event)">' +
+          '<span class="dot" style="background:var(--green)"></span>' +
+          '<span class="name">' + agentId + '</span>' +
+          '<span class="role-tag">' + role + '</span>' +
+          '<span class="actions">' +
+            '<span class="act" title="更新" onclick="event.stopPropagation();updateAgentDialog(\''+agentId+'\')">✏️</span>' +
+            '<span class="act" title="培训" onclick="event.stopPropagation();trainAgent(\''+agentId+'\')">🎓</span>' +
+            '<span class="act danger" title="移除" onclick="event.stopPropagation();removeAgentDialog(\''+agentId+'\',\''+pjName+'\')">🗑</span>' +
+          '</span>' +
+        '</div>';
+      });
+      
+      html += '</div></div>';
+    });
+    
+    html += '</div></div>';
+  });
   
-  var nodeHTML = function(a, cls){
-    var d = {agent_id:a.name||a.agent_id,role:a.role||(a.soul&&a.soul.role)||'Agent',name:a.name||a.agent_id,model:a.model||(a.model&&a.model.default)||'',load_pct:(a.load||0),skills:((a.skills||[]).length||0)};
-    var esc = JSON.stringify(d).replace(/"/g,'&quot;');
-    return '<div class="org-node '+cls+'" data-agent="'+esc+'" onclick="openDetailPanelEl(this)">'+
-      '<div class="on-icon">'+(cls==='origin'?'⚓':cls==='pm'?'🎯':'🔧')+'</div>'+
-      '<div class="on-name">'+(a.name||a.agent_id||'?')+'</div>'+
-      '<div class="on-role">'+(a._forceRole||a.role||(a.soul&&a.soul.role)||'Agent')+'</div>'+
-      '</div>';
-  };
-  
-  var html = '<div class="org-tree">'+
-    '<div class="org-level">'+originAgents.map(function(a){return nodeHTML(a,'origin');}).join('')+'</div>'+
-    '<div class="org-connector"></div>'+
-    '<div class="org-level">'+pmAgents.map(function(a){return nodeHTML(a,'pm');}).join('')+'</div>'+
-    '<div class="org-connector"></div>'+
-    '<div class="org-level">'+workers.slice(0,12).map(function(a){return nodeHTML(a,'worker');}).join('')+'</div>'+
-    (workers.length>12?'<div style="font-size:11px;color:var(--tx3);padding:4px">+ '+(workers.length-12)+' 更多...</div>':'')+
-    '</div>';
-  
-  document.getElementById(containerId).innerHTML = html;
+  html += '</div>';
+  el.innerHTML = html;
 }
 
+function toggleTreeNode(id) {
+  var children = document.getElementById(id);
+  var chev = document.getElementById(id+'-chev');
+  if (!children || !chev) return;
+  if (children.classList.contains('open')) {
+    children.classList.remove('open');
+    chev.classList.remove('open');
+  } else {
+    children.classList.add('open');
+    chev.classList.add('open');
+  }
+}
+
+var _dragAgentId = null;
+function treeLeafDragStart(e, el) {
+  _dragAgentId = (el.querySelector('.name')||{}).textContent || '';
+  el.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function treeLeafDragOver(e) { e.preventDefault(); }
+function treeLeafDrop(e, targetEl) {
+  e.preventDefault();
+  if (_dragAgentId) toast('已移动 ' + _dragAgentId);
+}
+function treeLeafDragEnd(e) {
+  document.querySelectorAll('.tree-leaf.dragging').forEach(function(el){el.classList.remove('dragging');});
+}
+
+function updateAgentDialog(agentId) {
+  var prof = (state.data.profiles||[]).find(function(p){return (p.name||p.agent_id)===agentId;});
+  var role = (prof&&prof.role)||'Worker';
+  var body = '<div class="fld"><label>Agent ID</label><input id="updAgentId" value="'+agentId+'" readonly style="width:100%;background:var(--bg3);color:var(--tx2);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px;font-size:12px"></div>'+
+    '<div class="fld"><label>角色</label><input id="updAgentRole" value="'+role+'" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px;font-size:12px"></div>';
+  openDrawerEdit('更新 Agent: '+agentId, '修改角色信息', '<i class="ti ti-edit" style="font-size:22px;color:var(--teal)"></i>', body,
+    function() {
+      var newRole = document.getElementById('updAgentRole')?.value?.trim();
+      if (newRole && prof) prof.role = newRole;
+      toast('Agent 已更新');
+      closeAll();
+    }, null, '💾 保存', '');
+}
+
+function trainAgent(agentId) {
+  toast('🎓 启动 ' + agentId + ' 培训...');
+  fetch(API + '/run', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({task:'学习最新技能并更新知识库', profile:agentId})
+  }).then(function(r){return r.json();}).then(function(res){
+    toast(res&&res.success ? '✅ '+agentId+' 培训完成' : '⚠️ 培训失败');
+  }).catch(function(){ toast('⚠️ 网络错误'); });
+}
+
+function removeAgentDialog(agentId, projectName) {
+  if (!confirm('确定从 '+projectName+' 移除 '+agentId+'？')) return;
+  toast('已移除 ' + agentId);
+}
 /* ========== DRAG & DROP — Agent → Project ========== */
 function initDragDrop() {
   // Make agent cards draggable in fleet view
@@ -4747,26 +4842,34 @@ function renderProjects() {
   var container = document.getElementById('dashboardProjects');
   if (!container) return;
 
-  // Auto-discover projects from tasks if liveProjects is empty
+  // Auto-discover projects from tasks
   if (!projects.length) {
     var pjNames = {};
     tasks.forEach(function(t) {
       var m = (t.title||'').match(/^\[([^\]]+)\]/);
       var name = m ? m[1] : '默认项目';
-      if (!pjNames[name]) pjNames[name] = {name:name, tasks:[], agents:{}};
+      if (!pjNames[name]) pjNames[name] = {name:name, tasks:[], agents:{}, modules:[]};
       pjNames[name].tasks.push(t);
-      if (t.assignee) pjNames[name].agents[t.assignee] = true;
+      if (t.assignee) {
+        pjNames[name].agents[t.assignee] = (pjNames[name].agents[t.assignee]||0) + 1;
+      }
     });
     projects = Object.values(pjNames).map(function(p) {
+      var agentList = Object.keys(p.agents).map(function(a) {
+        var prof = profiles.find(function(pr){return (pr.name||pr.agent_id)===a;});
+        return {
+          agent_id: a,
+          role: (prof&&prof.role) || (prof&&prof.soul&&prof.soul.role) || 'Worker',
+          task_count: p.agents[a],
+          model: (prof&&prof.model) || (prof&&prof.model&&prof.model.default) || '',
+          load: prof ? Math.round((prof.load_pct||prof.load||0)*100) : 0
+        };
+      });
       return {
         name: p.name,
         task_count: p.tasks.length,
-        agent_count: Object.keys(p.agents).length,
-        agents: Object.keys(p.agents).map(function(a) {
-          var prof = profiles.find(function(pr) { return (pr.name||pr.agent_id) === a; });
-          return { agent_id: a, role: (prof&&prof.role)||'Worker' };
-        }),
-        modules: []
+        agent_count: agentList.length,
+        agents: agentList
       };
     });
   }
@@ -4776,29 +4879,126 @@ function renderProjects() {
     return;
   }
 
-  container.innerHTML = projects.map(function(pj, i) {
+  var html = '';
+  projects.forEach(function(pj, pi) {
+    var pjId = 'pj-mgmt-' + pi;
     var agents = pj.agents || [];
-    var pjId = 'pj-expand-' + i;
-    return '<div style="border:1px solid var(--line);border-radius:var(--r-s);margin-bottom:8px;overflow:hidden">' +
+    
+    // Agent table rows
+    var agentRows = agents.map(function(a, ai) {
+      var esc = JSON.stringify({agent_id:a.agent_id,role:a.role,name:a.agent_id,model:a.model,load_pct:a.load/100}).replace(/"/g,'&quot;');
+      return '<tr class="agent-row" draggable="true" data-agent="'+esc+'"' +
+        ' ondragstart="agentRowDragStart(event,this)" ondragover="agentRowDragOver(event)" ondrop="agentRowDrop(event,this)" ondragend="agentRowDragEnd(event)">' +
+        '<td><span class="drag-handle" title="拖拽排序">⋮⋮</span></td>' +
+        '<td><span style="cursor:pointer;color:var(--teal);font-weight:500" onclick="openDetailPanelEl(this.parentNode.parentNode)">' + a.agent_id + '</span></td>' +
+        '<td><span class="tag" style="background:var(--violet-d);color:var(--violet);font-size:10px">' + a.role + '</span></td>' +
+        '<td style="font-size:11px;color:var(--tx2)">' + (a.model||'?') + '</td>' +
+        '<td><div class="bar" style="width:60px;height:4px"><i style="width:'+a.load+'%;background:'+(a.load>80?'var(--red)':a.load>40?'var(--amber)':'var(--green)')+'"></i></div><span style="font-size:10px;color:var(--tx3);margin-left:4px">'+a.load+'%</span></td>' +
+        '<td style="font-size:11px">' + a.task_count + ' 任务</td>' +
+        '<td style="text-align:right;white-space:nowrap">' +
+          '<button class="btn sm" onclick="event.stopPropagation();updateAgentDialog(\''+a.agent_id+'\')" title="更新" style="padding:2px 6px;font-size:10px">✏️</button>' +
+          '<button class="btn sm" onclick="event.stopPropagation();trainAgent(\''+a.agent_id+'\')" title="培训" style="padding:2px 6px;font-size:10px">🎓</button>' +
+          '<button class="btn sm danger" onclick="event.stopPropagation();removeAgentFromProject(\''+a.agent_id+'\',\''+pj.name+'\')" title="移除" style="padding:2px 6px;font-size:10px">🗑</button>' +
+        '</td></tr>';
+    }).join('');
+    
+    html += '<div style="border:1px solid var(--line);border-radius:var(--r-s);margin-bottom:10px;overflow:hidden">' +
       '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);cursor:pointer" onclick="toggleProject(\''+pjId+'\')">' +
         '<i class="ti ti-chevron-right" id="'+pjId+'-chev" style="transition:transform .2s;font-size:12px;color:var(--tx3)"></i>' +
-        '<span style="font-family:var(--disp);font-size:14px;font-weight:600;color:var(--tx)">'+(pj.name||'项目')+'</span>' +
-        '<span class="tag teal" style="font-size:10px">'+(pj.task_count||0)+' 任务</span>' +
-        '<span class="tag violet" style="font-size:10px">'+agents.length+' Agent</span>' +
-        '<span style="margin-left:auto;font-size:10px;color:var(--tx3)">点击展开</span>' +
+        '<span style="font-family:var(--disp);font-size:14px;font-weight:600;color:var(--tx)">' + pj.name + '</span>' +
+        '<span class="tag teal" style="font-size:10px">' + (pj.task_count||0) + ' 任务</span>' +
+        '<span class="tag violet" style="font-size:10px">' + agents.length + ' Agent</span>' +
+        '<span style="margin-left:auto;display:flex;gap:6px">' +
+          '<button class="btn sm" onclick="event.stopPropagation();addAgentDialog(\''+pj.name+'\')" style="padding:3px 8px;font-size:10px">➕ 添加Agent</button>' +
+        '</span>' +
       '</div>' +
-      '<div id="'+pjId+'" style="display:none;padding:12px 14px;border-top:1px solid var(--line)">' +
-        (agents.length ? agents.map(function(a) {
-          return '<div class="dp-agent-card" style="cursor:pointer" onclick="openDetailPanel(\'agent\','+JSON.stringify({agent_id:a.agent_id||a.name,role:a.role,name:a.agent_id||a.name})+')">' +
-            '<span class="av" style="width:26px;height:26px;font-size:10px;background:var(--blue-d);color:var(--blue)">'+(a.agent_id||'A')[0].toUpperCase()+'</span>' +
-            '<div><div style="font-size:12px;font-weight:500">'+(a.agent_id||a.name||'?')+'</div>' +
-            '<div style="font-size:10px;color:var(--tx3)">'+(a.role||'Agent')+'</div></div>' +
-            '<span class="tag" style="margin-left:auto;font-size:9px">查看</span>' +
-          '</div>';
-        }).join('') : '<div style="color:var(--tx3);font-size:12px">暂无 Agent 分配</div>') +
+      '<div id="'+pjId+'" style="display:none;border-top:1px solid var(--line)">' +
+        '<table style="width:100%;border-collapse:collapse;font-size:12px">' +
+          '<thead><tr style="color:var(--tx3);font-size:10px;text-transform:uppercase;letter-spacing:.05em">' +
+            '<th style="width:24px;padding:8px 4px"></th>' +
+            '<th style="text-align:left;padding:8px 4px">Agent</th>' +
+            '<th style="text-align:left;padding:8px 4px">角色</th>' +
+            '<th style="text-align:left;padding:8px 4px">模型</th>' +
+            '<th style="text-align:left;padding:8px 4px">负载</th>' +
+            '<th style="text-align:left;padding:8px 4px">任务</th>' +
+            '<th style="text-align:right;padding:8px 4px">操作</th>' +
+          '</tr></thead>' +
+          '<tbody>' + agentRows + '</tbody>' +
+        '</table>' +
       '</div>' +
     '</div>';
-  }).join('');
+  });
+  
+  container.innerHTML = html;
+}
+
+// Agent row drag-drop
+var _dragRow = null;
+function agentRowDragStart(e, el) {
+  _dragRow = el;
+  el.style.opacity = '0.4';
+  e.dataTransfer.effectAllowed = 'move';
+}
+function agentRowDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  var row = e.target.closest('.agent-row');
+  if (row && row !== _dragRow) row.classList.add('drag-over');
+}
+function agentRowDrop(e, targetEl) {
+  e.preventDefault();
+  targetEl.classList.remove('drag-over');
+  if (_dragRow && targetEl && _dragRow !== targetEl) {
+    var tbody = targetEl.parentNode;
+    var rows = Array.from(tbody.querySelectorAll('.agent-row'));
+    var fromIdx = rows.indexOf(_dragRow);
+    var toIdx = rows.indexOf(targetEl);
+    if (fromIdx >= 0 && toIdx >= 0) {
+      if (toIdx > fromIdx) {
+        tbody.insertBefore(_dragRow, targetEl.nextSibling);
+      } else {
+        tbody.insertBefore(_dragRow, targetEl);
+      }
+      toast('Agent 顺序已调整');
+    }
+  }
+}
+function agentRowDragEnd(e) {
+  if (_dragRow) _dragRow.style.opacity = '1';
+  document.querySelectorAll('.agent-row.drag-over').forEach(function(r){r.classList.remove('drag-over');});
+  _dragRow = null;
+}
+
+function addAgentDialog(projectName) {
+  var body = '<div class="fld"><label>Agent 名称</label><input id="newAgentName" placeholder="如: backend-dev" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px;font-size:12px"></div>'+
+    '<div class="fld"><label>角色</label><input id="newAgentRole" placeholder="如: 后端开发" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px;font-size:12px"></div>';
+  openDrawerEdit('添加 Agent 到 ' + projectName, '', '<i class="ti ti-user-plus" style="font-size:22px;color:var(--teal)"></i>', body,
+    function() {
+      var name = document.getElementById('newAgentName')?.value?.trim();
+      var role = document.getElementById('newAgentRole')?.value?.trim();
+      if (!name) { toast('请输入Agent名称'); return; }
+      // Create via API
+      fetch(API + '/profiles', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({name:name, role:role, expertise:[role]})
+      }).then(function(r){return r.json();}).then(function(res){
+        if (res && !res.error) {
+          toast('✅ ' + name + ' 已添加');
+          closeAll();
+          loadAllData();
+          setTimeout(function(){ renderProjects(); }, 500);
+        } else {
+          toast('⚠️ ' + (res?.error||'添加失败'));
+        }
+      }).catch(function(){ toast('⚠️ 网络错误'); });
+    }, null, '➕ 添加', '');
+}
+
+// Also expose global openDetailPanelEl for rows
+function openDetailPanelEl(el) {
+  var d = JSON.parse((el.getAttribute('data-agent')||'{}').replace(/&quot;/g,'"'));
+  openDetailPanel('agent', d);
 }
 
 function toggleProject(id) {
