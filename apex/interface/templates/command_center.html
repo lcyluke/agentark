@@ -4570,83 +4570,94 @@ function renderGanttTimeline(containerId) {
   document.getElementById(containerId).innerHTML = html;
 }
 
-/* ========== TREE ORG CHART (Project→Module→Agent) ========== */
+/* ========== ORG BOX CHART (Project→Module→Agent) ========== */
 function renderOrgChart(containerId) {
   var el = document.getElementById(containerId);
   if (!el) return;
-  
   var tasks = state.data.tasks || [];
   var profiles = state.data.profiles || [];
   
+  // Build Project → Module → Agent hierarchy
   var tree = {};
   tasks.forEach(function(t) {
     var m = (t.title||'').match(/^\[([^\]]+)\]/);
-    var pjName = m ? m[1] : '默认项目';
+    var pj = m ? m[1] : '默认项目';
     var title = t.title||'';
-    var modName = '通用模块';
-    if (title.includes('需求')||title.includes('PRD')||title.includes('分析')) modName = '需求分析';
-    else if (title.includes('设计')||title.includes('架构')) modName = '设计架构';
-    else if (title.includes('开发')||title.includes('API')||title.includes('后端')) modName = '后端开发';
-    else if (title.includes('前端')||title.includes('UI')||title.includes('页面')) modName = '前端开发';
-    else if (title.includes('测试')||title.includes('部署')||title.includes('发布')) modName = '测试部署';
-    else if (title.includes('支付')||title.includes('订单')) modName = '支付交易';
-    else if (title.includes('评估')||title.includes('诊断')) modName = 'AI评估';
+    var mod = '通用模块';
+    if (title.includes('需求')||title.includes('PRD')||title.includes('分析')) mod = '需求分析';
+    else if (title.includes('设计')||title.includes('架构')) mod = '设计架构';
+    else if (title.includes('开发')||title.includes('API')||title.includes('后端')) mod = '后端开发';
+    else if (title.includes('前端')||title.includes('UI')||title.includes('页面')) mod = '前端开发';
+    else if (title.includes('测试')||title.includes('部署')||title.includes('发布')) mod = '测试部署';
+    else if (title.includes('支付')||title.includes('订单')) mod = '支付交易';
+    else if (title.includes('评估')||title.includes('诊断')) mod = 'AI评估';
     
-    if (!tree[pjName]) tree[pjName] = {modules:{}};
-    if (!tree[pjName].modules[modName]) tree[pjName].modules[modName] = {agents:{}};
-    if (t.assignee) tree[pjName].modules[modName].agents[t.assignee] = true;
+    if (!tree[pj]) tree[pj] = {modules:{}};
+    if (!tree[pj].modules[mod]) tree[pj].modules[mod] = {agents:{}};
+    if (t.assignee) tree[pj].modules[mod].agents[t.assignee] = true;
   });
   
-  var html = '<div style="font-size:12px">';
-  Object.keys(tree).sort().forEach(function(pjName, pi) {
+  var pjNames = Object.keys(tree).sort();
+  if (!pjNames.length) { el.innerHTML = '<div style="color:var(--tx3);padding:20px;text-align:center">暂无项目数据</div>'; return; }
+  
+  // Render: Project row → Connector → Module row → Connector → Agent row
+  var html = '<div class="org-chart" style="position:relative">';
+  
+  // ── ROW 1: Projects ──
+  html += '<div class="org-row" id="org-pj-row">';
+  pjNames.forEach(function(pjName, pi) {
     var pj = tree[pjName];
-    var mods = Object.keys(pj.modules);
-    var totalAgents = 0;
-    mods.forEach(function(m){ totalAgents += Object.keys(pj.modules[m].agents).length; });
-    var id = 'tree-pj-' + pi;
+    var modCount = Object.keys(pj.modules).length;
+    var agCount = 0;
+    Object.values(pj.modules).forEach(function(m){ agCount += Object.keys(m.agents).length; });
+    html += '<div class="org-box project" onclick="toggleOrgChildren(\'org-pj-'+pi+'\')" title="点击展开/收缩">'+
+      '<span class="bstatus online"></span>'+
+      '<div class="bicon">📁</div>'+
+      '<div class="bname">'+pjName+'</div>'+
+      '<div class="bcount">'+modCount+'模块 · '+agCount+' Agent</div></div>';
+  });
+  html += '</div>';
+  
+  // ── For each project: modules row + connector ──
+  pjNames.forEach(function(pjName, pi) {
+    var pj = tree[pjName];
+    var modNames = Object.keys(pj.modules).sort();
+    var pjId = 'org-pj-' + pi;
     
-    html += '<div class="tree-item">' +
-      '<div class="tree-toggle" onclick="toggleTreeNode(\''+id+'\')">' +
-        '<span class="chev" id="'+id+'-chev">▶</span>' +
-        '<span class="icon">📁</span>' +
-        '<span class="label">' + pjName + '</span>' +
-        '<span class="badge" style="background:var(--teal-d);color:var(--teal)">' + mods.length + ' 模块</span>' +
-        '<span class="badge" style="background:var(--violet-d);color:var(--violet)">' + totalAgents + ' Agent</span>' +
-      '</div>' +
-      '<div class="tree-children" id="'+id+'">';
+    html += '<div class="org-children" id="'+pjId+'">';
     
-    mods.sort().forEach(function(modName, mi) {
+    // Connector SVG from project to its modules
+    html += '<div class="org-connector" style="position:relative;height:30px">'+
+      '<svg class="org-svg"><line x1="50%" y1="0" x2="50%" y2="15"/></svg></div>';
+    
+    // ── ROW 2: Modules ──
+    html += '<div class="org-row" id="'+pjId+'-mods">';
+    modNames.forEach(function(modName, mi) {
       var mod = pj.modules[modName];
+      var agCount = Object.keys(mod.agents).length;
+      var mid = pjId + '-m' + mi;
+      html += '<div class="org-box module" onclick="toggleOrgChildren(\''+mid+'\')" title="点击展开/收缩">'+
+        '<div class="bicon">📦</div>'+
+        '<div class="bname">'+modName+'</div>'+
+        '<div class="bcount">'+agCount+' Agent</div></div>';
+      
+      // ── ROW 3: Agents under each module ──
       var agents = Object.keys(mod.agents).sort();
-      var mid = id + '-m' + mi;
-      
-      html += '<div class="tree-item">' +
-        '<div class="tree-toggle" onclick="toggleTreeNode(\''+mid+'\')">' +
-          '<span class="chev" id="'+mid+'-chev">▶</span>' +
-          '<span class="icon">📦</span>' +
-          '<span class="label">' + modName + '</span>' +
-          '<span class="badge" style="background:var(--bg4);color:var(--tx2)">' + agents.length + '</span>' +
-        '</div>' +
-        '<div class="tree-children" id="'+mid+'">';
-      
+      html += '<div class="org-children" id="'+mid+'" style="display:block">';
+      html += '<div class="org-connector" style="position:relative;height:24px">'+
+        '<svg class="org-svg"><line x1="50%" y1="0" x2="50%" y2="12"/></svg></div>';
+      html += '<div class="org-row">';
       agents.forEach(function(agentId) {
         var prof = profiles.find(function(p){ return (p.name||p.agent_id) === agentId; });
         var role = (prof&&prof.role) || (prof&&prof.soul&&prof.soul.role) || 'Worker';
-        var ad = JSON.stringify({agent_id:agentId,role:role,name:agentId}).replace(/"/g,'&quot;');
-        
-        html += '<div class="tree-leaf" data-agent="'+ad+'" onclick="openDetailPanelEl(this)" draggable="true"' +
-          ' ondragstart="treeLeafDragStart(event,this)" ondragover="treeLeafDragOver(event)" ondrop="treeLeafDrop(event,this)" ondragend="treeLeafDragEnd(event)">' +
-          '<span class="dot" style="background:var(--green)"></span>' +
-          '<span class="name">' + agentId + '</span>' +
-          '<span class="role-tag">' + role + '</span>' +
-          '<span class="actions">' +
-            '<span class="act" title="更新" onclick="event.stopPropagation();updateAgentDialog(\''+agentId+'\')">✏️</span>' +
-            '<span class="act" title="培训" onclick="event.stopPropagation();trainAgent(\''+agentId+'\')">🎓</span>' +
-            '<span class="act danger" title="移除" onclick="event.stopPropagation();removeAgentDialog(\''+agentId+'\',\''+pjName+'\')">🗑</span>' +
-          '</span>' +
-        '</div>';
+        var load = prof ? Math.round((prof.load_pct||prof.load||0)*100) : 0;
+        var ad = JSON.stringify({agent_id:agentId,role:role,name:agentId,load_pct:load/100}).replace(/"/g,'&quot;');
+        html += '<div class="org-box agent" data-agent="'+ad+'" onclick="openDetailPanelEl(this)" style="cursor:pointer">'+
+          '<span class="bstatus '+(load>50?'busy':'online')+'"></span>'+
+          '<div class="bicon">🤖</div>'+
+          '<div class="bname">'+agentId+'</div>'+
+          '<div class="bcount">'+role+' · '+load+'%</div></div>';
       });
-      
       html += '</div></div>';
     });
     
@@ -4655,63 +4666,81 @@ function renderOrgChart(containerId) {
   
   html += '</div>';
   el.innerHTML = html;
+  
+  // Draw SVG connectors between rows
+  setTimeout(function(){ drawOrgConnectors(); }, 100);
 }
 
-function toggleTreeNode(id) {
-  var children = document.getElementById(id);
-  var chev = document.getElementById(id+'-chev');
-  if (!children || !chev) return;
-  if (children.classList.contains('open')) {
-    children.classList.remove('open');
-    chev.classList.remove('open');
-  } else {
-    children.classList.add('open');
-    chev.classList.add('open');
-  }
+function drawOrgConnectors() {
+  var chart = document.getElementById('dashboardOrgChart');
+  if (!chart) return;
+  var chartRect = chart.getBoundingClientRect();
+  
+  // Remove old SVGs
+  chart.querySelectorAll('.org-connector-svg').forEach(function(s){s.remove();});
+  
+  // Create one big SVG overlay
+  var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.classList.add('org-connector-svg');
+  svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0';
+  chart.style.position = 'relative';
+  
+  var pjBoxes = chart.querySelectorAll('.org-box.project');
+  pjBoxes.forEach(function(pjBox, pi) {
+    var pjId = 'org-pj-' + pi;
+    var pjChildren = document.getElementById(pjId);
+    if (!pjChildren || pjChildren.classList.contains('collapsed')) return;
+    
+    var pjRect = pjBox.getBoundingClientRect();
+    var pjCX = pjRect.left - chartRect.left + pjRect.width/2;
+    var pjCY = pjRect.top - chartRect.top + pjRect.height;
+    
+    var modBoxes = pjChildren.querySelectorAll('.org-box.module');
+    modBoxes.forEach(function(modBox, mi) {
+      var modRect = modBox.getBoundingClientRect();
+      var modCX = modRect.left - chartRect.left + modRect.width/2;
+      var modCY = modRect.top - chartRect.top;
+      
+      // Vertical down from project, then horizontal to module
+      var midY = pjCY + (modCY - pjCY) / 2;
+      var path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', 'M'+pjCX+','+pjCY+' L'+pjCX+','+midY+' L'+modCX+','+midY+' L'+modCX+','+modCY);
+      path.setAttribute('stroke', 'var(--line2)');
+      path.setAttribute('stroke-width', '1.5');
+      path.setAttribute('fill', 'none');
+      svg.appendChild(path);
+      
+      // Now from module to its agents
+      var mid = pjId + '-m' + mi;
+      var modChildren = document.getElementById(mid);
+      if (!modChildren || modChildren.classList.contains('collapsed')) return;
+      var agentBoxes = modChildren.querySelectorAll('.org-box.agent');
+      agentBoxes.forEach(function(agentBox) {
+        var agRect = agentBox.getBoundingClientRect();
+        var agCX = agRect.left - chartRect.left + agRect.width/2;
+        var agCY = agRect.top - chartRect.top;
+        var modBotY = modRect.top - chartRect.top + modRect.height;
+        var path2 = document.createElementNS('http://www.w3.org/2000/svg','line');
+        path2.setAttribute('x1', modCX);
+        path2.setAttribute('y1', modBotY);
+        path2.setAttribute('x2', agCX);
+        path2.setAttribute('y2', agCY);
+        path2.setAttribute('stroke', 'var(--line2)');
+        path2.setAttribute('stroke-width', '1');
+        path2.setAttribute('stroke-dasharray', '3,3');
+        svg.appendChild(path2);
+      });
+    });
+  });
+  
+  chart.appendChild(svg);
 }
 
-var _dragAgentId = null;
-function treeLeafDragStart(e, el) {
-  _dragAgentId = (el.querySelector('.name')||{}).textContent || '';
-  el.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-}
-function treeLeafDragOver(e) { e.preventDefault(); }
-function treeLeafDrop(e, targetEl) {
-  e.preventDefault();
-  if (_dragAgentId) toast('已移动 ' + _dragAgentId);
-}
-function treeLeafDragEnd(e) {
-  document.querySelectorAll('.tree-leaf.dragging').forEach(function(el){el.classList.remove('dragging');});
-}
-
-function updateAgentDialog(agentId) {
-  var prof = (state.data.profiles||[]).find(function(p){return (p.name||p.agent_id)===agentId;});
-  var role = (prof&&prof.role)||'Worker';
-  var body = '<div class="fld"><label>Agent ID</label><input id="updAgentId" value="'+agentId+'" readonly style="width:100%;background:var(--bg3);color:var(--tx2);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px;font-size:12px"></div>'+
-    '<div class="fld"><label>角色</label><input id="updAgentRole" value="'+role+'" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px;font-size:12px"></div>';
-  openDrawerEdit('更新 Agent: '+agentId, '修改角色信息', '<i class="ti ti-edit" style="font-size:22px;color:var(--teal)"></i>', body,
-    function() {
-      var newRole = document.getElementById('updAgentRole')?.value?.trim();
-      if (newRole && prof) prof.role = newRole;
-      toast('Agent 已更新');
-      closeAll();
-    }, null, '💾 保存', '');
-}
-
-function trainAgent(agentId) {
-  toast('🎓 启动 ' + agentId + ' 培训...');
-  fetch(API + '/run', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({task:'学习最新技能并更新知识库', profile:agentId})
-  }).then(function(r){return r.json();}).then(function(res){
-    toast(res&&res.success ? '✅ '+agentId+' 培训完成' : '⚠️ 培训失败');
-  }).catch(function(){ toast('⚠️ 网络错误'); });
-}
-
-function removeAgentDialog(agentId, projectName) {
-  if (!confirm('确定从 '+projectName+' 移除 '+agentId+'？')) return;
-  toast('已移除 ' + agentId);
+function toggleOrgChildren(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle('collapsed');
+  setTimeout(drawOrgConnectors, 100);
 }
 /* ========== DRAG & DROP — Agent → Project ========== */
 function initDragDrop() {
