@@ -360,7 +360,108 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
 }
 
 @media(max-width:920px){.app{grid-template-columns:1fr}.side{display:none}.kpis,.kanban,.ladder,.board-grid{grid-template-columns:repeat(1,1fr)}.fleet-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}}
+/* ═══ RIGHT DETAIL PANEL ═══ */
+.detail-panel{position:fixed;top:0;right:-440px;width:420px;height:100vh;background:var(--bg2);
+  border-left:1px solid var(--line);z-index:200;transition:right .3s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;overflow-y:auto;box-shadow:-8px 0 30px rgba(0,0,0,.4)}
+.detail-panel.on{right:0}
+.detail-panel .dp-header{padding:18px 20px 12px;border-bottom:1px solid var(--line);
+  display:flex;align-items:flex-start;gap:12px;background:var(--bg3);position:sticky;top:0;z-index:5}
+.detail-panel .dp-icon{width:44px;height:44px;border-radius:var(--r);display:grid;place-items:center;
+  font-size:22px;flex-shrink:0}
+.detail-panel .dp-close{position:absolute;right:16px;top:16px;cursor:pointer;color:var(--tx3);
+  font-size:18px;width:28px;height:28px;display:grid;place-items:center;border-radius:6px}
+.detail-panel .dp-close:hover{background:var(--bg4);color:var(--tx)}
+.detail-panel .dp-body{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+.detail-panel .dp-section{}
+.detail-panel .dp-section h4{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--tx3);
+  margin-bottom:8px;font-family:var(--disp);font-weight:600}
+.detail-panel .dp-kv{display:flex;justify-content:space-between;align-items:center;padding:7px 0;
+  border-bottom:1px solid var(--line);font-size:12.5px}
+.detail-panel .dp-kv .k{color:var(--tx2)} .detail-panel .dp-kv .v{font-family:var(--mono);font-size:12px}
+.detail-panel .dp-tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:10px;
+  font-weight:600;font-family:var(--mono)}
+.detail-panel .dp-tag.done{background:var(--green-d);color:var(--green)}
+.detail-panel .dp-tag.prog{background:var(--amber-d);color:var(--amber)}
+.detail-panel .dp-tag.todo{background:var(--bg4);color:var(--tx3)}
+.detail-panel .dp-agent-card{display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg3);
+  border-radius:var(--r-s);cursor:pointer;margin:4px 0}
+.detail-panel .dp-agent-card:hover{background:var(--bg4)}
+.detail-panel .dp-task-item{display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer;
+  border-radius:4px;font-size:12px;margin:2px 0}
+.detail-panel .dp-task-item:hover{background:var(--bg3)}
+
+/* ═══ GANTT TIMELINE ═══ */
+.gantt-wrap{overflow-x:auto;padding:8px 0}
+.gantt-phase{margin-bottom:14px}
+.gantt-phase-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;
+  padding:8px 10px;background:var(--bg3);border-radius:var(--r-s);font-size:13px;font-weight:600}
+.gantt-phase-header .chev{transition:transform .2s;font-size:12px}
+.gantt-phase-header.open .chev{transform:rotate(90deg)}
+.gantt-phase-tasks{display:none;padding-left:20px}
+.gantt-phase-tasks.open{display:block}
+.gantt-row{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:12px}
+.gantt-row .gantt-label{width:160px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:var(--tx)}
+.gantt-row .gantt-track{flex:1;height:22px;background:var(--bg4);border-radius:4px;position:relative;
+  min-width:100px}
+.gantt-row .gantt-bar{position:absolute;top:3px;height:16px;border-radius:3px;
+  background:linear-gradient(90deg,var(--teal),var(--green));opacity:.85}
+.gantt-row .gantt-bar.phase2{background:linear-gradient(90deg,var(--violet),var(--blue))}
+.gantt-row .gantt-bar.phase3{background:linear-gradient(90deg,var(--amber),#f97316)}
+.gantt-row .gantt-bar.done{opacity:.5}
+.gantt-row .gantt-bar.todo{background:var(--bg4);border:1px dashed var(--line2)}
+.gantt-row .gantt-dates{width:130px;flex-shrink:0;font-size:10px;color:var(--tx3);font-family:var(--mono);
+  text-align:right}
+.gantt-timeline{display:flex;font-size:9px;color:var(--tx3);padding-left:170px;margin-bottom:4px;
+  font-family:var(--mono)}
+.gantt-timeline span{flex:1;text-align:center}
+
+/* ═══ ORG CHART ═══ */
+.org-tree{display:flex;flex-direction:column;align-items:center;gap:0;padding:20px 0}
+.org-level{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;position:relative}
+.org-level::after{content:'';position:absolute;top:-12px;left:50%;width:2px;height:12px;background:var(--line2)}
+.org-level:first-child::after{display:none}
+.org-node{background:var(--bg3);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;
+  text-align:center;min-width:140px;transition:.15s;position:relative}
+.org-node:hover{border-color:var(--teal);box-shadow:0 0 16px rgba(45,212,191,.1)}
+.org-node .on-icon{font-size:28px;margin-bottom:4px}
+.org-node .on-name{font-family:var(--disp);font-size:13px;font-weight:600;margin-bottom:2px}
+.org-node .on-role{font-size:10px;color:var(--tx3);margin-bottom:4px}
+.org-node .on-meta{font-size:10px;color:var(--tx2);display:flex;gap:8px;justify-content:center}
+.org-node.origin{border-color:var(--teal);background:var(--teal-d)}
+.org-node.pm{border-color:var(--violet)}
+.org-node.worker{border-color:var(--blue)}
+.org-connector{width:2px;height:16px;background:var(--line2);margin:0 auto}
+
+/* ═══ DRAG & DROP ═══ */
+.agent-card[draggable]{cursor:grab;user-select:none}
+.agent-card[draggable]:active{cursor:grabbing;opacity:.7}
+.drop-zone{border:2px dashed var(--line2);border-radius:var(--r);padding:12px;min-height:60px;
+  transition:.2s;display:flex;align-items:center;justify-content:center;color:var(--tx3);font-size:12px}
+.drop-zone.active{border-color:var(--teal);background:var(--teal-d);color:var(--teal)}
+.drop-zone.hover{border-color:var(--green);background:var(--green-d);box-shadow:0 0 20px rgba(52,211,153,.15)}
+.drag-ghost{opacity:.6}
+
+/* ═══ AGENT TABLE ═══ */
+.agent-row{transition:opacity .15s;border-bottom:1px solid var(--line)}
+.agent-row:hover{background:var(--bg3)}
+.agent-row td{padding:6px 4px;vertical-align:middle}
+.drag-handle{cursor:grab;color:var(--tx3);font-size:14px;user-select:none;padding:0 4px}
+.drag-handle:active{cursor:grabbing}
+.agent-row.drag-over td{border-top:2px solid var(--teal)}
+
+/* ═══ D3 TREE CHART ═══ */
+.d3-tree-container{width:100%;overflow:auto;min-height:400px;padding:10px 0}
+.d3-tree-container svg{display:block;margin:0 auto}
+.d3-node rect{stroke-width:2px;rx:8px;ry:8px;transition:all .25s ease}
+.d3-node text{font-family:var(--body);font-size:11px;fill:var(--tx);pointer-events:none;text-anchor:middle}
+.d3-link{fill:none;stroke:var(--line2);stroke-width:2px}
+.d3-tree-container svg{cursor:grab}
+.d3-tree-container svg:active{cursor:grabbing}
+
 </style>
+<script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
 <div class="app">
@@ -408,18 +509,29 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
       <section class="view on" id="v-dashboard">
         <div class="grid kpis" id="kpiRow"></div>
         <div style="height:22px"></div>
-        <div class="grid" style="grid-template-columns:2fr 1fr">
-          <div class="card">
-          </div>
-          <div class="card">
-            <div class="sec-h"><i class="ti ti-activity-heartbeat"></i>快速统计</div>
-            <div id="quickStats"></div>
-          </div>
+        <!-- 项目群管理 -->
+        <div class="card">
+          <div class="sec-h"><i class="ti ti-folders"></i>📁 项目群管理 <span style="font-size:10px;color:var(--tx3);font-weight:400">— 点击展开查看Agent编队</span></div>
+          <div id="dashboardProjects"></div>
         </div>
         <div style="height:22px"></div>
         <div class="card">
-          <div class="sec-h"><i class="ti ti-activity"></i>活动流与警报</div>
-          <div id="feed"></div>
+          <div class="sec-h"><i class="ti ti-sitemap"></i>🪜 Agent 组织架构 <span style="font-size:10px;color:var(--tx3);font-weight:400">— 点击节点查看详情</span></div>
+          <div id="dashboardOrgChart"></div>
+        </div>
+        <div style="height:22px"></div>
+        <div class="card">
+          <div class="sec-h" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <i class="ti ti-timeline"></i>📅 项目任务时间线
+            <span style="font-size:10px;color:var(--tx3);font-weight:400">— 点击任务条查看详情</span>
+            <span style="flex:1"></span>
+            <span style="display:flex;align-items:center;gap:4px;background:var(--bg3);border-radius:6px;padding:3px">
+              <button class="btn sm" onclick="ganttZoom(-1)" style="padding:2px 8px;font-size:11px" title="缩小时间单位">🔍−</button>
+              <span id="ganttScaleLabel" style="font-size:11px;color:var(--tx2);min-width:30px;text-align:center;font-family:var(--mono)">日</span>
+              <button class="btn sm" onclick="ganttZoom(1)" style="padding:2px 8px;font-size:11px" title="放大时间单位">🔍+</button>
+            </span>
+          </div>
+          <div id="dashboardGantt"></div>
         </div>
       </section>
 
@@ -521,6 +633,22 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
             <div class="sec-h"><i class="ti ti-user-circle"></i>用户设置</div>
             <div id="userSettings"><div style="padding:16px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div class="av" style="width:48px;height:48px;font-size:20px;background:var(--teal-d);color:var(--teal)">👤</div><div><b style="font-size:16px">用户</b><div style="color:var(--tx3);font-size:12px">已登录 · Hermes 活跃</div></div></div><button class="btn" onclick="openUserSettings()" style="width:100%"><i class="ti ti-settings"></i>用户设置</button></div></div>
           </div>
+        </div>
+        <div style="height:22px"></div>
+        <div class="sec-h" style="display:flex;align-items:center;gap:10px">
+          <i class="ti ti-network"></i>🖥️ 远程舰队节点
+          <button class="btn sm" onclick="openAddNodeDialog()" style="margin-left:auto"><i class="ti ti-plus"></i>添加节点</button>
+        </div>
+        <div id="remoteNodesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-top:10px">
+          <div style="color:var(--tx3);font-size:12px;padding:20px;text-align:center">加载中...</div>
+        </div>
+        <!-- 舰队配置 -->
+        <div style="height:16px"></div>
+        <div class="sec-h"><i class="ti ti-shield-lock"></i>安全配置</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px" id="fleetSecurityBar">
+          <span style="font-size:12px;color:var(--tx2)">IP 白名单:</span>
+          <span id="whitelistBadge" style="font-size:11px"></span>
+          <button class="btn sm" onclick="openFleetConfig()"><i class="ti ti-settings"></i>配置</button>
         </div>
       </section>
 
@@ -771,6 +899,19 @@ h1,h2,h3,.disp{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
   </div>
 </div>
 
+<!-- ═══ RIGHT DETAIL PANEL ═══ -->
+<div class="detail-panel" id="detailPanel">
+  <div class="dp-header">
+    <div class="dp-icon" id="dpIcon">📋</div>
+    <div style="flex:1">
+      <div style="font-family:var(--disp);font-size:15px;font-weight:600" id="dpTitle">详情</div>
+      <div style="font-size:11px;color:var(--tx3)" id="dpSub"></div>
+    </div>
+    <div class="dp-close" onclick="closeDetailPanel()"><i class="ti ti-x"></i></div>
+  </div>
+  <div class="dp-body" id="dpBody"></div>
+</div>
+
 <script>
 /* ============ Apex Command Center — Application Logic ============ */
 window.__jsErrors = [];
@@ -993,6 +1134,7 @@ function closeAll() {
   $$('.drawer').forEach(d => d.classList.remove('on'));
   $$('.modal').forEach(m => m.classList.remove('on'));
   $('#scrim').classList.remove('on');
+  closeDetailPanel();
 }
 function openDrawer(title, sub, iconHtml, bodyHtml) {
   $('#ddTitle').textContent = title;
@@ -1044,34 +1186,16 @@ function kpiHTML(icon, label, num, sub, cls) {
    VIEW 1: DASHBOARD
    ================================================================= */
 function renderDashboard() {
+  // KPI row — keep it lightweight
   const d = state.data;
   const cc = d.cc || {};
-  const hs = cc.hermes_sessions || {};
-  const hprof = cc.hermes_profiles || {};
-  // Quick stats
   const cronCount = (cc.hermes_cron && cc.hermes_cron.jobs ? cc.hermes_cron.jobs.length : 0) || 0;
-  const modelsCount = (cc.pricing && cc.pricing.models ? Object.keys(cc.pricing.models).length : 0) || 0;
   const kgNodes = (d.knowledge && d.knowledge.nodes) || 0;
-  $('#quickStats').innerHTML = `
-    <div class="kv"><span class="k">Cron 任务</span><span class="vv">${cronCount}</span></div>
-    <div class="kv"><span class="k">模型数量</span><span class="vv">${modelsCount}</span></div>
-    <div class="kv"><span class="k">知识节点</span><span class="vv">${kgNodes}</span></div>
-    <div class="kv"><span class="k">Profile 数</span><span class="vv">${(d.profiles||[]).length}</span></div>
-    <div class="kv"><span class="k">引擎状态</span><span class="vv"><span class="tag ${auto.status==='running'?'green':'amber'}">${auto.status||'未启动'}</span></span></div>`;
-
-  // Feed
-  const alerts = (auto.alerts || []).slice(0, 5);
-  const feedItems = alerts.length ? alerts.map(a => {
-    return `<div class="li">
-      <div class="ic" style="background:var(--amber-d);color:var(--amber)"><i class="ti ti-alert-triangle"></i></div>
-      <div style="flex:1"><div class="t">${typeof a === 'string' ? a : a.message || JSON.stringify(a)}</div><div class="d">自治引擎警报</div></div>
-    </div>`;
-  }).join('') : `<div class="li">
-      <div class="ic" style="background:var(--green-d);color:var(--green)"><i class="ti ti-check"></i></div>
-      <div style="flex:1"><div class="t">系统运行正常,无警报</div><div class="d">实时</div></div>
-    </div>`;
-  $('#feed').innerHTML = feedItems;
-
+  $('#kpiRow').innerHTML = 
+    kpiHTML('ti-clock', 'Cron 任务', cronCount, '活跃定时任务', '') +
+    kpiHTML('ti-brain', '知识节点', kgNodes, '知识图谱', '') +
+    kpiHTML('ti-users', 'Profile', (d.profiles||[]).length, 'Agent 总数', '') +
+    kpiHTML('ti-list-check', 'Tasks', (d.tasks||[]).length, '总任务数', '');
   updatePulse();
 }
 
@@ -2059,9 +2183,219 @@ async function renderFleet() {
 
   // Board mini
   renderUserMini();
+  // Fetch remote fleet nodes
+  loadRemoteNodes();
 }
 
-/* ========== BOARD MANAGEMENT ========== */
+/* ========== REMOTE FLEET NODES ========== */
+async function loadRemoteNodes() {
+  const data = await fetchJSON(API + '/fleet/nodes');
+  const nodes = data?.nodes || [];
+  renderRemoteNodes(nodes);
+  renderFleetSecurity();
+}
+
+function renderRemoteNodes(nodes) {
+  const grid = $('#remoteNodesGrid');
+  if (!grid) return;
+
+  if (!nodes.length) {
+    grid.innerHTML = '<div style="color:var(--tx3);font-size:12px;padding:20px;text-align:center;border:1px dashed var(--line);border-radius:var(--r-s)"><i class="ti ti-network-off" style="font-size:28px;display:block;margin-bottom:8px"></i>暂无远程节点<br><span style="font-size:11px">点击「添加节点」连接局域网或互联网上的其他 Mac</span></div>';
+    return;
+  }
+
+  grid.innerHTML = nodes.map(n => {
+    const probe = n._probe || {};
+    const online = n.status === 'online';
+    const statusColor = online ? 'var(--green)' : 'var(--red)';
+    const statusText = online ? '🟢 已连接' : (probe.error ? '🔴 ' + probe.error : '⚫ 未连接');
+    const version = n.remote_version || probe.version || '?';
+    const name = n.remote_name || probe.name || 'AgentArk';
+
+    return `<div class="fleet-card" style="border-left:3px solid ${statusColor}">
+      <span class="fcan" style="background:${online?'var(--green-d)':'var(--red-d)'};color:${statusColor}">${statusText}</span>
+      <div class="fh">
+        <span class="av" style="background:var(--blue-d);color:var(--blue);width:32px;height:32px;font-size:14px">🖥️</span>
+        <div>
+          <div class="fname">${n.nickname||n.host}</div>
+          <div class="frole">${n.host}:${n.port} · ${name} v${version}</div>
+        </div>
+      </div>
+      <div class="fmeta">
+        <span><i class="ti ti-clock"></i>${n.last_seen ? new Date(n.last_seen).toLocaleTimeString() : '从未'}</span>
+        <span><i class="ti ti-key"></i>${n.token ? 'Token 认证' : '无认证'}</span>
+      </div>
+      <div class="fbtns">
+        <button class="btn sm" onclick="testRemoteNode('${n.id}')"><i class="ti ti-refresh"></i>测试</button>
+        <button class="btn sm" onclick="viewRemoteNode('${n.id}')"><i class="ti ti-eye"></i>详情</button>
+        <button class="btn sm danger" onclick="removeRemoteNode('${n.id}')"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function testRemoteNode(nodeId) {
+  toast('正在测试连接...');
+  const res = await fetchJSON(API + '/fleet/nodes/' + nodeId + '/test', { method: 'POST' });
+  if (res && res.probe?.reachable) {
+    toast('<i class="ti ti-circle-check"></i> 连接成功！' + (res.probe.version ? ' v' + res.probe.version : ''));
+  } else {
+    toast('<i class="ti ti-alert-triangle"></i> 连接失败: ' + ((res && res.probe?.error) || '未知错误'));
+  }
+  loadRemoteNodes();
+}
+
+async function viewRemoteNode(nodeId) {
+  const data = await fetchJSON(API + '/fleet/nodes/' + nodeId + '/status');
+  if (!data) { toast('无法获取节点详情'); return; }
+
+  const rs = data.remote_status || {};
+  const tasks = rs.recent_tasks || [];
+  const taskHTML = tasks.length ? tasks.map(t => 
+    `<div class="dt"><span class="dtag ${t.status==='done'?'done':t.status==='in_progress'?'prog':'todo'}">${t.status||'?'}</span><span style="font-size:11px">${t.title||''}</span></div>`
+  ).join('') : '<div style="font-size:11px;color:var(--tx3)">无任务</div>';
+
+  const body = `<div class="fld">
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px">
+      <div><b>${rs.profiles||0}</b> Agents</div>
+      <div><b>${rs.tasks||0}</b> Tasks</div>
+      <div><b>${Math.round((rs.uptime_seconds||0)/3600)}h</b> 运行</div>
+    </div>
+    <div class="fld"><label>最近任务</label>${taskHTML}</div>
+  </div>`;
+
+  openDrawer(
+    data.nickname + ' · 远程节点详情',
+    data.host + ':' + data.port + ' · ' + (data.version||'?'),
+    '<i class="ti ti-server" style="font-size:22px;color:var(--blue)"></i>',
+    body
+  );
+}
+
+function openAddNodeDialog() {
+  const body = `<div class="fld"><label><i class="ti ti-network"></i> 主机地址 (IP 或域名)</label>
+      <input id="newNodeHost" placeholder="例如: 192.168.1.100 或 mac-studio.local" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:10px;font-size:13px">
+    </div>
+    <div class="fld"><label><i class="ti ti-plug"></i> 端口</label>
+      <input id="newNodePort" value="8080" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:10px;font-size:13px">
+    </div>
+    <div class="fld"><label><i class="ti ti-tag"></i> 昵称 (可选)</label>
+      <input id="newNodeNick" placeholder="如: Mac Studio" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:10px;font-size:13px">
+    </div>
+    <div class="fld"><label><i class="ti ti-key"></i> 认证 Token (可选, 若远程开启了 Token 认证)</label>
+      <input id="newNodeToken" placeholder="远程机器上设置的 Fleet Token" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:10px;font-size:13px">
+    </div>
+    <div style="font-size:11px;color:var(--tx3);margin-top:8px;padding:8px;background:var(--bg3);border-radius:var(--r-s)">
+      <b>💡 提示:</b> 远程 Mac 需运行 <code style="background:var(--bg4);padding:2px 6px;border-radius:4px">agentark demo</code> 并确保防火墙允许端口访问。
+      <br>局域网: 使用 IP 地址 · 互联网: 使用公网 IP/域名 + 端口转发
+    </div>`;
+
+  openDrawerEdit(
+    '添加远程舰队节点',
+    '连接局域网或互联网上的其他 Mac',
+    '<i class="ti ti-network" style="font-size:22px;color:var(--teal)"></i>',
+    body,
+    async () => {
+      const host = document.getElementById('newNodeHost')?.value?.trim();
+      const port = parseInt(document.getElementById('newNodePort')?.value) || 8080;
+      const nickname = document.getElementById('newNodeNick')?.value?.trim();
+      const token = document.getElementById('newNodeToken')?.value?.trim();
+
+      if (!host) { toast('请输入主机地址'); return; }
+
+      const res = await fetch(API + '/fleet/nodes', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ host, port, nickname, token: token || undefined })
+      }).then(r => r.json());
+
+      if (res.error) {
+        toast('<i class="ti ti-alert-triangle"></i> ' + res.error);
+      } else {
+        toast('<i class="ti ti-circle-check"></i> 节点已添加' + (res._probe?.reachable ? ' · 连接成功！' : ' · 无法连接'));
+        closeAll();
+        loadRemoteNodes();
+      }
+    },
+    null, '🔗 添加并测试', ''
+  );
+}
+
+async function removeRemoteNode(nodeId) {
+  if (!confirm('确定移除此节点？')) return;
+  const res = await fetch(API + '/fleet/nodes/' + nodeId, { method: 'DELETE' }).then(r => r.json());
+  if (res.deleted) {
+    toast('节点已移除');
+    loadRemoteNodes();
+  }
+}
+
+async function fetchFleetConfig() {
+  return await fetchJSON(API + '/fleet/config');
+}
+
+function renderFleetSecurity() {
+  fetchFleetConfig().then(cfg => {
+    if (!cfg) return;
+    const badge = $('#whitelistBadge');
+    if (badge) {
+      badge.innerHTML = cfg.whitelist_enabled
+        ? '<span style="color:var(--green);font-weight:600">🟢 已启用</span> · ' + cfg.allowed_ips.join(', ')
+        : '<span style="color:var(--tx3)">⚫ 已禁用 (允许所有 IP)</span>';
+    }
+  });
+}
+
+function openFleetConfig() {
+  fetchFleetConfig().then(cfg => {
+    if (!cfg) return;
+    const body = `<div class="fld"><label style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="cfgWhitelist" ${cfg.whitelist_enabled?'checked':''} onchange="this.checked ? $('#cfgIps').style.display='' : $('#cfgIps').style.display='none'">
+        <span>启用 IP 白名单</span>
+      </label></div>
+      <div class="fld" id="cfgIps" style="${cfg.whitelist_enabled?'':'display:none'}">
+        <label>允许的 IP/CIDR (每行一个)</label>
+        <textarea id="cfgIpsInput" style="width:100%;min-height:80px;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:10px;font-size:12px;font-family:var(--mono)">${(cfg.allowed_ips||[]).join('\\n')}</textarea>
+        <div style="font-size:10px;color:var(--tx3);margin-top:4px">示例: 192.168.1.0/24 · 10.0.0.1 · 0.0.0.0/0 (允许所有)</div>
+      </div>
+      <div class="fld"><label>本机 Fleet Token (远程节点连接本机时使用)</label>
+        <input id="cfgToken" placeholder="${cfg.local_token_set ? '(已设置，留空保持不变)' : '设置 Token'}" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:10px;font-size:13px">
+        <div style="font-size:10px;color:var(--tx3);margin-top:4px">留空则不启用 Token 认证</div>
+      </div>`;
+
+    openDrawerEdit(
+      '舰队安全配置',
+      '白名单 + Token 双重保护',
+      '<i class="ti ti-shield-lock" style="font-size:22px;color:var(--amber)"></i>',
+      body,
+      async () => {
+        const whitelistEnabled = document.getElementById('cfgWhitelist')?.checked;
+        const ipsText = document.getElementById('cfgIpsInput')?.value || '';
+        const tokenVal = document.getElementById('cfgToken')?.value?.trim();
+        const ips = ipsText.split('\\n').map(s => s.trim()).filter(Boolean);
+
+        const payload = { whitelist_enabled: whitelistEnabled, allowed_ips: ips };
+        if (tokenVal) payload.local_token = tokenVal;
+
+        const res = await fetch(API + '/fleet/config', {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        }).then(r => r.json());
+
+        if (res.saved) {
+          toast('<i class="ti ti-circle-check"></i> 安全配置已保存');
+          closeAll();
+          renderFleetSecurity();
+        }
+      },
+      null, '💾 保存', ''
+    );
+  });
+}
+
+
+
 function renderUserMini() {
   const b = state.board;
   const humans = b.humans || [];
@@ -4097,10 +4431,710 @@ setInterval(async () => {
 Promise.all([
   loadAllData(),
   fetchLiveRuntime()
-]).then(() => {
+]).then(function() {
   renderDashboard();
-  toast('Apex 指挥中心已就绪');
+  toast('AgentArk 指挥中心已就绪');
 });
+/* ========== RIGHT DETAIL PANEL ========== */
+function openDetailPanel(type, data) {
+  var icon, title, sub, body = '';
+  
+  if (type === 'agent') {
+    icon = '🤖'; title = data.name || data.agent_id || 'Agent';
+    sub = (data.role || 'Worker') + ' · ' + (data.model || '?');
+    var tasks = (state.data.tasks || []).filter(function(t){return t.assignee === data.name || t.assignee === data.agent_id;});
+    body = '<div class="dp-section"><h4>📊 基本信息</h4>'+
+      '<div class="dp-kv"><span class="k">Agent ID</span><span class="v">'+(data.agent_id||data.name||'?')+'</span></div>'+
+      '<div class="dp-kv"><span class="k">角色</span><span class="v">'+(data.role||'Worker')+'</span></div>'+
+      '<div class="dp-kv"><span class="k">模型</span><span class="v">'+(data.model||'?')+'</span></div>'+
+      '<div class="dp-kv"><span class="k">负载</span><span class="v">'+Math.round((data.load_pct||data.load||0)*100)+'%</span></div>'+
+      '<div class="dp-kv"><span class="k">技能数</span><span class="v">'+(data.skills||0)+'</span></div>'+
+      '<div class="dp-kv"><span class="k">状态</span><span class="v">'+(data.canAccept!==false?'<span class="dp-tag prog">可接单</span>':'<span class="dp-tag done">忙碌</span>')+'</span></div>'+
+      '</div>'+
+      '<div class="dp-section"><h4>📋 任务列表 ('+tasks.length+')</h4>'+
+      tasks.slice(0,10).map(function(t){
+        return '<div class="dp-task-item" onclick="openDetailPanel(\'task\',{id:\''+t.id+'\',title:\''+(t.title||'').replace(/'/g,"\\'")+'\',status:\''+t.status+'\',assignee:\''+(t.assignee||'')+'\',priority:'+(t.priority||0)+'})">'+
+          '<span class="dp-tag '+(t.status==='done'?'done':t.status==='in_progress'?'prog':'todo')+'">'+(t.status||'todo')+'</span>'+
+          '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(t.title||'')+'</span>'+
+          '</div>';
+      }).join('')+
+      (tasks.length>10?'<div style="font-size:11px;color:var(--tx3);padding:4px">+ '+(tasks.length-10)+' 更多...</div>':'')+
+      '</div>';
+  } else if (type === 'task') {
+    icon = '📋'; title = (data.title||'').substring(0,50); sub = '#'+data.id;
+    var statusTag = '<span class="dp-tag '+(data.status==='done'?'done':data.status==='in_progress'?'prog':'todo')+'">'+(data.status||'todo')+'</span>';
+    var phase = data.phase || (data.title||'').includes('需求')?'Phase 1 · 需求定义':(data.title||'').includes('设计')?'Phase 2 · 设计开发':(data.title||'').includes('测试')?'Phase 3 · 测试部署':'Phase 2 · 设计开发';
+    var startDate = data.created_at ? new Date(data.created_at).toLocaleDateString() : '?';
+    var endDate = data.completed_at ? new Date(data.completed_at).toLocaleDateString() : (data.status==='done'?startDate:'进行中');
+    var duration = data.created_at && data.completed_at ? Math.round((new Date(data.completed_at)-new Date(data.created_at))/86400000)+' 天' : '?';
+    
+    body = '<div class="dp-section"><h4>📊 任务信息</h4>'+
+      '<div class="dp-kv"><span class="k">ID</span><span class="v">'+data.id+'</span></div>'+
+      '<div class="dp-kv"><span class="k">状态</span><span class="v">'+statusTag+'</span></div>'+
+      '<div class="dp-kv"><span class="k">阶段</span><span class="v">'+phase+'</span></div>'+
+      '<div class="dp-kv"><span class="k">负责人</span><span class="v">'+(data.assignee||'未分配')+'</span></div>'+
+      '<div class="dp-kv"><span class="k">优先级</span><span class="v">'+(data.priority===1?'🔴 高':data.priority===2?'🟡 中':'🟢 低')+'</span></div>'+
+      '<div class="dp-kv"><span class="k">开始</span><span class="v">'+startDate+'</span></div>'+
+      '<div class="dp-kv"><span class="k">完成</span><span class="v">'+endDate+'</span></div>'+
+      '<div class="dp-kv"><span class="k">工期</span><span class="v">'+duration+'</span></div>'+
+      '</div>'+
+      '<div class="dp-section"><h4>📝 描述</h4><div style="font-size:12px;color:var(--tx2);line-height:1.6">'+(data.description||data.title||'无描述')+'</div></div>';
+  } else if (type === 'project') {
+    icon = '📁'; title = data.name||'Project'; sub = (data.modules||[]).length+' 模块 · '+(data.agents||[]).length+' Agent';
+    var mods = data.modules||[];
+    var agents = data.agents||[];
+    body = '<div class="dp-section"><h4>📊 项目概览</h4>'+
+      '<div class="dp-kv"><span class="k">模块数</span><span class="v">'+mods.length+'</span></div>'+
+      '<div class="dp-kv"><span class="k">Agent数</span><span class="v">'+agents.length+'</span></div>'+
+      '</div>'+
+      '<div class="dp-section"><h4>🧩 模块列表</h4>'+
+      mods.map(function(m){return '<div class="dp-task-item"><span style="color:var(--violet)">📦</span> '+(m.name||'?')+'</div>';}).join('')+
+      '</div>'+
+      '<div class="dp-section"><h4>🤖 Agent编队</h4>'+
+      agents.map(function(a){return '<div class="dp-agent-card" onclick="openDetailPanel(\'agent\','+JSON.stringify(a)+')"><span class="av" style="width:24px;height:24px;font-size:10px;background:var(--teal-d);color:var(--teal)">'+(a.agent_id||'A')[0].toUpperCase()+'</span><span style="font-size:12px">'+(a.agent_id||'?')+'</span><span style="margin-left:auto;font-size:10px;color:var(--tx3)">'+Math.round((a.load_pct||0)*100)+'%</span></div>';}).join('')+
+      '</div>';
+  }
+  
+  document.getElementById('dpIcon').textContent = icon;
+  document.getElementById('dpTitle').textContent = title;
+  document.getElementById('dpSub').textContent = sub;
+  document.getElementById('dpBody').innerHTML = body;
+  document.getElementById('detailPanel').classList.add('on');
+}
+function closeDetailPanel() {
+  document.getElementById('detailPanel').classList.remove('on');
+}
+
+
+/* ========== PROJECT GANTT TIMELINE ========== */
+function openDetailPanelTask(el) {
+  var d = JSON.parse(el.getAttribute('data-task')||'{}');
+  openDetailPanel('task', d);
+}
+
+function renderGanttTimeline(containerId) {
+  var tasks = state.data.tasks || [];
+  if (!tasks.length) { document.getElementById(containerId).innerHTML = '<div style="color:var(--tx3);font-size:12px;padding:20px;text-align:center">暂无任务数据</div>'; return; }
+  
+  // Group tasks by phase based on title keywords
+  var phases = {
+    'Phase 1 · 需求定义': [],
+    'Phase 2 · 设计开发': [],
+    'Phase 3 · 测试部署': []
+  };
+  
+  tasks.forEach(function(t) {
+    var title = t.title||'';
+    if (title.includes('需求')||title.includes('PRD')||title.includes('分析')) phases['Phase 1 · 需求定义'].push(t);
+    else if (title.includes('测试')||title.includes('部署')||title.includes('上线')||title.includes('发布')) phases['Phase 3 · 测试部署'].push(t);
+    else phases['Phase 2 · 设计开发'].push(t);
+  });
+  
+  // Calculate date range
+  var allDates = [];
+  tasks.forEach(function(t){
+    if (t.created_at) allDates.push(new Date(t.created_at).getTime());
+    if (t.completed_at) allDates.push(new Date(t.completed_at).getTime());
+  });
+  if (!allDates.length) allDates = [Date.now() - 7*86400000, Date.now()];
+  var minDate = Math.min.apply(null, allDates);
+  var maxDate = Math.max.apply(null, allDates);
+  var range = maxDate - minDate || 86400000;
+  
+  var phaseColors = ['', 'phase2', 'phase3'];
+  var html = '<div class="gantt-wrap">';
+  
+  Object.keys(phases).forEach(function(phaseName, pi){
+    var pt = phases[phaseName];
+    var doneCount = pt.filter(function(t){return t.status==='done';}).length;
+    html += '<div class="gantt-phase">'+
+      '<div class="gantt-phase-header" onclick="this.classList.toggle(\'open\');this.nextElementSibling.classList.toggle(\'open\')">'+
+        '<span class="chev">▶</span> '+phaseName+' · '+
+        '<span style="color:var(--green)">'+doneCount+'/'+pt.length+' 完成</span>'+
+        '<span style="margin-left:auto;font-size:10px;color:var(--tx3)">▼</span>'+
+      '</div>'+
+      '<div class="gantt-phase-tasks">';
+    
+    pt.forEach(function(t){
+      var start = t.created_at ? new Date(t.created_at).getTime() : minDate;
+      var end = t.completed_at ? new Date(t.completed_at).getTime() : (t.status==='done'?start+86400000:maxDate);
+      var leftPct = Math.round((start - minDate) / range * 100);
+      var widthPct = Math.max(3, Math.round((end - start) / range * 100));
+      var done = t.status === 'done';
+      var startStr = t.created_at ? new Date(t.created_at).toLocaleDateString() : '?';
+      var endStr = t.completed_at ? new Date(t.completed_at).toLocaleDateString() : (done?startStr:'?');
+      
+      var td = {id:t.id,title:t.title||'',status:t.status||'todo',assignee:t.assignee||'',priority:t.priority||2,created_at:t.created_at||'',completed_at:t.completed_at||'',description:t.description||''};
+      html += '<div class="gantt-row" style="cursor:pointer" data-task="'+JSON.stringify(td).replace(/"/g,'&quot;')+'" onclick="openDetailPanelTask(this)">'+
+        '<span class="gantt-label" title="'+(t.title||'')+'">'+(t.title||'').substring(0,25)+'</span>'+
+        '<div class="gantt-track">'+
+          '<div class="gantt-bar'+(done?' done':'')+' '+(phaseColors[pi]||'')+'" style="left:'+leftPct+'%;width:'+widthPct+'%"></div>'+
+        '</div>'+
+        '<span class="gantt-dates">'+startStr+' → '+endStr+'</span>'+
+      '</div>';
+    });
+    
+    html += '</div></div>';
+  });
+  
+  html += '</div>';
+  document.getElementById(containerId).innerHTML = html;
+}
+
+/* ========== D3 TREE CHART (Centered + Zoomable + Draggable) ========== */
+function renderOrgChart(containerId) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  var tasks = state.data.tasks || [];
+  var profiles = state.data.profiles || [];
+  
+  // Build hierarchical data
+  var tree = {name:'⚓ AgentArk 舰队总司令',type:'origin',children:[]};
+  var pjMap = {};
+  tasks.forEach(function(t) {
+    var m = (t.title||'').match(/^\[([^\]]+)\]/);
+    var pjName = m ? m[1] : '默认项目';
+    var title = t.title||'';
+    var modName = '通用模块';
+    if (title.includes('需求')||title.includes('PRD')||title.includes('分析')) modName = '需求分析';
+    else if (title.includes('设计')||title.includes('架构')) modName = '设计架构';
+    else if (title.includes('开发')||title.includes('API')||title.includes('后端')) modName = '后端开发';
+    else if (title.includes('前端')||title.includes('UI')||title.includes('页面')) modName = '前端开发';
+    else if (title.includes('测试')||title.includes('部署')||title.includes('发布')) modName = '测试部署';
+    else if (title.includes('支付')||title.includes('订单')) modName = '支付交易';
+    else if (title.includes('评估')||title.includes('诊断')) modName = 'AI评估';
+    
+    if (!pjMap[pjName]) { pjMap[pjName] = {name:pjName,type:'project',children:[],modMap:{}}; tree.children.push(pjMap[pjName]); }
+    var pj = pjMap[pjName];
+    if (!pj.modMap[modName]) { pj.modMap[modName] = {name:modName,type:'module',children:[],agentSet:{}}; pj.children.push(pj.modMap[modName]); }
+    var mod = pj.modMap[modName];
+    if (t.assignee && !mod.agentSet[t.assignee]) {
+      mod.agentSet[t.assignee] = true;
+      var prof = profiles.find(function(p){return (p.name||p.agent_id)===t.assignee;});
+      mod.children.push({name:t.assignee,type:'agent',role:(prof&&prof.role)||(prof&&prof.soul&&prof.soul.role)||'Worker',load:prof?Math.round((prof.load_pct||prof.load||0)*100):0});
+    }
+  });
+  
+  if (!tree.children.length) { el.innerHTML = '<div style="color:var(--tx3);padding:40px;text-align:center">暂无项目数据</div>'; return; }
+  
+  el.innerHTML = '<div class="d3-tree-container" id="'+containerId+'-d3"></div>';
+  var container = document.getElementById(containerId+'-d3');
+  var W = Math.max(1200, el.clientWidth);
+  var H = Math.max(tree.children.length * 200, 600);
+  
+  var svg = d3.select('#'+containerId+'-d3').append('svg').attr('width',W).attr('height',H);
+  
+  // ── Zoom & Pan ──
+  var gRoot = svg.append('g');
+  var zoom = d3.zoom().scaleExtent([0.3, 3]).on('zoom', function(e) {
+    gRoot.attr('transform', e.transform);
+  });
+  svg.call(zoom);
+  
+  // ── Tree layout ──
+  var root = d3.hierarchy(tree);
+  var treeLayout = d3.tree().size([H-80, W-200]).nodeSize([60, 180]);
+  treeLayout(root);
+  
+  // Center the tree initially
+  var x0 = W/2 - root.y;
+  var y0 = H/2;
+  svg.call(zoom.transform, d3.zoomIdentity.translate(x0, y0));
+  
+  // ── Links ──
+  gRoot.selectAll('.d3-link').data(root.links()).join('path').attr('class','d3-link')
+    .attr('d', d3.linkHorizontal().x(function(d){return d.y;}).y(function(d){return d.x;}));
+  
+  // ── Nodes ──
+  var node = gRoot.selectAll('.d3-node').data(root.descendants()).join('g').attr('class','d3-node')
+    .attr('transform',function(d){return 'translate('+d.y+','+d.x+')';}).style('cursor','pointer')
+    .on('click',function(e,d){e.stopPropagation();
+      if(d.data.type==='agent'){var ad=JSON.stringify({agent_id:d.data.name,role:d.data.role,name:d.data.name,load_pct:(d.data.load||0)/100}).replace(/"/g,'&quot;');var el2=document.createElement('div');el2.setAttribute('data-agent',ad);openDetailPanelEl(el2);}
+      else{toggleD3Node(d);updateD3Tree(containerId,root,gRoot,zoom,treeLayout);}
+    });
+  
+  // Box
+  node.append('rect').attr('x',function(d){var w=getNodeWidth(d);return -w/2;}).attr('y',-24).attr('width',function(d){return getNodeWidth(d);}).attr('height',48)
+    .attr('fill',function(d){return d.data.type==='origin'?'var(--teal-d)':d.data.type==='project'?'var(--teal-d)':d.data.type==='module'?'var(--violet-d)':'var(--blue-d)';})
+    .attr('stroke',function(d){return d.data.type==='origin'?'var(--teal)':d.data.type==='project'?'var(--teal)':d.data.type==='module'?'var(--violet)':'var(--blue)';});
+  
+  // Label
+  node.append('text').attr('y',-7).style('font-weight','600').style('font-size','12px').style('fill','var(--tx)').style('text-anchor','middle')
+    .text(function(d){return (d.data.type==='origin'?'⚓':d.data.type==='project'?'📁':d.data.type==='module'?'📦':'🤖')+' '+(d.data.name||'').substring(0,16);});
+  node.append('text').attr('y',9).style('font-size','10px').style('fill','var(--tx3)').style('text-anchor','middle')
+    .text(function(d){if(d.data.type==='agent')return(d.data.role||'')+' · '+(d.data.load||0)+'%';var c=d.children?d.children.length:(d._children?d._children.length:0);return d.data.type==='project'?c+' 模块':d.data.type==='origin'?'舰队总司令':c+' Agent';});
+  
+  // Collapse toggle
+  node.filter(function(d){return d.children||d._children;}).append('circle').attr('cx',function(d){return getNodeWidth(d)/2+14;}).attr('cy',-24).attr('r',8).attr('fill','var(--bg2)').attr('stroke','var(--line2)');
+  node.filter(function(d){return d.children||d._children;}).append('text').attr('x',function(d){return getNodeWidth(d)/2+14;}).attr('y',-20).attr('text-anchor','middle').style('font-size','10px').style('fill','var(--tx2)').text(function(d){return d.children?'−':'+';});
+  
+  container._d3Root = root;
+  container._d3G = gRoot;
+  container._d3Zoom = zoom;
+  container._d3Tree = treeLayout;
+}
+
+function getNodeWidth(d) { var len = (d.data.name||'').length; return Math.max(80, Math.min(200, len * 9 + 50)); }
+function toggleD3Node(d) { if(d.children){d._children=d.children;d.children=null;}else{d.children=d._children;d._children=null;} }
+
+function updateD3Tree(containerId, root, gRoot, zoom, treeLayout) {
+  var c = document.getElementById(containerId+'-d3'); if(!c) return;
+  gRoot = gRoot || c._d3G;
+  zoom = zoom || c._d3Zoom;
+  treeLayout = treeLayout || c._d3Tree;
+  if(!gRoot) return;
+  
+  treeLayout(root);
+  
+  // Update links with animation
+  var link = gRoot.selectAll('.d3-link').data(root.links(),function(d){return d.target.data.name+d.target.data.type;});
+  link.transition().duration(400).attr('d',d3.linkHorizontal().x(function(d){return d.y;}).y(function(d){return d.x;}));
+  link.enter().append('path').attr('class','d3-link').attr('d',d3.linkHorizontal().x(function(d){return d.y;}).y(function(d){return d.x;})).style('opacity',0).transition().duration(400).style('opacity',1);
+  link.exit().transition().duration(300).style('opacity',0).remove();
+  
+  // Update nodes with animation
+  var node = gRoot.selectAll('.d3-node').data(root.descendants(),function(d){return d.data.name+d.data.type;});
+  node.transition().duration(400).attr('transform',function(d){return 'translate('+d.y+','+d.x+')';});
+  var ne = node.enter().append('g').attr('class','d3-node').attr('transform',function(d){return 'translate('+d.y+','+d.x+')';}).style('opacity',0);
+  ne.on('click',function(e,d){e.stopPropagation();if(d.data.type==='agent'){var ad=JSON.stringify({agent_id:d.data.name,role:d.data.role,name:d.data.name,load_pct:(d.data.load||0)/100}).replace(/"/g,'&quot;');var el2=document.createElement('div');el2.setAttribute('data-agent',ad);openDetailPanelEl(el2);}else{toggleD3Node(d);updateD3Tree(containerId,root,gRoot,zoom,treeLayout);}});
+  ne.append('rect').attr('x',function(d){var w=getNodeWidth(d);return -w/2;}).attr('y',-24).attr('width',function(d){return getNodeWidth(d);}).attr('height',48).attr('fill',function(d){return d.data.type==='origin'?'var(--teal-d)':d.data.type==='project'?'var(--teal-d)':d.data.type==='module'?'var(--violet-d)':'var(--blue-d)';}).attr('stroke',function(d){return d.data.type==='origin'?'var(--teal)':d.data.type==='project'?'var(--teal)':d.data.type==='module'?'var(--violet)':'var(--blue)';});
+  ne.append('text').attr('y',-7).style('font-weight','600').style('font-size','12px').style('fill','var(--tx)').style('text-anchor','middle').text(function(d){return (d.data.type==='origin'?'⚓':d.data.type==='project'?'📁':d.data.type==='module'?'📦':'🤖')+' '+(d.data.name||'').substring(0,16);});
+  ne.append('text').attr('y',9).style('font-size','10px').style('fill','var(--tx3)').style('text-anchor','middle').text(function(d){if(d.data.type==='agent')return(d.data.role||'')+' · '+(d.data.load||0)+'%';var c2=d.children?d.children.length:(d._children?d._children.length:0);return d.data.type==='project'?c2+' 模块':d.data.type==='origin'?'舰队总司令':c2+' Agent';});
+  ne.filter(function(d){return d.children||d._children;}).append('circle').attr('cx',function(d){return getNodeWidth(d)/2+14;}).attr('cy',-24).attr('r',8).attr('fill','var(--bg2)').attr('stroke','var(--line2)');
+  ne.filter(function(d){return d.children||d._children;}).append('text').attr('x',function(d){return getNodeWidth(d)/2+14;}).attr('y',-20).attr('text-anchor','middle').style('font-size','10px').style('fill','var(--tx2)').text(function(d){return d.children?'−':'+';});
+  ne.transition().duration(400).style('opacity',1);
+  node.exit().transition().duration(300).style('opacity',0).remove();
+  gRoot.selectAll('.d3-node').filter(function(d){return d.children||d._children;}).select('text:last-child').text(function(d){return d.children?'−':'+';});
+}
+/* ========== DRAG & DROP — Agent → Project ========== */
+function initDragDrop() {
+  // Make agent cards draggable in fleet view
+  setTimeout(function(){
+    var cards = document.querySelectorAll('#fleetGrid .fleet-card');
+    cards.forEach(function(card){
+      card.setAttribute('draggable','true');
+      card.addEventListener('dragstart', function(e){
+        e.dataTransfer.setData('text/plain', card.getAttribute('data-agent-id')||'');
+        card.classList.add('drag-ghost');
+      });
+      card.addEventListener('dragend', function(e){ card.classList.remove('drag-ghost'); });
+    });
+    
+    // Set up drop zones in project view
+    var dropZones = document.querySelectorAll('.drop-zone');
+    dropZones.forEach(function(zone){
+      zone.addEventListener('dragover', function(e){ e.preventDefault(); zone.classList.add('hover'); });
+      zone.addEventListener('dragleave', function(e){ zone.classList.remove('hover'); });
+      zone.addEventListener('drop', function(e){
+        e.preventDefault();
+        zone.classList.remove('hover');
+        var agentId = e.dataTransfer.getData('text/plain');
+        var project = zone.getAttribute('data-project')||'';
+        if (agentId && project) {
+          assignAgentToProject(agentId, project);
+        }
+      });
+    });
+  }, 500);
+}
+
+async function assignAgentToProject(agentId, projectName) {
+  toast('正在将 '+agentId+' 分配到 '+projectName+'...');
+  try {
+    var res = await fetch(API + '/projects/subfunction', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({project:projectName, module_name:'默认模块', func_name:'Agent '+agentId, assigned_agent:agentId})
+    }).then(function(r){return r.json();});
+    if (res && !res.error) {
+      toast('<i class="ti ti-circle-check"></i> '+agentId+' 已加入 '+projectName);
+      loadAllData();
+      setTimeout(function(){ renderProject(); renderFleet(); }, 500);
+    } else {
+      toast('<i class="ti ti-alert-triangle"></i> '+(res?.error||'分配失败'));
+    }
+  } catch(e) {
+    toast('<i class="ti ti-alert-triangle"></i> 网络错误');
+  }
+}
+
+// Hook into renderFleet to add drag-drop and org chart
+var _origRenderFleet = renderFleet;
+renderFleet = async function() {
+  await _origRenderFleet();
+  // Add org chart below fleet grid
+  var fleetGrid = document.getElementById('fleetGrid');
+  if (fleetGrid && !document.getElementById('orgChartContainer')) {
+    var orgDiv = document.createElement('div');
+    orgDiv.id = 'orgChartContainer';
+    orgDiv.innerHTML = '<div style="height:16px"></div><div class="sec-h"><i class="ti ti-sitemap"></i>🪜 组织架构</div><div id="orgChart"></div>';
+    fleetGrid.parentNode.insertBefore(orgDiv, fleetGrid.nextSibling);
+    renderOrgChart('orgChart');
+  }
+  initDragDrop();
+};
+
+// Hook into renderProject to add Gantt timeline
+var _origRenderProject = renderProject;
+renderProject = async function() {
+  await _origRenderProject();
+  // Add Gantt timeline
+  var pjModTree = document.getElementById('pjModTree');
+  if (pjModTree && !document.getElementById('ganttTimeline')) {
+    var ganttDiv = document.createElement('div');
+    ganttDiv.id = 'ganttTimeline';
+    ganttDiv.innerHTML = '<div style="height:20px"></div><div class="sec-h"><i class="ti ti-timeline"></i>📅 任务时间线</div><div id="ganttChart"></div>';
+    pjModTree.parentNode.appendChild(ganttDiv);
+    renderGanttTimeline('ganttChart');
+  }
+  // Add drop zone for agent reassignment
+  var agentList = document.getElementById('pjAgentList');
+  if (agentList && !document.getElementById('agentDropZone')) {
+    var dropDiv = document.createElement('div');
+    dropDiv.id = 'agentDropZone';
+    dropDiv.className = 'drop-zone active';
+    dropDiv.setAttribute('data-project', state.selectedProject||'');
+    dropDiv.innerHTML = '<i class="ti ti-robot"></i> 拖拽Agent卡片到此处以加入项目';
+    agentList.parentNode.insertBefore(dropDiv, agentList);
+    initDragDrop();
+  }
+};
+
+// ── Dashboard enrich: wait for state.data then render ──
+(function enrichDashboard() {
+  function tryEnrich() {
+    try {
+      var hasData = state && state.data && (state.data.profiles||[]).length > 0 && (state.data.tasks||[]).length > 0;
+      if (!hasData) {
+        setTimeout(tryEnrich, 300);
+        return;
+      }
+      if (document.getElementById('dashboardOrgChart') && !document.querySelector('#dashboardOrgChart .org-node')) {
+        renderOrgChart('dashboardOrgChart');
+      }
+      if (document.getElementById('dashboardGantt') && !document.querySelector('#dashboardGantt .gantt-row')) {
+        renderGanttTimeline('dashboardGantt');
+      }
+    } catch(e) {
+      console.warn('Enrich retry error:', e);
+      setTimeout(tryEnrich, 500);
+    }
+  }
+  setTimeout(tryEnrich, 500);
+})();
+
+/* ========== PROJECT MANAGEMENT ========== */
+state.ganttScale = state.ganttScale || 'day'; // hour | day | week | month
+var ganttScales = ['hour', 'day', 'week', 'month'];
+var ganttScaleLabels = {hour:'时', day:'日', week:'周', month:'月'};
+
+function renderProjects() {
+  var projects = state.liveProjects || [];
+  var profiles = state.data.profiles || [];
+  var tasks = state.data.tasks || [];
+  var container = document.getElementById('dashboardProjects');
+  if (!container) return;
+
+  // Auto-discover projects from tasks
+  if (!projects.length) {
+    var pjNames = {};
+    tasks.forEach(function(t) {
+      var m = (t.title||'').match(/^\[([^\]]+)\]/);
+      var name = m ? m[1] : '默认项目';
+      if (!pjNames[name]) pjNames[name] = {name:name, tasks:[], agents:{}, modules:[]};
+      pjNames[name].tasks.push(t);
+      if (t.assignee) {
+        pjNames[name].agents[t.assignee] = (pjNames[name].agents[t.assignee]||0) + 1;
+      }
+    });
+    projects = Object.values(pjNames).map(function(p) {
+      var agentList = Object.keys(p.agents).map(function(a) {
+        var prof = profiles.find(function(pr){return (pr.name||pr.agent_id)===a;});
+        return {
+          agent_id: a,
+          role: (prof&&prof.role) || (prof&&prof.soul&&prof.soul.role) || 'Worker',
+          task_count: p.agents[a],
+          model: (prof&&prof.model) || (prof&&prof.model&&prof.model.default) || '',
+          load: prof ? Math.round((prof.load_pct||prof.load||0)*100) : 0
+        };
+      });
+      return {
+        name: p.name,
+        task_count: p.tasks.length,
+        agent_count: agentList.length,
+        agents: agentList
+      };
+    });
+  }
+
+  if (!projects.length) {
+    container.innerHTML = '<div style="color:var(--tx3);font-size:12px;padding:20px;text-align:center">暂无项目数据</div>';
+    return;
+  }
+
+  var html = '';
+  projects.forEach(function(pj, pi) {
+    var pjId = 'pj-mgmt-' + pi;
+    var agents = pj.agents || [];
+    
+    // Agent table rows
+    var agentRows = agents.map(function(a, ai) {
+      var esc = JSON.stringify({agent_id:a.agent_id,role:a.role,name:a.agent_id,model:a.model,load_pct:a.load/100}).replace(/"/g,'&quot;');
+      return '<tr class="agent-row" draggable="true" data-agent="'+esc+'"' +
+        ' ondragstart="agentRowDragStart(event,this)" ondragover="agentRowDragOver(event)" ondrop="agentRowDrop(event,this)" ondragend="agentRowDragEnd(event)">' +
+        '<td><span class="drag-handle" title="拖拽排序">⋮⋮</span></td>' +
+        '<td><span style="cursor:pointer;color:var(--teal);font-weight:500" onclick="openDetailPanelEl(this.parentNode.parentNode)">' + a.agent_id + '</span></td>' +
+        '<td><span class="tag" style="background:var(--violet-d);color:var(--violet);font-size:10px">' + a.role + '</span></td>' +
+        '<td style="font-size:11px;color:var(--tx2)">' + (a.model||'?') + '</td>' +
+        '<td><div class="bar" style="width:60px;height:4px"><i style="width:'+a.load+'%;background:'+(a.load>80?'var(--red)':a.load>40?'var(--amber)':'var(--green)')+'"></i></div><span style="font-size:10px;color:var(--tx3);margin-left:4px">'+a.load+'%</span></td>' +
+        '<td style="font-size:11px">' + a.task_count + ' 任务</td>' +
+        '<td style="text-align:right;white-space:nowrap">' +
+          '<button class="btn sm" onclick="event.stopPropagation();updateAgentDialog(\''+a.agent_id+'\')" title="更新" style="padding:2px 6px;font-size:10px">✏️</button>' +
+          '<button class="btn sm" onclick="event.stopPropagation();trainAgent(\''+a.agent_id+'\')" title="培训" style="padding:2px 6px;font-size:10px">🎓</button>' +
+          '<button class="btn sm danger" onclick="event.stopPropagation();removeAgentFromProject(\''+a.agent_id+'\',\''+pj.name+'\')" title="移除" style="padding:2px 6px;font-size:10px">🗑</button>' +
+        '</td></tr>';
+    }).join('');
+    
+    html += '<div style="border:1px solid var(--line);border-radius:var(--r-s);margin-bottom:10px;overflow:hidden">' +
+      '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);cursor:pointer" onclick="toggleProject(\''+pjId+'\')">' +
+        '<i class="ti ti-chevron-right" id="'+pjId+'-chev" style="transition:transform .2s;font-size:12px;color:var(--tx3)"></i>' +
+        '<span style="font-family:var(--disp);font-size:14px;font-weight:600;color:var(--tx)">' + pj.name + '</span>' +
+        '<span class="tag teal" style="font-size:10px">' + (pj.task_count||0) + ' 任务</span>' +
+        '<span class="tag violet" style="font-size:10px">' + agents.length + ' Agent</span>' +
+        '<span style="margin-left:auto;display:flex;gap:6px">' +
+          '<button class="btn sm" onclick="event.stopPropagation();addAgentDialog(\''+pj.name+'\')" style="padding:3px 8px;font-size:10px">➕ 添加Agent</button>' +
+        '</span>' +
+      '</div>' +
+      '<div id="'+pjId+'" style="display:none;border-top:1px solid var(--line)">' +
+        '<table style="width:100%;border-collapse:collapse;font-size:12px">' +
+          '<thead><tr style="color:var(--tx3);font-size:10px;text-transform:uppercase;letter-spacing:.05em">' +
+            '<th style="width:24px;padding:8px 4px"></th>' +
+            '<th style="text-align:left;padding:8px 4px">Agent</th>' +
+            '<th style="text-align:left;padding:8px 4px">角色</th>' +
+            '<th style="text-align:left;padding:8px 4px">模型</th>' +
+            '<th style="text-align:left;padding:8px 4px">负载</th>' +
+            '<th style="text-align:left;padding:8px 4px">任务</th>' +
+            '<th style="text-align:right;padding:8px 4px">操作</th>' +
+          '</tr></thead>' +
+          '<tbody>' + agentRows + '</tbody>' +
+        '</table>' +
+      '</div>' +
+    '</div>';
+  });
+  
+  container.innerHTML = html;
+}
+
+// Agent row drag-drop
+var _dragRow = null;
+function agentRowDragStart(e, el) {
+  _dragRow = el;
+  el.style.opacity = '0.4';
+  e.dataTransfer.effectAllowed = 'move';
+}
+function agentRowDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  var row = e.target.closest('.agent-row');
+  if (row && row !== _dragRow) row.classList.add('drag-over');
+}
+function agentRowDrop(e, targetEl) {
+  e.preventDefault();
+  targetEl.classList.remove('drag-over');
+  if (_dragRow && targetEl && _dragRow !== targetEl) {
+    var tbody = targetEl.parentNode;
+    var rows = Array.from(tbody.querySelectorAll('.agent-row'));
+    var fromIdx = rows.indexOf(_dragRow);
+    var toIdx = rows.indexOf(targetEl);
+    if (fromIdx >= 0 && toIdx >= 0) {
+      if (toIdx > fromIdx) {
+        tbody.insertBefore(_dragRow, targetEl.nextSibling);
+      } else {
+        tbody.insertBefore(_dragRow, targetEl);
+      }
+      toast('Agent 顺序已调整');
+    }
+  }
+}
+function agentRowDragEnd(e) {
+  if (_dragRow) _dragRow.style.opacity = '1';
+  document.querySelectorAll('.agent-row.drag-over').forEach(function(r){r.classList.remove('drag-over');});
+  _dragRow = null;
+}
+
+function addAgentDialog(projectName) {
+  var body = '<div class="fld"><label>Agent 名称</label><input id="newAgentName" placeholder="如: backend-dev" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px;font-size:12px"></div>'+
+    '<div class="fld"><label>角色</label><input id="newAgentRole" placeholder="如: 后端开发" style="width:100%;background:var(--bg3);color:var(--tx);border:1px solid var(--line2);border-radius:var(--r-s);padding:8px;font-size:12px"></div>';
+  openDrawerEdit('添加 Agent 到 ' + projectName, '', '<i class="ti ti-user-plus" style="font-size:22px;color:var(--teal)"></i>', body,
+    function() {
+      var name = document.getElementById('newAgentName')?.value?.trim();
+      var role = document.getElementById('newAgentRole')?.value?.trim();
+      if (!name) { toast('请输入Agent名称'); return; }
+      // Create via API
+      fetch(API + '/profiles', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({name:name, role:role, expertise:[role]})
+      }).then(function(r){return r.json();}).then(function(res){
+        if (res && !res.error) {
+          toast('✅ ' + name + ' 已添加');
+          closeAll();
+          loadAllData();
+          setTimeout(function(){ renderProjects(); }, 500);
+        } else {
+          toast('⚠️ ' + (res?.error||'添加失败'));
+        }
+      }).catch(function(){ toast('⚠️ 网络错误'); });
+    }, null, '➕ 添加', '');
+}
+
+// Also expose global openDetailPanelEl for rows
+function openDetailPanelEl(el) {
+  var d = JSON.parse((el.getAttribute('data-agent')||'{}').replace(/&quot;/g,'"'));
+  openDetailPanel('agent', d);
+}
+
+function toggleProject(id) {
+  var el = document.getElementById(id);
+  var chev = document.getElementById(id+'-chev');
+  if (!el || !chev) return;
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    chev.style.transform = 'rotate(90deg)';
+  } else {
+    el.style.display = 'none';
+    chev.style.transform = 'rotate(0deg)';
+  }
+}
+
+/* ========== ZOOMABLE GANTT ========== */
+function ganttZoom(dir) {
+  var idx = ganttScales.indexOf(state.ganttScale);
+  var newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= ganttScales.length) return;
+  state.ganttScale = ganttScales[newIdx];
+  document.getElementById('ganttScaleLabel').textContent = ganttScaleLabels[state.ganttScale] || state.ganttScale;
+  // Re-render Gantt on dashboard and project view
+  if (document.getElementById('dashboardGantt')) renderGanttTimeline('dashboardGantt');
+  if (document.getElementById('ganttChart')) renderGanttTimeline('ganttChart');
+}
+
+// Patch renderGanttTimeline to use scale
+var _origRenderGantt = renderGanttTimeline;
+renderGanttTimeline = function(containerId) {
+  var scale = state.ganttScale || 'day';
+  var tasks = state.data.tasks || [];
+  var el = document.getElementById(containerId);
+  if (!el || !tasks.length) {
+    if (el) el.innerHTML = '<div style="color:var(--tx3);font-size:12px;padding:20px;text-align:center">暂无任务数据</div>';
+    return;
+  }
+
+  // Scale setup
+  var scaleMs = {hour:3600000, day:86400000, week:604800000, month:2592000000};
+  var scaleUnit = scaleMs[scale] || 86400000;
+  var dateFmt = scale === 'hour' ? function(d){return d.toLocaleString();} :
+                scale === 'day' ? function(d){return d.toLocaleDateString();} :
+                scale === 'week' ? function(d){return d.toLocaleDateString();} :
+                function(d){return (d.getMonth()+1)+'/'+d.getFullYear();};
+
+  // Group tasks by phase
+  var phases = {'Phase 1 · 需求定义':[], 'Phase 2 · 设计开发':[], 'Phase 3 · 测试部署':[]};
+  tasks.forEach(function(t) {
+    var title = t.title||'';
+    if (title.includes('需求')||title.includes('PRD')||title.includes('分析')) phases['Phase 1 · 需求定义'].push(t);
+    else if (title.includes('测试')||title.includes('部署')||title.includes('上线')||title.includes('发布')) phases['Phase 3 · 测试部署'].push(t);
+    else phases['Phase 2 · 设计开发'].push(t);
+  });
+
+  // Calculate date range
+  var allDates = [];
+  tasks.forEach(function(t) {
+    if (t.created_at) allDates.push(new Date(t.created_at).getTime());
+    if (t.completed_at) allDates.push(new Date(t.completed_at).getTime());
+  });
+  if (!allDates.length) allDates = [Date.now() - 7*86400000, Date.now()];
+  var minDate = Math.min.apply(null, allDates);
+  var maxDate = Math.max.apply(null, allDates);
+  var range = maxDate - minDate || scaleUnit;
+  var totalUnits = Math.ceil(range / scaleUnit);
+  if (totalUnits < 3) totalUnits = 3;
+  if (totalUnits > 100) totalUnits = 100;
+
+  // Timeline header
+  var tlHeader = '<div class="gantt-timeline" style="padding-left:160px">';
+  for (var u = 0; u < totalUnits; u++) {
+    var d = new Date(minDate + u * scaleUnit);
+    var label = scale === 'hour' ? d.getHours()+':00' :
+                scale === 'day' ? (d.getMonth()+1)+'/'+d.getDate() :
+                scale === 'week' ? 'W'+(Math.ceil(d.getDate()/7)) :
+                (d.getMonth()+1)+'月';
+    tlHeader += '<span style="width:'+(100/totalUnits)+'%">'+label+'</span>';
+  }
+  tlHeader += '</div>';
+
+  var phaseColors = ['', 'phase2', 'phase3'];
+  var html = '<div class="gantt-wrap">' + tlHeader;
+
+  Object.keys(phases).forEach(function(phaseName, pi) {
+    var pt = phases[phaseName];
+    if (!pt.length) return;
+    var doneCount = pt.filter(function(t){return t.status==='done';}).length;
+    html += '<div class="gantt-phase">'+
+      '<div class="gantt-phase-header" onclick="this.classList.toggle(\'open\');this.nextElementSibling.classList.toggle(\'open\')">'+
+        '<span class="chev">▶</span> '+phaseName+' · '+
+        '<span style="color:var(--green)">'+doneCount+'/'+pt.length+' 完成</span>'+
+        '<span style="margin-left:auto;font-size:10px;color:var(--tx3)">▼</span>'+
+      '</div>'+
+      '<div class="gantt-phase-tasks">';
+
+    pt.forEach(function(t) {
+      var start = t.created_at ? new Date(t.created_at).getTime() : minDate;
+      var end = t.completed_at ? new Date(t.completed_at).getTime() : (t.status==='done'?start+scaleUnit:maxDate);
+      var leftPct = Math.round((start - minDate) / range * 100);
+      var widthPct = Math.max(2, Math.round((end - start) / range * 100));
+      var done = t.status === 'done';
+      var startStr = t.created_at ? dateFmt(new Date(t.created_at)) : '?';
+      var endStr = t.completed_at ? dateFmt(new Date(t.completed_at)) : (done?startStr:'?');
+
+      var td = {id:t.id,title:t.title||'',status:t.status||'todo',assignee:t.assignee||'',priority:t.priority||2,created_at:t.created_at||'',completed_at:t.completed_at||'',description:t.description||''};
+      html += '<div class="gantt-row" style="cursor:pointer" data-task="'+JSON.stringify(td).replace(/\"/g,'&quot;')+'" onclick="openDetailPanelTask(this)">'+
+        '<span class="gantt-label" title="'+(t.title||'')+'">'+(t.title||'').substring(0,22)+'</span>'+
+        '<div class="gantt-track">'+
+          '<div class="gantt-bar'+(done?' done':'')+' '+(phaseColors[pi]||'')+'" style="left:'+leftPct+'%;width:'+widthPct+'%"></div>'+
+        '</div>'+
+        '<span class="gantt-dates">'+startStr+' → '+endStr+'</span>'+
+      '</div>';
+    });
+    html += '</div></div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+  // Update scale label
+  var lbl = document.getElementById('ganttScaleLabel');
+  if (lbl) lbl.textContent = ganttScaleLabels[state.ganttScale] || state.ganttScale;
+};
+
+// Update enrichDashboard to include renderProjects
+var _origTryEnrich = undefined;
+(function patchEnrich() {
+  var script = document.querySelector('script:not([src])');
+  if (!script) return;
+  var code = script.textContent;
+  // Add renderProjects call after renderOrgChart in tryEnrich
+  var oldCheck = "if (document.getElementById('dashboardGantt') && !document.querySelector('#dashboardGantt .gantt-row'))";
+  var newCheck = "if (document.getElementById('dashboardProjects') && !document.querySelector('#dashboardProjects .dp-agent-card')) { renderProjects(); }\n      " + oldCheck;
+  // Can't easily patch the IIFE from here, so just call renderProjects in the enrich flow
+  // Instead, add a simple interval that calls renderProjects once data is ready
+  var projectInterval = setInterval(function() {
+    if (state && state.data && (state.data.tasks||[]).length > 0) {
+      try { renderProjects(); } catch(e) {}
+      clearInterval(projectInterval);
+    }
+  }, 800);
+})();
+
+
 </script>
 </body>
 </html>

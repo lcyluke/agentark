@@ -20,6 +20,7 @@ from agentark.interface.middleware import (
     register_error_handlers, log_event, get_log_buffer,
 )
 from agentark.interface.event_stream import push_event, get_recent_events, format_sse
+from agentark.interface.fleet_api import fleet_bp
 
 
 def create_app():
@@ -809,6 +810,68 @@ def create_app():
             return jsonify({"error": "msg parameter required"}), 400
         try:
             return jsonify({"quick": get_router().quick(msg)})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    # ── 微信多Agent命令路由 ──────────────────────────────
+
+    _wcr = None
+    def get_wcr():
+        nonlocal _wcr
+        if _wcr is None:
+            from agentark.orchestration.wechat_command_router import WeChatCommandRouter
+            _wcr = WeChatCommandRouter(
+                dashboard_log_path=str(APEX_HOME / "logs")
+            )
+        return _wcr
+
+    @app.route("/api/router/wechat/parse", methods=["POST"])
+    def api_wcr_parse():
+        """解析微信命令: POST {message: "P1:dev 修复bug"}"""
+        data = request.get_json(silent=True) or {}
+        message = data.get("message", "")
+        if not message:
+            return jsonify({"error": "message required"}), 400
+        try:
+            wcr = get_wcr()
+            result = wcr.parse(message)
+            return jsonify({
+                "parsed": result.parsed,
+                "project": result.project_code,
+                "role": result.role_code,
+                "profile": result.role_profile,
+                "agent": result.agent_signature,
+                "message": result.message,
+                "is_signoff": result.is_signoff,
+                "formatted": wcr.format_response(result, "→ 待回复")
+            })
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/router/wechat/sessions")
+    def api_wcr_sessions():
+        """活跃会话列表"""
+        try:
+            wcr = get_wcr()
+            return jsonify(wcr.get_active_sessions())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/router/wechat/stats")
+    def api_wcr_stats():
+        """路由统计"""
+        try:
+            wcr = get_wcr()
+            return jsonify(wcr.stats())
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/api/router/wechat/help")
+    def api_wcr_help():
+        """命令帮助"""
+        try:
+            wcr = get_wcr()
+            return jsonify({"help": wcr.help_text()})
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
@@ -2533,6 +2596,9 @@ def create_app():
             "requires_hermes": False,
             "note": "Apex runs standalone. Hermes integration enables real-time session tracking and token analytics." if not hermes_ok else "Hermes integrated — full analytics available.",
         })
+
+    # ── Register Fleet Blueprint ────────────────────────────
+    app.register_blueprint(fleet_bp)
 
     return app
 
