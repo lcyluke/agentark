@@ -61,10 +61,10 @@ all = [
 ]
 
 [project.scripts]
-agentark = "apex.cli.main:cli"
+agentark = "agentark.cli.main:cli"
 
 [tool.hatch.build.targets.wheel]
-packages = ["apex"]
+packages = ["agentark"]
 
 [tool.ruff]
 line-length = 100
@@ -75,7 +75,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 
 [tool.coverage.run]
-source = ["apex"]
+source = ["agentark"]
 
 [tool.coverage.report]
 exclude_lines = [

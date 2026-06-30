@@ -7,16 +7,16 @@ from pathlib import Path
 
 import pytest
 
-from apex.orchestration.swarm import Swarm, SwarmResult
-from apex.orchestration.kanban import Kanban
+from agentark.orchestration.swarm import Swarm, SwarmResult
+from agentark.orchestration.kanban import Kanban
 
 
 class TestSwarm:
     """Test suite for Swarm mode."""
 
-    def test_swarm_init(self, tmp_apex_home: Path):
+    def test_swarm_init(self, tmp_agentark_home: Path):
         """Swarm can be initialized with a Kanban instance."""
-        kanban = Kanban(db_path=tmp_apex_home / "kanban.db")
+        kanban = Kanban(db_path=tmp_agentark_home / "kanban.db")
         swarm = Swarm(kanban=kanban)
         assert swarm.kanban is kanban
 

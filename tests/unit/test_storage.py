@@ -1,4 +1,4 @@
-"""Unit tests for apex.storage.db — SQLite persistence layer.
+"""Unit tests for agentark.storage.db — SQLite persistence layer.
 
 Run standalone:  python3 tests/unit/test_storage.py
 """
@@ -22,7 +22,7 @@ if str(_PROJECT_ROOT) not in sys.path:
 # Override DB_PATH *before* importing the module so it uses a temp file.
 os.environ["APEX_DB_PATH"] = str(Path(tempfile.gettempdir()) / "test_agentops.db")
 
-from apex.storage.db import (  # noqa: E402
+from agentark.storage.db import (  # noqa: E402
     DB_PATH,
     close_db,
     get_event,
@@ -41,8 +41,8 @@ from apex.storage.db import (  # noqa: E402
     update_session_status,
     update_task_status,
 )
-from apex.adapters.base import SessionHandle, SpawnSpec
-from apex.protocol import (
+from agentark.adapters.base import SessionHandle, SpawnSpec
+from agentark.protocol import (
     ApexEvent,
     InstanceInfo,
     InstanceState,

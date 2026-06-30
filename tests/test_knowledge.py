@@ -7,15 +7,15 @@ from pathlib import Path
 
 import pytest
 
-from apex.core.knowledge import KnowledgeGraph, QueryResult
+from agentark.core.knowledge import KnowledgeGraph, QueryResult
 
 
 class TestKnowledgeGraph:
     """Test suite for the knowledge graph."""
 
-    def test_learn_entity(self, tmp_apex_home: Path):
+    def test_learn_entity(self, tmp_agentark_home: Path):
         """Learning an entity adds it to the graph."""
-        kg = KnowledgeGraph(db_path=tmp_apex_home / "knowledge.db")
+        kg = KnowledgeGraph(db_path=tmp_agentark_home / "knowledge.db")
         kg.learn("Redis", "database", "In-memory data structure store", source="test")
         stats = kg.stats()
         assert stats["total_nodes"] >= 1
@@ -28,9 +28,9 @@ class TestKnowledgeGraph:
         result = kg.query("Redis")
         assert result.confidence > 0
 
-    def test_relate_entities(self, tmp_apex_home: Path):
+    def test_relate_entities(self, tmp_agentark_home: Path):
         """Relating two entities creates an edge."""
-        kg = KnowledgeGraph(db_path=tmp_apex_home / "knowledge.db")
+        kg = KnowledgeGraph(db_path=tmp_agentark_home / "knowledge.db")
         kg.learn("Python", "language", source="test")
         kg.learn("FastAPI", "framework", source="test")
         kg.relate("FastAPI", "depends_on", "Python", "built on Python", source="test")
@@ -51,9 +51,9 @@ class TestKnowledgeGraph:
         assert "Found" in result.answer or "associations" in result.answer
         assert len(result.evidence) > 0
 
-    def test_query_no_results(self, tmp_apex_home: Path):
+    def test_query_no_results(self, tmp_agentark_home: Path):
         """Query returns empty result when nothing matches."""
-        kg = KnowledgeGraph(db_path=tmp_apex_home / "knowledge.db")
+        kg = KnowledgeGraph(db_path=tmp_agentark_home / "knowledge.db")
         result = kg.query("NonExistentTechnologyXYZ123")
         assert result.confidence == 0.0
         assert "not found" in result.answer.lower() or "no information" in result.answer.lower()
@@ -67,9 +67,9 @@ class TestKnowledgeGraph:
         assert "type_distribution" in stats
         assert isinstance(stats["type_distribution"], dict)
 
-    def test_learn_from_experience(self, tmp_apex_home: Path):
+    def test_learn_from_experience(self, tmp_agentark_home: Path):
         """learn_from_experience records errors, fixes, and pitfalls."""
-        kg = KnowledgeGraph(db_path=tmp_apex_home / "knowledge.db")
+        kg = KnowledgeGraph(db_path=tmp_agentark_home / "knowledge.db")
         kg.learn_from_experience(
             agent_name="test-agent",
             task="Deploy the application",

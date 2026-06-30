@@ -15,40 +15,40 @@ class TestSelfHealing:
     """Verify SelfHealingExecutor is properly integrated into Agent runtime."""
 
     def test_healing_result_default_success(self):
-        from apex.orchestration.healing import HealingResult
+        from agentark.orchestration.healing import HealingResult
         r = HealingResult()
         assert r.success is False, "HealingResult() should default to success=False"
         assert r.attempts == 0
 
     def test_healing_result_with_values(self):
-        from apex.orchestration.healing import HealingResult
+        from agentark.orchestration.healing import HealingResult
         r = HealingResult(success=True, attempts=3, final_output="hello")
         assert r.success is True
         assert r.attempts == 3
         assert r.final_output == "hello"
 
     def test_agent_self_healing_flag(self):
-        from apex.core.runtime import Agent
-        from apex.core.profile import Profile, SoulConfig
+        from agentark.core.runtime import Agent
+        from agentark.core.profile import Profile, SoulConfig
         p = Profile(name="tester", soul=SoulConfig(role="Test"))
         a = Agent(p, self_healing=True)
         assert a.self_healing is True
 
     def test_agent_run_has_heal_param(self):
         import inspect
-        from apex.core.runtime import Agent
+        from agentark.core.runtime import Agent
         sig = inspect.signature(Agent.run)
         assert "heal" in sig.parameters
 
     def test_self_healing_executor_imports(self):
-        from apex.orchestration.healing import SelfHealingExecutor
+        from agentark.orchestration.healing import SelfHealingExecutor
         assert SelfHealingExecutor.MAX_ATTEMPTS == 3
         assert SelfHealingExecutor.STRATEGIES == ["direct", "switch_model", "simplify_task"]
 
     def test_self_healing_executor_wraps_agent(self):
-        from apex.core.runtime import Agent
-        from apex.core.profile import Profile, SoulConfig
-        from apex.orchestration.healing import SelfHealingExecutor
+        from agentark.core.runtime import Agent
+        from agentark.core.profile import Profile, SoulConfig
+        from agentark.orchestration.healing import SelfHealingExecutor
         p = Profile(name="tester", soul=SoulConfig(role="Test"))
         a = Agent(p)
         ex = SelfHealingExecutor(a)
@@ -57,9 +57,9 @@ class TestSelfHealing:
         assert ex.evolution is not None
 
     def test_healer_agent_created(self):
-        from apex.core.runtime import Agent
-        from apex.core.profile import Profile, SoulConfig
-        from apex.orchestration.healing import SelfHealingExecutor
+        from agentark.core.runtime import Agent
+        from agentark.core.profile import Profile, SoulConfig
+        from agentark.orchestration.healing import SelfHealingExecutor
         p = Profile(name="tester", soul=SoulConfig(role="Test"))
         a = Agent(p)
         ex = SelfHealingExecutor(a)
@@ -76,13 +76,13 @@ class TestOps:
     """Verify OpsManager CRUD operations and dashboard stats."""
 
     def test_get_ops_singleton(self):
-        from apex.orchestration.ops import get_ops
+        from agentark.orchestration.ops import get_ops
         o1 = get_ops()
         o2 = get_ops()
         assert o1 is o2
 
     def test_release_create_and_list(self):
-        from apex.orchestration.ops import get_ops
+        from agentark.orchestration.ops import get_ops
         o = get_ops()
         rel = o.create_release("99-test", "Test Release")
         assert rel.version == "99-test"
@@ -93,7 +93,7 @@ class TestOps:
         assert any(r.version == "99-test" for r in releases)
 
     def test_bug_create_and_list(self):
-        from apex.orchestration.ops import get_ops
+        from agentark.orchestration.ops import get_ops
         o = get_ops()
         bug = o.create_bug("Test bug", "Integration test", severity="high")
         assert bug.title == "Test bug"
@@ -104,7 +104,7 @@ class TestOps:
         assert any(b.title == "Test bug" for b in bugs)
 
     def test_task_create_and_list(self):
-        from apex.orchestration.ops import get_ops
+        from agentark.orchestration.ops import get_ops
         o = get_ops()
         task = o.create_task("Test task",
                              description="Integration test",
@@ -118,7 +118,7 @@ class TestOps:
         assert any(t.title == "Test task" for t in tasks)
 
     def test_dashboard_stats(self):
-        from apex.orchestration.ops import get_ops
+        from agentark.orchestration.ops import get_ops
         o = get_ops()
         stats = o.get_dashboard_stats()
         assert "tasks" in stats
@@ -141,25 +141,25 @@ class TestSQLiteThreadSafety:
     """Verify check_same_thread=False is set on all DB connections."""
 
     def test_evolution_db_thread_safe(self):
-        from apex.core.profile import APEX_HOME
+        from agentark.core.profile import AGENTARK_HOME
         import sqlite3
-        path = APEX_HOME / "evolution.db"
+        path = AGENTARK_HOME / "evolution.db"
         conn = sqlite3.connect(str(path), check_same_thread=False)
         row = conn.execute("SELECT 1").fetchone()
         assert row[0] == 1
         conn.close()
 
     def test_knowledge_db_thread_safe(self):
-        from apex.core.profile import APEX_HOME
+        from agentark.core.profile import AGENTARK_HOME
         import sqlite3
-        path = APEX_HOME / "knowledge.db"
+        path = AGENTARK_HOME / "knowledge.db"
         conn = sqlite3.connect(str(path), check_same_thread=False)
         row = conn.execute("SELECT 1").fetchone()
         assert row[0] == 1
         conn.close()
 
     def test_ops_db_thread_safe(self):
-        from apex.orchestration.ops import get_ops
+        from agentark.orchestration.ops import get_ops
         o = get_ops()
         # ops already has check_same_thread=False in constructor
         stats = o.get_dashboard_stats()
@@ -174,7 +174,7 @@ class TestKnowledgeGraph:
     """Verify KG has seed data and queries work."""
 
     def test_kg_stats(self):
-        from apex.core.knowledge import KnowledgeGraph
+        from agentark.core.knowledge import KnowledgeGraph
         kg = KnowledgeGraph()
         stats = kg.stats()
         assert stats["total_nodes"] >= 40, f"Expected >=40 nodes, got {stats['total_nodes']}"
@@ -182,26 +182,26 @@ class TestKnowledgeGraph:
         assert stats["unresolved_conflicts"] == 0
 
     def test_kg_python_query(self):
-        from apex.core.knowledge import KnowledgeGraph
+        from agentark.core.knowledge import KnowledgeGraph
         kg = KnowledgeGraph()
         result = kg.query("Python mutable defaults")
         assert result.confidence > 0
         assert len(result.answer) > 0
 
     def test_kg_docker_query(self):
-        from apex.core.knowledge import KnowledgeGraph
+        from agentark.core.knowledge import KnowledgeGraph
         kg = KnowledgeGraph()
         result = kg.query("Docker health check")
         assert result.confidence > 0
 
     def test_kg_api_query(self):
-        from apex.core.knowledge import KnowledgeGraph
+        from agentark.core.knowledge import KnowledgeGraph
         kg = KnowledgeGraph()
         result = kg.query("API pagination")
         assert result.confidence > 0
 
     def test_kg_structured_outputs_query(self):
-        from apex.core.knowledge import KnowledgeGraph
+        from agentark.core.knowledge import KnowledgeGraph
         kg = KnowledgeGraph()
         result = kg.query("type hints Python")
         assert result.confidence > 0
@@ -240,8 +240,8 @@ class TestAgentRuntime:
     """Verify Agent runtime construction and method signatures."""
 
     def test_agent_creation(self):
-        from apex.core.runtime import Agent
-        from apex.core.profile import Profile, SoulConfig
+        from agentark.core.runtime import Agent
+        from agentark.core.profile import Profile, SoulConfig
         p = Profile(name="unit-test", soul=SoulConfig(role="Unit Tester"))
         a = Agent(p)
         assert a.profile.name == "unit-test"
@@ -249,8 +249,8 @@ class TestAgentRuntime:
         assert a.context is not None
 
     def test_agent_provider_resolution(self):
-        from apex.core.runtime import Agent
-        from apex.core.profile import Profile, SoulConfig
+        from agentark.core.runtime import Agent
+        from agentark.core.profile import Profile, SoulConfig
         p = Profile(name="utest", soul=SoulConfig(role="Test"))
         a = Agent(p)
         # Provider property should resolve without error
@@ -258,8 +258,8 @@ class TestAgentRuntime:
         assert provider is not None
 
     def test_agent_system_prompt(self):
-        from apex.core.runtime import Agent
-        from apex.core.profile import Profile, SoulConfig
+        from agentark.core.runtime import Agent
+        from agentark.core.profile import Profile, SoulConfig
         p = Profile(name="utest", soul=SoulConfig(
             role="Expert Coder",
             expertise=["Python", "FastAPI"],

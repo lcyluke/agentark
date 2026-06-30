@@ -15,7 +15,7 @@ echo "🎬 Recording Apex Demo..."
 echo "   Output: $OUTPUT"
 echo ""
 echo "   Commands to be recorded:"
-echo "   1. pip install apex-multiagent"
+echo "   1. pip install agentark"
 echo "   2. apex init demo-project"
 echo "   3. apex demo --no-browser"
 echo ""
@@ -38,7 +38,7 @@ asciinema rec "$OUTPUT" \
         echo \"\"
         sleep 1
         echo \"  Step 1: Install Apex\"
-        echo \"  \$ pip install apex-multiagent\"
+        echo \"  \$ pip install agentark\"
         sleep 1
         echo \"  ✓ Already installed (v0.1.0)\"
         echo \"\"

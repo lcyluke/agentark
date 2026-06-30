@@ -7,16 +7,16 @@ from pathlib import Path
 
 import pytest
 
-from apex.core.profile import ProfileManager, Profile, APEX_HOME, ModelConfig, SoulConfig, ToolConfig, MemoryConfig
-from apex.core.templates import get_template
+from agentark.core.profile import ProfileManager, Profile, AGENTARK_HOME, ModelConfig, SoulConfig, ToolConfig, MemoryConfig
+from agentark.core.templates import get_template
 
 
 class TestProfileDefaults:
     """Test creating profiles with default values."""
 
-    def test_create_profile_defaults(self, tmp_apex_home: Path):
+    def test_create_profile_defaults(self, tmp_agentark_home: Path):
         """ProfileManager.create_default creates a profile with sensible defaults."""
-        pm = ProfileManager(home=tmp_apex_home)
+        pm = ProfileManager(home=tmp_agentark_home)
         profile = pm.create_default(name="default-agent", role="Assistant")
         assert profile.name == "default-agent"
         assert profile.display == "Assistant"
@@ -26,9 +26,9 @@ class TestProfileDefaults:
         # Verify it was saved
         assert "default-agent" in pm.list()
 
-    def test_create_profile_custom(self, tmp_apex_home: Path):
+    def test_create_profile_custom(self, tmp_agentark_home: Path):
         """Can create a Profile with all custom fields."""
-        pm = ProfileManager(home=tmp_apex_home)
+        pm = ProfileManager(home=tmp_agentark_home)
         profile = Profile(
             name="custom-agent",
             display="Custom Agent",
@@ -134,8 +134,8 @@ class TestProfileDefaults:
         pm.delete("test-agent")
         assert "test-agent" not in pm.list()
 
-    def test_load_nonexistent_raises(self, tmp_apex_home: Path):
+    def test_load_nonexistent_raises(self, tmp_agentark_home: Path):
         """Loading a non-existent profile raises FileNotFoundError."""
-        pm = ProfileManager(home=tmp_apex_home)
+        pm = ProfileManager(home=tmp_agentark_home)
         with pytest.raises(FileNotFoundError, match="nonexistent"):
             pm.load("nonexistent")

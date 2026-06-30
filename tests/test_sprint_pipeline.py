@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from apex.orchestration.sprint_pipeline import (
+from agentark.orchestration.sprint_pipeline import (
     SprintManager,
     Sprint,
     PhaseRecord,

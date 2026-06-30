@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from apex.orchestration.kanban import Kanban, Task
-from apex.orchestration.kanban import (
+from agentark.orchestration.kanban import Kanban, Task
+from agentark.orchestration.kanban import (
     TASK_STATUS_TODO,
     TASK_STATUS_READY,
     TASK_STATUS_IN_PROGRESS,
@@ -21,9 +21,9 @@ from apex.orchestration.kanban import (
 class TestKanban:
     """Test suite for the Kanban task board."""
 
-    def test_create_task(self, tmp_apex_home: Path):
+    def test_create_task(self, tmp_agentark_home: Path):
         """Creating a task returns a Task with correct fields."""
-        kanban = Kanban(db_path=tmp_apex_home / "kanban.db")
+        kanban = Kanban(db_path=tmp_agentark_home / "kanban.db")
         task = kanban.create_task(
             "Implement login",
             description="OAuth2 login flow",
@@ -38,9 +38,9 @@ class TestKanban:
         assert task.id.startswith("t_")
         assert task.created_at != ""
 
-    def test_update_task_status(self, tmp_apex_home: Path):
+    def test_update_task_status(self, tmp_agentark_home: Path):
         """Updating a task status works correctly."""
-        kanban = Kanban(db_path=tmp_apex_home / "kanban.db")
+        kanban = Kanban(db_path=tmp_agentark_home / "kanban.db")
         task = kanban.create_task("Deploy to production")
         kanban.update_task(task.id, status=TASK_STATUS_IN_PROGRESS)
         updated = kanban.get_task(task.id)
@@ -52,9 +52,9 @@ class TestKanban:
         assert done.status == TASK_STATUS_DONE
         assert done.completed_at is not None
 
-    def test_list_tasks_by_status(self, tmp_apex_home: Path):
+    def test_list_tasks_by_status(self, tmp_agentark_home: Path):
         """list_tasks filters correctly by status."""
-        kanban = Kanban(db_path=tmp_apex_home / "kanban.db")
+        kanban = Kanban(db_path=tmp_agentark_home / "kanban.db")
         t1 = kanban.create_task("Task 1", status=TASK_STATUS_TODO)
         t2 = kanban.create_task("Task 2", status=TASK_STATUS_IN_PROGRESS)
         t3 = kanban.create_task("Task 3", status=TASK_STATUS_DONE)
@@ -71,9 +71,9 @@ class TestKanban:
         assert len(done_tasks) == 1
         assert done_tasks[0].id == t3.id
 
-    def test_dependency_chain(self, tmp_apex_home: Path):
+    def test_dependency_chain(self, tmp_agentark_home: Path):
         """Tasks can depend on other tasks via depends_on."""
-        kanban = Kanban(db_path=tmp_apex_home / "kanban.db")
+        kanban = Kanban(db_path=tmp_agentark_home / "kanban.db")
         parent = kanban.create_task("Setup database")
         child = kanban.create_task("Build API", depends_on=[parent.id])
         assert child.depends_on == [parent.id]
@@ -83,9 +83,9 @@ class TestKanban:
         assert loaded_child is not None
         assert loaded_child.depends_on == [parent.id]
 
-    def test_get_ready_tasks(self, tmp_apex_home: Path):
+    def test_get_ready_tasks(self, tmp_agentark_home: Path):
         """get_ready_tasks returns tasks whose dependencies are met."""
-        kanban = Kanban(db_path=tmp_apex_home / "kanban.db")
+        kanban = Kanban(db_path=tmp_agentark_home / "kanban.db")
         t1 = kanban.create_task("Independent task")
         t2 = kanban.create_task("Dependent task", depends_on=[t1.id])
 
@@ -101,9 +101,9 @@ class TestKanban:
         ready2_ids = [t.id for t in ready2]
         assert t2.id in ready2_ids
 
-    def test_get_ready_tasks_blocked(self, tmp_apex_home: Path):
+    def test_get_ready_tasks_blocked(self, tmp_agentark_home: Path):
         """get_ready_tasks does NOT return tasks with unmet dependencies."""
-        kanban = Kanban(db_path=tmp_apex_home / "kanban.db")
+        kanban = Kanban(db_path=tmp_agentark_home / "kanban.db")
         t1 = kanban.create_task("Blocking task A")
         t2 = kanban.create_task("Blocking task B")
         t3 = kanban.create_task("Blocked task", depends_on=[t1.id, t2.id])
@@ -125,9 +125,9 @@ class TestKanban:
         ready3_ids = [t.id for t in ready3]
         assert t3.id in ready3_ids
 
-    def test_ai_suggestions(self, tmp_apex_home: Path):
+    def test_ai_suggestions(self, tmp_agentark_home: Path):
         """ai_suggestions returns context-aware suggestions."""
-        kanban = Kanban(db_path=tmp_apex_home / "kanban.db")
+        kanban = Kanban(db_path=tmp_agentark_home / "kanban.db")
         # No tasks yet — may return empty or basic suggestion
         suggestions_empty = kanban.ai_suggestions()
         assert isinstance(suggestions_empty, list)

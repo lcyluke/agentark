@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from apex.mcp.hub import MCPHub, MCPTool, MCPResult
-from apex.core.knowledge import KnowledgeGraph
+from agentark.mcp.hub import MCPHub, MCPTool, MCPResult
+from agentark.core.knowledge import KnowledgeGraph
 
 
 class TestMCPHub:
@@ -41,11 +41,11 @@ class TestMCPHub:
         assert result.success is False
         assert "not found" in result.error.lower() or "exist" in result.error.lower()
 
-    def test_knowledge_query(self, tmp_apex_home: Path):
+    def test_knowledge_query(self, tmp_agentark_home: Path):
         """Knowledge MCP tool returns a result for a query."""
         hub = MCPHub()
         # Seed some data into the default knowledge graph location
-        # The KnowledgeMCP uses KnowledgeGraph() which defaults to APEX_HOME/knowledge.db
+        # The KnowledgeMCP uses KnowledgeGraph() which defaults to AGENTARK_HOME/knowledge.db
         # We need to work around this — let's check that the tool at least responds
         result = hub.call("knowledge", action="stats")
         # stats should succeed even with an empty graph

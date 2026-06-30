@@ -6,7 +6,7 @@ display:
   agent_name_prefix: true
   show_apex_badge: true
 kanban:
-  board: apex
+  board: agentark
   skills_policy: inherit
   workspace: dir:/Users/Mac/Desktop/2026AIAPP/Apex
 model:

@@ -20,8 +20,8 @@ APEX_DIR = Path(os.environ.get("APEX_DIR", "/Users/Mac/Desktop/2026AIAPP/Apex"))
 SCRIPTS_DIR = APEX_DIR / "scripts" / "mcp-servers"
 sys.path.insert(0, str(APEX_DIR))
 
-from apex.mcp.stdio_client import MCPStdioClient
-from apex.mcp.hub import MCPHub
+from agentark.mcp.stdio_client import MCPStdioClient
+from agentark.mcp.hub import MCPHub
 
 passed = 0
 failed = 0

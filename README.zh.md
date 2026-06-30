@@ -4,9 +4,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/lcyluke/apex/stargazers"><img src="https://img.shields.io/github/stars/lcyluke/apex?style=social" alt="Stars"></a>
-  <a href="https://github.com/lcyluke/apex/network/members"><img src="https://img.shields.io/github/forks/lcyluke/apex?style=social" alt="Forks"></a>
-  <a href="https://github.com/lcyluke/apex/watchers"><img src="https://img.shields.io/github/watchers/lcyluke/apex?style=social" alt="Watchers"></a>
+  <a href="https://github.com/lcyluke/agentark/stargazers"><img src="https://img.shields.io/github/stars/lcyluke/apex?style=social" alt="Stars"></a>
+  <a href="https://github.com/lcyluke/agentark/network/members"><img src="https://img.shields.io/github/forks/lcyluke/apex?style=social" alt="Forks"></a>
+  <a href="https://github.com/lcyluke/agentark/watchers"><img src="https://img.shields.io/github/watchers/lcyluke/apex?style=social" alt="Watchers"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.10%2B-orange?style=flat-square" alt="Python"></a>
 </p>
@@ -24,7 +24,7 @@
 ## 🚀 快速开始
 
 ```bash
-pip install apex-multiagent
+pip install agentark
 apex init my-project && cd my-project
 apex run "写一个登录页面"
 apex run "开发一个完整网站" --swarm
@@ -53,14 +53,14 @@ apex dashboard
 
 | 场景 | 模式 | 命令 |
 |------|------|------|
-| 软件开发 | Crew + Chain | `apex crew create "开发Web应用"` |
-| 研究分析 | Debate | `apex debate "该用微服务吗？"` |
-| 内容生产 | Chain | `apex chain run "写一篇博客" -p content` |
-| 客户支持 | Router | `apex router route "我的账号被锁了"` |
-| 企业审批 | Supervisor | `apex supervisor "设计合规流程"` |
-| DevOps监控 | Monitor | `apex monitor check -f /var/log/nginx.log` |
-| 产品策略 | Swarm | `apex run "分析市场竞争" --swarm` |
-| 初创公司 | Company | `apex company create my-startup -i saas` |
+| 软件开发 | Crew + Chain | `agentark crew create "开发Web应用"` |
+| 研究分析 | Debate | `agentark debate "该用微服务吗？"` |
+| 内容生产 | Chain | `agentark chain run "写一篇博客" -p content` |
+| 客户支持 | Router | `agentark router route "我的账号被锁了"` |
+| 企业审批 | Supervisor | `agentark supervisor "设计合规流程"` |
+| DevOps监控 | Monitor | `agentark monitor check -f /var/log/nginx.log` |
+| 产品策略 | Swarm | `agentark run "分析市场竞争" --swarm` |
+| 初创公司 | Company | `agentark company create my-startup -i saas` |
 
 ---
 
@@ -68,24 +68,24 @@ apex dashboard
 
 | 命令 | 说明 |
 |------|------|
-| `apex init <name>` | 初始化项目 |
-| `apex run "<task>"` | 单Agent执行 |
-| `apex run "<task>" --swarm` | Swarm模式 |
-| `apex crew create "<goal>"` | Crew模式 |
-| `apex chain run "<goal>" -p dev` | 流水线模式 |
-| `apex debate "<topic>"` | 辩论模式 |
-| `apex router route "<task>"` | 路由模式 |
-| `apex supervisor "<goal>"` | 审批模式 |
-| `apex monitor check -f <file>` | 监控模式 |
-| `apex team create <name>` | 创建Agent |
-| `apex template list` | 模板列表 |
-| `apex template use <name>` | 从模板创建 |
-| `apex economy status` | 经济看板 |
-| `apex knowledge query "<q>"` | 知识图谱查询 |
-| `apex evolution agent <name>` | Agent进化报告 |
-| `apex company create <name>` | 创建AI公司 |
-| `apex autonomous start` | 启动7x24引擎 |
-| `apex dashboard` | Web UI |
+| `agentark init <name>` | 初始化项目 |
+| `agentark run "<task>"` | 单Agent执行 |
+| `agentark run "<task>" --swarm` | Swarm模式 |
+| `agentark crew create "<goal>"` | Crew模式 |
+| `agentark chain run "<goal>" -p dev` | 流水线模式 |
+| `agentark debate "<topic>"` | 辩论模式 |
+| `agentark router route "<task>"` | 路由模式 |
+| `agentark supervisor "<goal>"` | 审批模式 |
+| `agentark monitor check -f <file>` | 监控模式 |
+| `agentark team create <name>` | 创建Agent |
+| `agentark template list` | 模板列表 |
+| `agentark template use <name>` | 从模板创建 |
+| `agentark economy status` | 经济看板 |
+| `agentark knowledge query "<q>"` | 知识图谱查询 |
+| `agentark evolution agent <name>` | Agent进化报告 |
+| `agentark company create <name>` | 创建AI公司 |
+| `agentark autonomous start` | 启动7x24引擎 |
+| `agentark dashboard` | Web UI |
 
 ---
 
@@ -93,7 +93,7 @@ apex dashboard
 
 ```bash
 # macOS / Linux / Windows
-pip install apex-multiagent
+pip install agentark
 
 # 配置API Key
 export DEEPSEEK_API_KEY="sk-xxx"

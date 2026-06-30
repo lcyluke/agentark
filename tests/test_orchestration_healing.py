@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from apex.orchestration.healing import HealingResult
+from agentark.orchestration.healing import HealingResult
 
 
 class TestHealing:

@@ -34,7 +34,7 @@ from datetime import datetime
 from pathlib import Path
 
 # ─── Config ────────────────────────────────────────────────
-APEX_ROOT = Path(os.environ.get("APEX_HOME", os.path.expanduser("~/.hermes")))
+APEX_ROOT = Path(os.environ.get("AGENTARK_HOME", os.path.expanduser("~/.hermes")))
 # Try multiple locations for the fleet config
 FLEET_DIRS = [
     Path(__file__).resolve().parent.parent / "fleet",

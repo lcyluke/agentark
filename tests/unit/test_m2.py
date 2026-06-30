@@ -25,9 +25,9 @@ _TMP_DB = Path(tempfile.gettempdir()) / "test_m2_apex.db"
 os.environ["APEX_DB_PATH"] = str(_TMP_DB)
 
 # Now import the modules under test.
-from apex.core.blackboard import Blackboard, _close_conn as _bb_close  # noqa: E402
-from apex.core.claims import ClaimsRegistry, _close_conn as _cr_close  # noqa: E402
-from apex.core.injector import inject  # noqa: E402
+from agentark.core.blackboard import Blackboard, _close_conn as _bb_close  # noqa: E402
+from agentark.core.claims import ClaimsRegistry, _close_conn as _cr_close  # noqa: E402
+from agentark.core.injector import inject  # noqa: E402
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────

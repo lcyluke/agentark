@@ -1,7 +1,7 @@
      1|<p align="center">
      2|  <picture>
-     3|    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/lcyluke/apex/main/docs/images/agentark-banner.png">
-     4|    <img alt="AgentArk — Multi-Agent Operating System" src="https://raw.githubusercontent.com/lcyluke/apex/main/docs/images/agentark-banner.png" width="800">
+     3|    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/lcyluke/agentark/main/docs/images/agentark-banner.png">
+     4|    <img alt="AgentArk — Multi-Agent Operating System" src="https://raw.githubusercontent.com/lcyluke/agentark/main/docs/images/agentark-banner.png" width="800">
      5|  </picture>
      6|</p>
      7|
@@ -11,7 +11,7 @@
     11|</p>
     12|
     13|<p align="center">
-    14|  <a href="https://github.com/lcyluke/apex/releases"><img src="https://img.shields.io/github/v/release/lcyluke/apex?style=flat-square&color=3b82f6" alt="Release"></a>
+    14|  <a href="https://github.com/lcyluke/agentark/releases"><img src="https://img.shields.io/github/v/release/lcyluke/agentark?style=flat-square&color=3b82f6" alt="Release"></a>
     15|  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License"></a>
     16|  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.10%2B-orange?style=flat-square" alt="Python"></a>
     17|  <img src="https://img.shields.io/badge/platform-macOS%20|%20Linux%20|%20Windows-lightgrey?style=flat-square" alt="Platform">
@@ -50,7 +50,7 @@ agentark tutorial
 ### 🍺 macOS (Homebrew)
 
 ```bash
-brew tap lcyluke/apex
+brew tap lcyluke/agentark
 brew install agentark
 ```
 
@@ -101,7 +101,7 @@ pip install -e ".[dev]"
     64|```bash
     65|pip install agentark-multiagent
     66|# or from source:
-    67|pip install git+https://github.com/lcyluke/apex.git@v0.5.0
+    67|pip install git+https://github.com/lcyluke/agentark.git@v0.5.0
     68|```
     69|
     70|---
@@ -315,7 +315,7 @@ pip install -e ".[dev]"
    278|## 🔧 Development
    279|
    280|```bash
-   281|git clone https://github.com/lcyluke/apex.git
+   281|git clone https://github.com/lcyluke/agentark.git
    282|cd apex
    283|pip install -e .
    284|

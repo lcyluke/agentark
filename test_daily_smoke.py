@@ -1,7 +1,7 @@
 """Quick smoke test for daily_report module"""
 import sys
 sys.path.insert(0, '/Users/Mac/Desktop/2026AIAPP/Apex')
-from apex.orchestration.daily_report import generate_report, generate_json_report
+from agentark.orchestration.daily_report import generate_report, generate_json_report
 
 # Test dataclass
 r = generate_report()

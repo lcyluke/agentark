@@ -39,12 +39,12 @@ jobs:
       run: |
         source .venv/bin/activate
         uv pip install ruff
-        ruff check apex/ --ignore E501 --exit-zero
+        ruff check agentark/ --ignore E501 --exit-zero
 
     - name: Test with pytest
       run: |
         source .venv/bin/activate
-        pytest -v --tb=short --cov=apex --cov-report=term-missing
+        pytest -v --tb=short --cov=agentark --cov-report=term-missing
 
     - name: Generate coverage summary
       run: |

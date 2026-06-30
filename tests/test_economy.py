@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from apex.economy import (
+from agentark.economy import (
     classify_task,
     select_model,
     BudgetManager,
@@ -61,9 +61,9 @@ class TestEconomyClassification:
 class TestBudgetManager:
     """Test BudgetManager CRUD and tracking."""
 
-    def test_budget_manager_init(self, tmp_apex_home: Path):
+    def test_budget_manager_init(self, tmp_agentark_home: Path):
         """BudgetManager initializes with a SQLite database."""
-        db_path = tmp_apex_home / "economy.db"
+        db_path = tmp_agentark_home / "economy.db"
         bm = BudgetManager(db_path=db_path)
         assert bm.db_path == db_path
         # Should be able to create an account immediately
@@ -72,9 +72,9 @@ class TestBudgetManager:
         assert account.monthly_limit == 5.0
         assert account.used == 0.0
 
-    def test_budget_account_create(self, tmp_apex_home: Path):
+    def test_budget_account_create(self, tmp_agentark_home: Path):
         """Creating an account with custom limit works."""
-        bm = BudgetManager(db_path=tmp_apex_home / "economy.db")
+        bm = BudgetManager(db_path=tmp_agentark_home / "economy.db")
         account = bm.get_or_create_account("big-project", monthly_limit=100.0)
         assert account.project == "big-project"
         assert account.monthly_limit == 100.0
@@ -84,9 +84,9 @@ class TestBudgetManager:
         account2 = bm.get_or_create_account("big-project")
         assert account2.monthly_limit == 100.0
 
-    def test_budget_record_usage(self, tmp_apex_home: Path):
+    def test_budget_record_usage(self, tmp_agentark_home: Path):
         """Recording usage updates the account balance."""
-        bm = BudgetManager(db_path=tmp_apex_home / "economy.db")
+        bm = BudgetManager(db_path=tmp_agentark_home / "economy.db")
         bm.get_or_create_account("my-project", monthly_limit=10.0)
         bm.record_usage("my-project", 2.5, task_type="code-review", model="deepseek-v4-pro")
         used, limit, remaining = bm.get_balance("my-project")
@@ -100,9 +100,9 @@ class TestBudgetManager:
         assert used2 == 3.5
         assert remaining2 == 6.5
 
-    def test_budget_warning(self, tmp_apex_home: Path):
+    def test_budget_warning(self, tmp_agentark_home: Path):
         """check_warning returns a warning string when budget exceeds threshold."""
-        bm = BudgetManager(db_path=tmp_apex_home / "economy.db")
+        bm = BudgetManager(db_path=tmp_agentark_home / "economy.db")
         bm.get_or_create_account("tight-project", monthly_limit=10.0)
 
         # Under threshold — no warning

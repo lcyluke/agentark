@@ -1,7 +1,7 @@
 #!/bin/bash
 # ════════════════════════════════════════════════════════════
 # 老卢舰队 · Mac Worker 一键入列 (v2 — 单仓库)
-# 从 lcyluke/apex 拉取全部配置
+# 从 lcyluke/agentark 拉取全部配置
 # 只需要: git + bash (macOS 自带)
 # ════════════════════════════════════════════════════════════
 set -e
@@ -16,7 +16,7 @@ echo ""
 echo -e "${CYAN}╔══════════════════════════════════════════╗${NC}"
 echo -e "${CYAN}║   ⚓ 老卢舰队 · Mac Worker 一键入列 v2  ║${NC}"
 echo -e "${CYAN}╚══════════════════════════════════════════╝${NC}"
-echo -e "  仓库: ${YELLOW}lcyluke/apex${NC} (唯一)"
+echo -e "  仓库: ${YELLOW}lcyluke/agentark${NC} (唯一)"
 echo ""
 
 # ─── Step 0: 检测 ───
@@ -54,7 +54,7 @@ if [ -d "$APEX_DIR" ]; then
     cd "$APEX_DIR" && git pull origin main 2>/dev/null
     echo -e "${GREEN}✅ Apex 已更新${NC}"
 else
-    git clone https://github.com/lcyluke/apex.git "$APEX_DIR"
+    git clone https://github.com/lcyluke/agentark.git "$APEX_DIR"
     echo -e "${GREEN}✅ Apex 已克隆${NC}"
 fi
 
@@ -111,7 +111,7 @@ echo -e "${GREEN}╚════════════════════
 echo ""
 echo -e "  角色:   ${YELLOW}WORKER${NC}"
 echo -e "  机器:   ${CYAN}$MACHINE_ID${NC}"
-echo -e "  仓库:   ${CYAN}lcyluke/apex${NC}"
+echo -e "  仓库:   ${CYAN}lcyluke/agentark${NC}"
 echo ""
 echo -e "${CYAN}📋 下一步:${NC}"
 echo ""

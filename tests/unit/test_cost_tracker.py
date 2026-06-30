@@ -1,4 +1,4 @@
-"""Unit tests for apex.core.cost_tracker — Hermes state.db cost queries.
+"""Unit tests for agentark.core.cost_tracker — Hermes state.db cost queries.
 
 Run standalone:  python3 tests/unit/test_cost_tracker.py
 """
@@ -150,7 +150,7 @@ class TestSessionCost(unittest.TestCase):
             source="cli",
         )
 
-        from apex.core.cost_tracker import get_session_cost
+        from agentark.core.cost_tracker import get_session_cost
 
         result = get_session_cost(sid, db_path=_TMP_DB)
         self.assertEqual(result["session_id"], "sess-001")
@@ -163,7 +163,7 @@ class TestSessionCost(unittest.TestCase):
         self.assertEqual(result["agent"], "cli")  # falls back to source
 
     def test_session_cost_not_found(self):
-        from apex.core.cost_tracker import get_session_cost
+        from agentark.core.cost_tracker import get_session_cost
 
         result = get_session_cost("nonexistent", db_path=_TMP_DB)
         self.assertIn("error", result)
@@ -180,7 +180,7 @@ class TestSessionCost(unittest.TestCase):
             model="deepseek-chat",
         )
 
-        from apex.core.cost_tracker import get_session_cost
+        from agentark.core.cost_tracker import get_session_cost
 
         result = get_session_cost(sid, db_path=_TMP_DB)
         self.assertEqual(result["agent"], "code-reviewer")
@@ -199,7 +199,7 @@ class TestSessionCost(unittest.TestCase):
             reasoning_tokens=300,
         )
 
-        from apex.core.cost_tracker import get_session_cost
+        from agentark.core.cost_tracker import get_session_cost
 
         result = get_session_cost(sid, db_path=_TMP_DB)
         self.assertEqual(result["cache_read_tokens"], 200)
@@ -216,7 +216,7 @@ class TestSessionCost(unittest.TestCase):
             output_tokens=1000,
         )
 
-        from apex.core.cost_tracker import get_session_cost
+        from agentark.core.cost_tracker import get_session_cost
 
         result = get_session_cost(sid, db_path=_TMP_DB)
         self.assertEqual(result["project"], "badminton-coach-ai")
@@ -230,7 +230,7 @@ class TestSessionCost(unittest.TestCase):
             model="deepseek-v4-pro",
         )
 
-        from apex.core.cost_tracker import get_session_cost
+        from agentark.core.cost_tracker import get_session_cost
 
         result = get_session_cost(sid, db_path=_TMP_DB)
         self.assertEqual(result["estimated_cost_usd"], 0.0)
@@ -254,14 +254,14 @@ class TestProjectCost(unittest.TestCase):
         self.conn.commit()
 
     def test_unknown_project(self):
-        from apex.core.cost_tracker import get_project_cost
+        from agentark.core.cost_tracker import get_project_cost
 
         result = get_project_cost("no-such-project", db_path=_TMP_DB)
         self.assertIn("error", result)
         self.assertEqual(result["error"], "unknown project: no-such-project")
 
     def test_empty_project(self):
-        from apex.core.cost_tracker import get_project_cost
+        from agentark.core.cost_tracker import get_project_cost
 
         result = get_project_cost("apex", days=30, db_path=_TMP_DB)
         self.assertEqual(result["project"], "apex")
@@ -296,7 +296,7 @@ class TestProjectCost(unittest.TestCase):
             output_tokens=999999,
         )
 
-        from apex.core.cost_tracker import get_project_cost
+        from agentark.core.cost_tracker import get_project_cost
 
         result = get_project_cost("apex", days=30, db_path=_TMP_DB)
         self.assertEqual(result["total_sessions"], 2)
@@ -332,7 +332,7 @@ class TestProjectCost(unittest.TestCase):
             output_tokens=25000,
         )
 
-        from apex.core.cost_tracker import get_project_cost
+        from agentark.core.cost_tracker import get_project_cost
 
         result = get_project_cost("apex", days=30, db_path=_TMP_DB)
         self.assertEqual(result["total_sessions"], 1)  # Only recent one
@@ -347,7 +347,7 @@ class TestProjectCost(unittest.TestCase):
             model="deepseek-v4-pro",
         )
 
-        from apex.core.cost_tracker import get_project_cost
+        from agentark.core.cost_tracker import get_project_cost
 
         result = get_project_cost("badminton-coach-ai", days=30, db_path=_TMP_DB)
         self.assertEqual(result["total_sessions"], 1)
@@ -373,7 +373,7 @@ class TestAgentCost(unittest.TestCase):
         self.conn.commit()
 
     def test_empty_agent(self):
-        from apex.core.cost_tracker import get_agent_cost
+        from agentark.core.cost_tracker import get_agent_cost
 
         result = get_agent_cost("cli", days=30, db_path=_TMP_DB)
         self.assertEqual(result["agent"], "cli")
@@ -406,7 +406,7 @@ class TestAgentCost(unittest.TestCase):
             output_tokens=999999,
         )
 
-        from apex.core.cost_tracker import get_agent_cost
+        from agentark.core.cost_tracker import get_agent_cost
 
         result = get_agent_cost("cli", days=30, db_path=_TMP_DB)
         self.assertEqual(result["total_sessions"], 2)
@@ -436,7 +436,7 @@ class TestAgentCost(unittest.TestCase):
             output_tokens=999999,
         )
 
-        from apex.core.cost_tracker import get_agent_cost
+        from agentark.core.cost_tracker import get_agent_cost
 
         result = get_agent_cost("code-reviewer", days=30, db_path=_TMP_DB)
         self.assertEqual(result["total_sessions"], 1)
@@ -452,7 +452,7 @@ class TestAgentCost(unittest.TestCase):
             output_tokens=5000,
         )
 
-        from apex.core.cost_tracker import get_agent_cost
+        from agentark.core.cost_tracker import get_agent_cost
 
         result = get_agent_cost("slack", days=30, db_path=_TMP_DB)
         self.assertEqual(result["total_sessions"], 1)
@@ -476,7 +476,7 @@ class TestDailyCost(unittest.TestCase):
         self.conn.commit()
 
     def test_empty_days(self):
-        from apex.core.cost_tracker import get_daily_cost
+        from agentark.core.cost_tracker import get_daily_cost
 
         result = get_daily_cost(days=3, db_path=_TMP_DB)
         self.assertEqual(len(result), 3)
@@ -519,7 +519,7 @@ class TestDailyCost(unittest.TestCase):
             source="cli",
         )
 
-        from apex.core.cost_tracker import get_daily_cost
+        from agentark.core.cost_tracker import get_daily_cost
 
         result = get_daily_cost(days=3, db_path=_TMP_DB)
         self.assertEqual(len(result), 3)
@@ -551,7 +551,7 @@ class TestDailyCost(unittest.TestCase):
             output_tokens=999999,
         )
 
-        from apex.core.cost_tracker import get_daily_cost
+        from agentark.core.cost_tracker import get_daily_cost
 
         result = get_daily_cost(days=7, db_path=_TMP_DB)
         for entry in result:
@@ -565,7 +565,7 @@ class TestDailyCost(unittest.TestCase):
             model="deepseek-v4-pro",
         )
 
-        from apex.core.cost_tracker import get_daily_cost
+        from agentark.core.cost_tracker import get_daily_cost
 
         result = get_daily_cost(days=1, db_path=_TMP_DB)
         json_str = json.dumps(result)
@@ -579,7 +579,7 @@ class TestPricingCalculation(unittest.TestCase):
 
     def setUp(self):
         # Direct import to test the internal helper
-        from apex.core.cost_tracker import _calculate_cost
+        from agentark.core.cost_tracker import _calculate_cost
 
         self.calc = _calculate_cost
 
@@ -612,7 +612,7 @@ class TestProjectDetection(unittest.TestCase):
     """Verify keyword-based project detection."""
 
     def setUp(self):
-        from apex.core.cost_tracker import _detect_project
+        from agentark.core.cost_tracker import _detect_project
 
         self.detect = _detect_project
 
@@ -665,7 +665,7 @@ class TestJSONSerializable(unittest.TestCase):
             model="deepseek-v4-pro",
         )
 
-        from apex.core.cost_tracker import get_session_cost
+        from agentark.core.cost_tracker import get_session_cost
 
         result = get_session_cost(sid, db_path=_TMP_DB)
         json_str = json.dumps(result)
@@ -680,7 +680,7 @@ class TestJSONSerializable(unittest.TestCase):
             output_tokens=5000,
         )
 
-        from apex.core.cost_tracker import get_project_cost
+        from agentark.core.cost_tracker import get_project_cost
 
         result = get_project_cost("apex", days=30, db_path=_TMP_DB)
         json_str = json.dumps(result)
@@ -698,7 +698,7 @@ class TestJSONSerializable(unittest.TestCase):
             output_tokens=5000,
         )
 
-        from apex.core.cost_tracker import get_agent_cost
+        from agentark.core.cost_tracker import get_agent_cost
 
         result = get_agent_cost("cli", days=30, db_path=_TMP_DB)
         json_str = json.dumps(result)
@@ -712,7 +712,7 @@ class TestJSONSerializable(unittest.TestCase):
             output_tokens=500,
         )
 
-        from apex.core.cost_tracker import get_daily_cost
+        from agentark.core.cost_tracker import get_daily_cost
 
         result = get_daily_cost(days=1, db_path=_TMP_DB)
         json_str = json.dumps(result)

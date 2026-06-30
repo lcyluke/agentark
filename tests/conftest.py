@@ -8,15 +8,15 @@ from typing import Any
 
 import pytest
 
-from apex.core.profile import ProfileManager, Profile, SoulConfig, ModelConfig, ToolConfig, MemoryConfig
-from apex.orchestration.kanban import Kanban
-from apex.core.knowledge import KnowledgeGraph
-from apex.providers.base import LLMResponse
+from agentark.core.profile import ProfileManager, Profile, SoulConfig, ModelConfig, ToolConfig, MemoryConfig
+from agentark.orchestration.kanban import Kanban
+from agentark.core.knowledge import KnowledgeGraph
+from agentark.providers.base import LLMResponse
 
 
 @pytest.fixture
-def tmp_apex_home(tmp_path: Path) -> Path:
-    """Create a temporary APEX_HOME with profiles directory."""
+def tmp_agentark_home(tmp_path: Path) -> Path:
+    """Create a temporary AGENTARK_HOME with profiles directory."""
     home = tmp_path / ".apex"
     profiles_dir = home / "profiles"
     profiles_dir.mkdir(parents=True, exist_ok=True)
@@ -24,9 +24,9 @@ def tmp_apex_home(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def sample_profile_manager(tmp_apex_home: Path) -> ProfileManager:
+def sample_profile_manager(tmp_agentark_home: Path) -> ProfileManager:
     """ProfileManager with a pre-created test profile."""
-    pm = ProfileManager(home=tmp_apex_home)
+    pm = ProfileManager(home=tmp_agentark_home)
     profile = Profile(
         name="test-agent",
         display="Test Agent",
@@ -52,9 +52,9 @@ def sample_profile_manager(tmp_apex_home: Path) -> ProfileManager:
 
 
 @pytest.fixture
-def sample_kanban(tmp_apex_home: Path) -> Kanban:
+def sample_kanban(tmp_agentark_home: Path) -> Kanban:
     """Kanban with a few test tasks."""
-    kanban = Kanban(db_path=tmp_apex_home / "kanban.db")
+    kanban = Kanban(db_path=tmp_agentark_home / "kanban.db")
     # Create some tasks
     kanban.create_task("Task A — no dependencies", priority=1)
     kanban.create_task("Task B — depends on A", depends_on=["t_00000001"], priority=2)
@@ -63,9 +63,9 @@ def sample_kanban(tmp_apex_home: Path) -> Kanban:
 
 
 @pytest.fixture
-def sample_knowledge_graph(tmp_apex_home: Path) -> KnowledgeGraph:
+def sample_knowledge_graph(tmp_agentark_home: Path) -> KnowledgeGraph:
     """KnowledgeGraph with seed data."""
-    kg = KnowledgeGraph(db_path=tmp_apex_home / "knowledge.db")
+    kg = KnowledgeGraph(db_path=tmp_agentark_home / "knowledge.db")
     kg.learn("Python", "language", "A high-level programming language", source="fixture")
     kg.learn("FastAPI", "framework", "A modern Python web framework", source="fixture")
     kg.learn("Pydantic", "library", "Data validation library", source="fixture")

@@ -1,5 +1,5 @@
 """
-Unit tests for apex.adapters.claude — ClaudeCodeAdapter.
+Unit tests for agentark.adapters.claude — ClaudeCodeAdapter.
 
 Run standalone:
   python3 -m pytest tests/unit/test_claude_adapter.py -v
@@ -23,7 +23,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-from apex.adapters.claude import (
+from agentark.adapters.claude import (
     CLAUDE_BIN,
     TMUX_BIN,
     ClaudeCodeAdapter,
@@ -36,8 +36,8 @@ from apex.adapters.claude import (
     _tmux_capture_pane,
     _run,
 )
-from apex.adapters.base import SessionHandle
-from apex.protocol import InstanceState
+from agentark.adapters.base import SessionHandle
+from agentark.protocol import InstanceState
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -111,7 +111,7 @@ class TestClaudeSession(unittest.TestCase):
         now = time.time()
         session = ClaudeSession(
             session_id="abc123",
-            tmux_session="apex-claude-abc123",
+            tmux_session="agentark-claude-abc123",
             profile="test",
             agent="tester",
             workdir="/tmp/test",
@@ -123,7 +123,7 @@ class TestClaudeSession(unittest.TestCase):
     def test_handle_property(self):
         session = ClaudeSession(
             session_id="abc123",
-            tmux_session="apex-claude-abc123",
+            tmux_session="agentark-claude-abc123",
             profile="test",
             agent="tester",
             workdir="/tmp/test",
@@ -138,7 +138,7 @@ class TestClaudeSession(unittest.TestCase):
     def test_handle_no_agent_falls_back_to_profile(self):
         session = ClaudeSession(
             session_id="xyz",
-            tmux_session="apex-claude-xyz",
+            tmux_session="agentark-claude-xyz",
             profile="default",
             workdir="/tmp/test",
         )
@@ -154,21 +154,21 @@ class TestClaudeCodeAdapterInit(unittest.TestCase):
 
     def test_default_init(self):
         adapter = ClaudeCodeAdapter()
-        self.assertIsNotNone(adapter._apex_home)
+        self.assertIsNotNone(adapter._agentark_home)
         self.assertEqual(adapter._sessions, {})
 
-    def test_init_with_apex_home_string(self):
-        adapter = ClaudeCodeAdapter(apex_home="/tmp/test-apex")
-        self.assertEqual(str(adapter._apex_home), "/tmp/test-apex")
+    def test_init_with_agentark_home_string(self):
+        adapter = ClaudeCodeAdapter(agentark_home="/tmp/test-agentark")
+        self.assertEqual(str(adapter._agentark_home), "/tmp/test-agentark")
 
-    def test_init_with_apex_home_path(self):
-        adapter = ClaudeCodeAdapter(apex_home=Path("/tmp/test-apex-path"))
-        self.assertEqual(str(adapter._apex_home), "/tmp/test-apex-path")
+    def test_init_with_agentark_home_path(self):
+        adapter = ClaudeCodeAdapter(agentark_home=Path("/tmp/test-agentark-path"))
+        self.assertEqual(str(adapter._agentark_home), "/tmp/test-agentark-path")
 
     def test_init_creates_workdir(self, tmp_path=None):
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             expected = Path(tmpdir) / "claude-sessions"
             self.assertTrue(expected.exists())
             self.assertTrue(expected.is_dir())
@@ -177,13 +177,13 @@ class TestClaudeCodeAdapterInit(unittest.TestCase):
 class TestClaudeCodeAdapterSpawn(unittest.TestCase):
     """Tests for the spawn method."""
 
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_spawn_creates_session(self, mock_tmux_new):
         mock_tmux_new.return_value = True
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn(profile="test", agent="tester", metadata={"key": "val"})
 
             self.assertIsInstance(session_id, str)
@@ -195,15 +195,15 @@ class TestClaudeCodeAdapterSpawn(unittest.TestCase):
             self.assertEqual(session.agent, "tester")
             self.assertEqual(session.metadata, {"key": "val"})
             self.assertEqual(session.state, InstanceState.RUNNING)
-            self.assertTrue(session.tmux_session.startswith("apex-claude-"))
+            self.assertTrue(session.tmux_session.startswith("agentark-claude-"))
 
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_spawn_with_empty_profile(self, mock_tmux_new):
         mock_tmux_new.return_value = True
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn()
 
             self.assertIn(session_id, adapter._sessions)
@@ -211,25 +211,25 @@ class TestClaudeCodeAdapterSpawn(unittest.TestCase):
             self.assertEqual(session.profile, "")
             self.assertEqual(session.agent, "")
 
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_spawn_tmux_failure_still_creates_session(self, mock_tmux_new):
         mock_tmux_new.return_value = False
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn(profile="test")
 
             # Should still have a session even if tmux fails
             self.assertIn(session_id, adapter._sessions)
 
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_spawn_multiple_sessions_unique_ids(self, mock_tmux_new):
         mock_tmux_new.return_value = True
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             ids = set()
             for _ in range(10):
                 sid = adapter.spawn()
@@ -240,7 +240,7 @@ class TestClaudeCodeAdapterSpawn(unittest.TestCase):
 class TestClaudeCodeAdapterPrompt(unittest.TestCase):
     """Tests for the prompt method."""
 
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_prompt_session_not_found(self, mock_tmux_new):
         mock_tmux_new.return_value = True
         adapter = ClaudeCodeAdapter()
@@ -248,15 +248,15 @@ class TestClaudeCodeAdapterPrompt(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertIn("not found", result.get("error", ""))
 
-    @patch("apex.adapters.claude._run")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._run")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_prompt_successful_json_response(self, mock_tmux_new, mock_run):
         mock_tmux_new.return_value = True
         mock_run.return_value = (0, '{"type":"assistant","content":"Hello, world!"}', "")
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn(profile="test")
 
             result = adapter.prompt(session_id, "Hi there")
@@ -265,30 +265,30 @@ class TestClaudeCodeAdapterPrompt(unittest.TestCase):
             self.assertEqual(result["response"], "Hello, world!")
             self.assertIn("json_output", result)
 
-    @patch("apex.adapters.claude._run")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._run")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_prompt_non_json_output(self, mock_tmux_new, mock_run):
         mock_tmux_new.return_value = True
         mock_run.return_value = (0, "Plain text response", "")
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn(profile="test")
 
             result = adapter.prompt(session_id, "Hello")
             self.assertTrue(result["ok"])
             self.assertEqual(result["response"], "Plain text response")
 
-    @patch("apex.adapters.claude._run")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._run")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_prompt_claude_error(self, mock_tmux_new, mock_run):
         mock_tmux_new.return_value = True
         mock_run.return_value = (1, "", "Claude error: invalid API key")
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn(profile="test")
 
             result = adapter.prompt(session_id, "Hello")
@@ -299,72 +299,72 @@ class TestClaudeCodeAdapterPrompt(unittest.TestCase):
             session = adapter._sessions[session_id]
             self.assertEqual(session.state, InstanceState.FAILED)
 
-    @patch("apex.adapters.claude._run")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._run")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_prompt_timeout(self, mock_tmux_new, mock_run):
         mock_tmux_new.return_value = True
         mock_run.return_value = (-1, "", "timeout after 300s")
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn(profile="test")
 
             result = adapter.prompt(session_id, "Long running task", timeout=300)
             self.assertFalse(result["ok"])
             self.assertEqual(result["exit_code"], -1)
 
-    @patch("apex.adapters.claude._run")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._run")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_prompt_json_with_content_field(self, mock_tmux_new, mock_run):
         mock_tmux_new.return_value = True
         mock_run.return_value = (0, '{"content": "Direct content field"}', "")
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn()
 
             result = adapter.prompt(session_id, "test")
             self.assertEqual(result["response"], "Direct content field")
 
-    @patch("apex.adapters.claude._run")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._run")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_prompt_json_with_text_field(self, mock_tmux_new, mock_run):
         mock_tmux_new.return_value = True
         mock_run.return_value = (0, '{"text": "Text field content"}', "")
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn()
 
             result = adapter.prompt(session_id, "test")
             self.assertEqual(result["response"], "Text field content")
 
-    @patch("apex.adapters.claude._run")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._run")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_prompt_json_with_result_field(self, mock_tmux_new, mock_run):
         mock_tmux_new.return_value = True
         mock_run.return_value = (0, '{"result": "Result field content"}', "")
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn()
 
             result = adapter.prompt(session_id, "test")
             self.assertEqual(result["response"], "Result field content")
 
-    @patch("apex.adapters.claude._run")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._run")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_prompt_with_resume_id(self, mock_tmux_new, mock_run):
         mock_tmux_new.return_value = True
         mock_run.return_value = (0, '{"content": "ok"}', "")
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn()
 
             result = adapter.prompt(session_id, "continue", resume_id="claude-sess-123")
@@ -378,8 +378,8 @@ class TestClaudeCodeAdapterPrompt(unittest.TestCase):
 class TestClaudeCodeAdapterSteer(unittest.TestCase):
     """Tests for the steer method."""
 
-    @patch("apex.adapters.claude._tmux_send_keys")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_send_keys")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_steer_session_not_found(self, mock_tmux_new, mock_tmux_send):
         mock_tmux_new.return_value = True
         adapter = ClaudeCodeAdapter()
@@ -387,15 +387,15 @@ class TestClaudeCodeAdapterSteer(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertIn("not found", result.get("error", ""))
 
-    @patch("apex.adapters.claude._tmux_send_keys")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_send_keys")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_steer_sends_ctrl_c_then_instruction(self, mock_tmux_new, mock_tmux_send):
         mock_tmux_new.return_value = True
         mock_tmux_send.return_value = True
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn(profile="test")
 
             result = adapter.steer(session_id, "focus on tests")
@@ -408,15 +408,15 @@ class TestClaudeCodeAdapterSteer(unittest.TestCase):
             first_call_args = mock_tmux_send.call_args_list[0][0]
             self.assertEqual(first_call_args[0], adapter._sessions[session_id].tmux_session)
 
-    @patch("apex.adapters.claude._tmux_send_keys")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_send_keys")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_steer_tmux_send_fails(self, mock_tmux_new, mock_tmux_send):
         mock_tmux_new.return_value = True
         mock_tmux_send.return_value = False  # send_keys fails
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn()
 
             result = adapter.steer(session_id, "instruction")
@@ -426,8 +426,8 @@ class TestClaudeCodeAdapterSteer(unittest.TestCase):
 class TestClaudeCodeAdapterAbort(unittest.TestCase):
     """Tests for the abort method."""
 
-    @patch("apex.adapters.claude._tmux_send_keys")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_send_keys")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_abort_session_not_found(self, mock_tmux_new, mock_tmux_send):
         mock_tmux_new.return_value = True
         adapter = ClaudeCodeAdapter()
@@ -435,15 +435,15 @@ class TestClaudeCodeAdapterAbort(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertIn("not found", result.get("error", ""))
 
-    @patch("apex.adapters.claude._tmux_send_keys")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_send_keys")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_abort_sends_ctrl_c(self, mock_tmux_new, mock_tmux_send):
         mock_tmux_new.return_value = True
         mock_tmux_send.return_value = True
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn()
 
             result = adapter.abort(session_id)
@@ -456,15 +456,15 @@ class TestClaudeCodeAdapterAbort(unittest.TestCase):
             call_args = mock_tmux_send.call_args[0]
             self.assertIn("\x03", call_args[1])  # Ctrl+C character
 
-    @patch("apex.adapters.claude._tmux_send_keys")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_send_keys")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_abort_updates_session_state(self, mock_tmux_new, mock_tmux_send):
         mock_tmux_new.return_value = True
         mock_tmux_send.return_value = True
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn()
 
             adapter.abort(session_id)
@@ -482,9 +482,9 @@ class TestClaudeCodeAdapterStatus(unittest.TestCase):
         self.assertEqual(result["state"], "unknown")
         self.assertIn("not found", result.get("error", ""))
 
-    @patch("apex.adapters.claude._tmux_capture_pane")
-    @patch("apex.adapters.claude._tmux_has_session")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_capture_pane")
+    @patch("agentark.adapters.claude._tmux_has_session")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_status_session_running(self, mock_tmux_new, mock_has_session,
                                      mock_capture_pane):
         mock_tmux_new.return_value = True
@@ -493,7 +493,7 @@ class TestClaudeCodeAdapterStatus(unittest.TestCase):
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn(profile="test", agent="tester")
 
             result = adapter.status(session_id)
@@ -508,9 +508,9 @@ class TestClaudeCodeAdapterStatus(unittest.TestCase):
                 "working..."
             )
 
-    @patch("apex.adapters.claude._tmux_capture_pane")
-    @patch("apex.adapters.claude._tmux_has_session")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_capture_pane")
+    @patch("agentark.adapters.claude._tmux_has_session")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_status_session_stopped(self, mock_tmux_new, mock_has_session,
                                      mock_capture_pane):
         mock_tmux_new.return_value = True
@@ -519,7 +519,7 @@ class TestClaudeCodeAdapterStatus(unittest.TestCase):
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn()
 
             result = adapter.status(session_id)
@@ -527,9 +527,9 @@ class TestClaudeCodeAdapterStatus(unittest.TestCase):
             self.assertEqual(result["state"], "stopped")
             self.assertEqual(result["pane_content_preview"], "")
 
-    @patch("apex.adapters.claude._tmux_capture_pane")
-    @patch("apex.adapters.claude._tmux_has_session")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_capture_pane")
+    @patch("agentark.adapters.claude._tmux_has_session")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_status_includes_uptime(self, mock_tmux_new, mock_has_session,
                                      mock_capture_pane):
         mock_tmux_new.return_value = True
@@ -538,7 +538,7 @@ class TestClaudeCodeAdapterStatus(unittest.TestCase):
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn()
 
             result = adapter.status(session_id)
@@ -555,15 +555,15 @@ class TestClaudeCodeAdapterDispose(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertIn("not found", result.get("error", ""))
 
-    @patch("apex.adapters.claude._tmux_kill_session")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_kill_session")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_dispose_removes_session(self, mock_tmux_new, mock_tmux_kill):
         mock_tmux_new.return_value = True
         mock_tmux_kill.return_value = True
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn(profile="test")
 
             self.assertIn(session_id, adapter._sessions)
@@ -573,29 +573,29 @@ class TestClaudeCodeAdapterDispose(unittest.TestCase):
             self.assertTrue(result["disposed"])
             self.assertNotIn(session_id, adapter._sessions)
 
-    @patch("apex.adapters.claude._tmux_kill_session")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_kill_session")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_dispose_kills_tmux(self, mock_tmux_new, mock_tmux_kill):
         mock_tmux_new.return_value = True
         mock_tmux_kill.return_value = True
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn()
 
             adapter.dispose(session_id)
             mock_tmux_kill.assert_called_once()
 
-    @patch("apex.adapters.claude._tmux_kill_session")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_kill_session")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_dispose_tmux_kill_fails_gracefully(self, mock_tmux_new, mock_tmux_kill):
         mock_tmux_new.return_value = True
         mock_tmux_kill.return_value = False  # kill fails
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn()
 
             result = adapter.dispose(session_id)
@@ -603,15 +603,15 @@ class TestClaudeCodeAdapterDispose(unittest.TestCase):
             self.assertFalse(result["tmux_killed"])
             self.assertNotIn(session_id, adapter._sessions)
 
-    @patch("apex.adapters.claude._tmux_kill_session")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_kill_session")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_dispose_cleans_workdir(self, mock_tmux_new, mock_tmux_kill):
         mock_tmux_new.return_value = True
         mock_tmux_kill.return_value = True
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn()
             workdir = adapter._sessions[session_id].workdir
             self.assertTrue(Path(workdir).exists())
@@ -624,15 +624,15 @@ class TestClaudeCodeAdapterDispose(unittest.TestCase):
 class TestClaudeCodeAdapterStopExec(unittest.TestCase):
     """Tests for Protocol-compatible stop() and exec() methods."""
 
-    @patch("apex.adapters.claude._tmux_send_keys")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_send_keys")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_stop_calls_abort(self, mock_tmux_new, mock_tmux_send):
         mock_tmux_new.return_value = True
         mock_tmux_send.return_value = True
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn()
 
             session = adapter._sessions[session_id]
@@ -643,7 +643,7 @@ class TestClaudeCodeAdapterStopExec(unittest.TestCase):
             session_after = adapter._sessions[session_id]
             self.assertEqual(session_after.state, InstanceState.STOPPED)
 
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_stop_nonexistent_handle(self, mock_tmux_new):
         mock_tmux_new.return_value = True
         adapter = ClaudeCodeAdapter()
@@ -651,15 +651,15 @@ class TestClaudeCodeAdapterStopExec(unittest.TestCase):
         result = adapter.stop(handle)
         self.assertFalse(result)
 
-    @patch("apex.adapters.claude._run")
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._run")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_exec_runs_command_in_session_workdir(self, mock_tmux_new, mock_run):
         mock_tmux_new.return_value = True
         mock_run.return_value = (0, "output", "")
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             session_id = adapter.spawn()
 
             session = adapter._sessions[session_id]
@@ -674,7 +674,7 @@ class TestClaudeCodeAdapterStopExec(unittest.TestCase):
                 if isinstance(arg, str)
             ) or mock_run.call_args[1].get("cwd") == session.workdir)
 
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_exec_nonexistent_handle(self, mock_tmux_new):
         mock_tmux_new.return_value = True
         adapter = ClaudeCodeAdapter()
@@ -687,20 +687,20 @@ class TestClaudeCodeAdapterStopExec(unittest.TestCase):
 class TestClaudeCodeAdapterListSessions(unittest.TestCase):
     """Tests for list_sessions utility."""
 
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_list_sessions_empty(self, mock_tmux_new):
         mock_tmux_new.return_value = True
         adapter = ClaudeCodeAdapter()
         result = adapter.list_sessions()
         self.assertEqual(result, [])
 
-    @patch("apex.adapters.claude._tmux_new_session")
+    @patch("agentark.adapters.claude._tmux_new_session")
     def test_list_sessions_with_active(self, mock_tmux_new):
         mock_tmux_new.return_value = True
 
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            adapter = ClaudeCodeAdapter(apex_home=tmpdir)
+            adapter = ClaudeCodeAdapter(agentark_home=tmpdir)
             adapter.spawn(profile="a")
             adapter.spawn(profile="b")
             adapter.spawn(profile="c")

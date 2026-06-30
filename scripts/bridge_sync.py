@@ -21,9 +21,9 @@ from pathlib import Path
 # NOTE: HERMES_HOME env var may point to a profile subdirectory (e.g. ~/.hermes/profiles/cron-inspector),
 # but state.db always lives at the root ~/.hermes/. Force the canonical path.
 HERMES_ROOT = Path(os.path.expanduser("~/.hermes"))
-APEX_HOME = Path(os.environ.get("APEX_HOME", os.path.expanduser("~/.apex")))
+AGENTARK_HOME = Path(os.environ.get("AGENTARK_HOME", os.path.expanduser("~/.apex")))
 STATE_DB = HERMES_ROOT / "state.db"
-KANBAN_DB = APEX_HOME / "kanban.db"
+KANBAN_DB = AGENTARK_HOME / "kanban.db"
 MONITOR_DB = Path(os.path.expanduser("~/Desktop/2026AIAPP/monitor/logs/monitor.db"))
 
 # ── Helper ──────────────────────────────────────────────────
