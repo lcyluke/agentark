@@ -77,7 +77,7 @@ from .commands import survey_cmds
 # New mgmt commands (v2 CLI)
 from .commands.mgmt import (
     create_group, delete_group, run_group, stop_group,
-    view_group, add_group, change_group, update_group,
+    view_group, add_group, change_group, update_group, learn_group,
 )
 
 # New mode CLIs
@@ -132,7 +132,7 @@ class AliasedGroup(click.Group):
 
 
 @click.group(cls=AliasedGroup, context_settings={"help_option_names": ["-h", "--help"]})
-@click.version_option(version="0.5.4", message="AgentArk v0.5.4 — 46 Agents, 30 commands, infinite capacity.")
+@click.version_option(version="0.5.5", message="AgentArk v0.5.5 — 46 Agents, 30 commands, infinite capacity.")
 @click.pass_context
 def cli(ctx):
     """⚓ AgentArk — One person, infinite capacity.
@@ -2026,6 +2026,7 @@ cli.add_command(view_group)
 cli.add_command(add_group)
 cli.add_command(change_group)
 cli.add_command(update_group)
+cli.add_command(learn_group)
 
 
 if __name__ == "__main__":

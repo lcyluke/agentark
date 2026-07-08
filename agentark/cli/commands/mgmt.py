@@ -41,6 +41,30 @@ from agentark.cli.commands.project_team import (
 
 console = Console()
 pm = ProfileManager()
+
+
+def _resolve_agent_name(agent: str) -> str | None:
+    """Resolve agent name — supports full name or role-only shorthand.
+
+    Exact match → returns as-is. Role-only → searches profile directory.
+    """
+    # Direct match
+    try:
+        pm.load(agent)
+        return agent
+    except Exception:
+        pass
+
+    # Search profiles: agent in name OR ends with -agent
+    profile_dir = Path(os.path.expanduser("~/.apex/profiles"))
+    if profile_dir.exists():
+        for d in sorted(profile_dir.iterdir()):
+            if d.is_dir():
+                name = d.name
+                if (agent in name or name.endswith(f"-{agent}")):
+                    return name
+    return None
+
 AGENTARK_HOME = Path(os.environ.get("AGENTARK_HOME", Path.home() / ".apex"))
 
 
@@ -690,6 +714,232 @@ def update_project_cmd(project: str) -> None:
 
 
 # ══════════════════════════════════════════════════════════════════
+# SKILL — Agent skill management
+# ══════════════════════════════════════════════════════════════════
+
+def view_skills_cmd(agent: str) -> None:
+    """View agent skill levels with evidence and recommendations.
+
+    Usage: agentark view skills -a <agent>
+    """
+    from agentark.interface.skill_registry import get_registry, LEVEL_LABELS
+
+    registry = get_registry()
+
+    # Resolve agent name
+    agent_name = _resolve_agent_name(agent)
+    if not agent_name:
+        console.print(f"[red]✗ Agent '{agent}' not found[/]")
+        return
+
+    skills = registry.get_agent_skills(agent_name)
+    if not skills:
+        console.print(f"[yellow]⚠ '{agent_name}' has no skills registered.[/]")
+        console.print(f"[dim]Run: agentark learn -a {agent_name} to discover skills[/]")
+        return
+
+    table = Table(title=f"🧠 {agent_name} — Skill Profile", box=None)
+    table.add_column("Skill", style="bold cyan")
+    table.add_column("Level", style="yellow")
+    table.add_column("Confidence", style="green")
+    table.add_column("Evidence", style="dim")
+    table.add_column("Description")
+
+    for s in sorted(skills, key=lambda x: -x.get("confidence", 0)):
+        level = s.get("level", "L0")
+        label = LEVEL_LABELS.get(level, level)
+        table.add_row(
+            s["skill_name"],
+            f"[bold]{label}[/]",
+            f"{s['confidence']:.0%}" if s.get("confidence") else "—",
+            str(s.get("evidence_count", 0)),
+            s.get("level_description", "")[:60],
+        )
+
+    console.print()
+    console.print(table)
+    console.print()
+
+
+def add_skill_cmd(agent: str, skill: str, level: str = "L3") -> None:
+    """Add a skill to an agent.
+
+    Usage: agentark add skill -a <agent> -s <skill> [--level L3]
+    """
+    from agentark.interface.skill_registry import get_registry, SKILL_CATALOG, LEVELS
+
+    registry = get_registry()
+
+    agent_name = _resolve_agent_name(agent)
+    if not agent_name:
+        console.print(f"[red]✗ Agent '{agent}' not found[/]")
+        return
+
+    if skill not in SKILL_CATALOG:
+        available = ", ".join(sorted(SKILL_CATALOG.keys())[:15])
+        console.print(f"[red]✗ Unknown skill: '{skill}'[/]")
+        console.print(f"[dim]Available: {available}...[/]")
+        return
+
+    if level not in LEVELS:
+        console.print(f"[red]✗ Unknown level: '{level}' (use L1-L8 or P1-P4)[/]")
+        return
+
+    # Add skill to agent
+    try:
+        profile = pm.load(agent_name)
+        if skill in (profile.skills or []):
+            console.print(f"[yellow]⚠ '{agent_name}' already has skill '{skill}'[/]")
+        else:
+            profile.skills = list(profile.skills or []) + [skill]
+            pm.save(profile)
+        console.print(
+            f"[green]✅ Added [bold]{skill}[/] ([yellow]{level}[/]) "
+            f"→ [bold]{agent_name}[/][/]"
+        )
+    except Exception as e:
+        console.print(f"[red]✗ {e}[/]")
+
+    # Also update registry
+    try:
+        registry.load()
+        agent_data = registry._data.get("agents", {}).get(agent_name, {"skills": {}})
+        agent_data.setdefault("skills", {})[skill] = {
+            "level": level,
+            "confidence": 0.8,
+            "evidence": [],
+        }
+        registry._data["agents"][agent_name] = agent_data
+        registry.save()
+    except Exception:
+        pass
+
+
+def change_skills_cmd(agent: str, skills: str) -> None:
+    """Set skills for an agent (comma-separated).
+
+    Usage: agentark change skills -a <agent> -s <skills>
+    """
+    agent_name = _resolve_agent_name(agent)
+    if not agent_name:
+        console.print(f"[red]✗ Agent '{agent}' not found[/]")
+        return
+
+    from agentark.interface.skill_registry import SKILL_CATALOG
+
+    skill_list = [s.strip() for s in skills.split(",") if s.strip()]
+    invalid = [s for s in skill_list if s not in SKILL_CATALOG]
+    if invalid:
+        available = ", ".join(sorted(SKILL_CATALOG.keys())[:15])
+        console.print(f"[red]✗ Unknown skills: {', '.join(invalid)}[/]")
+        console.print(f"[dim]Available: {available}...[/]")
+        return
+
+    try:
+        profile = pm.load(agent_name)
+        old_skills = profile.skills or []
+        profile.skills = skill_list
+        pm.save(profile)
+        removed = set(old_skills) - set(skill_list)
+        added = set(skill_list) - set(old_skills)
+
+        console.print(f"[green]✅ Skills updated for [bold]{agent_name}[/][/]")
+        if added:
+            console.print(f"  [green]+ Added: {', '.join(sorted(added))}[/]")
+        if removed:
+            console.print(f"  [dim]- Removed: {', '.join(sorted(removed))}[/]")
+        if not added and not removed:
+            console.print("  [dim](no changes)[/]")
+    except Exception as e:
+        console.print(f"[red]✗ {e}[/]")
+
+
+def learn_cmd(agent: str) -> None:
+    """Discover/recommend skills for an agent based on role and profile.
+
+    Usage: agentark learn -a <agent>
+    """
+    agent_name = _resolve_agent_name(agent)
+    if not agent_name:
+        console.print(f"[red]✗ Agent '{agent}' not found[/]")
+        return
+
+    from agentark.interface.skill_registry import get_registry, SKILL_CATALOG
+
+    registry = get_registry()
+
+    # Get current skills
+    current_skills = set()
+    try:
+        profile = pm.load(agent_name)
+        current_skills = set(profile.skills or [])
+        role = profile.soul.role or ""
+        expertise = profile.soul.expertise or ""
+    except Exception:
+        role = ""
+        expertise = ""
+
+    # Get role keywords from role description
+    role_keywords = set()
+    keyword_map = {
+        "pm": ["project", "management", "communication", "planning", "github", "notion"],
+        "architect": ["architecture", "design", "system", "infrastructure", "aws"],
+        "backend": ["api", "database", "server", "docker", "kubernetes"],
+        "frontend": ["web", "ui", "css", "javascript", "react"],
+        "devops": ["ci", "deploy", "monitoring", "docker", "kubernetes", "aws"],
+        "ml": ["machine learning", "python", "data", "training", "model"],
+        "qa": ["testing", "quality", "automation", "security"],
+        "cloud": ["aws", "gcp", "azure", "infrastructure", "finops"],
+        "data": ["analytics", "visualization", "sql", "pipeline", "etl"],
+    }
+    for kw, skills_list in keyword_map.items():
+        if kw in role.lower() or kw in (agent_name or "").lower():
+            role_keywords.update(skills_list)
+
+    # Recommend skills not yet assigned
+    recommendations = []
+    for sname, sdef in sorted(SKILL_CATALOG.items()):
+        if sname in current_skills:
+            continue
+        score = 0
+        cat = sdef.category or ""
+        desc = sdef.description or ""
+        for kw in role_keywords:
+            if kw in sname.lower() or kw in cat.lower() or kw in desc.lower():
+                score += 1
+        if score > 0:
+            recommendations.append((sname, score, sdef))
+
+    console.print()
+    if current_skills:
+        console.print(f"[bold]{agent_name}[/] current skills: [cyan]{', '.join(sorted(current_skills))}[/]")
+    else:
+        console.print(f"[bold]{agent_name}[/] [dim]has no skills assigned[/]")
+
+    console.print(f"  Role: [yellow]{role}[/]")
+    console.print()
+
+    if recommendations:
+        recs = sorted(recommendations, key=lambda x: -x[1])[:10]
+        table = Table(title="💡 Recommended Skills", box=None)
+        table.add_column("Skill", style="bold cyan")
+        table.add_column("Category", style="yellow")
+        table.add_column("Description", style="dim")
+        for name, score, sdef in recs:
+            table.add_row(name, sdef.category or "—", (sdef.description or "")[:55])
+        console.print(table)
+        console.print()
+        console.print(
+            f"[dim]Add all:  agentark add skill -a {agent_name} -s "
+            f"{','.join(n for n, _, _ in recs[:5])}[/]"
+        )
+        console.print(
+            f"[dim]Add one:  agentark add skill -a {agent_name} -s {recs[0][0]}[/]"
+        )
+    else:
+        console.print("[yellow]No additional skill recommendations found.[/]")
+
+    console.print()
 # CLICK GROUPS — registered in main.py
 # ══════════════════════════════════════════════════════════════════
 
@@ -776,6 +1026,11 @@ def _view_agent(agent):
 def _view_tasks(project):
     view_tasks_cmd(project)
 
+@view_group.command(name="skills")
+@_click.option("--agent", "-a", required=True, help="Agent name")
+def _view_skills(agent):
+    view_skills_cmd(agent)
+
 
 @_click.group(name="add")
 def add_group():
@@ -788,6 +1043,13 @@ def add_group():
 @_click.option("--model", "-m", default="deepseek-v4-pro", help="Default model")
 def _add_agent(project, role, model):
     add_agent_cmd(project, role, model)
+
+@add_group.command(name="skill")
+@_click.option("--agent", "-a", required=True, help="Agent name")
+@_click.option("--skill", "-s", required=True, help="Skill name")
+@_click.option("--level", "-l", default="L3", help="Skill level (L1-L8, P1-P4)")
+def _add_skill(agent, skill, level):
+    add_skill_cmd(agent, skill, level)
 
 
 @_click.group(name="change")
@@ -807,6 +1069,12 @@ def _change_model(agent, model):
 def _change_role(agent, role):
     change_role_cmd(agent, role)
 
+@change_group.command(name="skills")
+@_click.option("--agent", "-a", required=True, help="Agent name")
+@_click.option("--skills", "-s", required=True, help="Comma-separated skill names")
+def _change_skills(agent, skills):
+    change_skills_cmd(agent, skills)
+
 
 @_click.group(name="update")
 def update_group():
@@ -821,3 +1089,14 @@ def _update_self():
 @_click.option("--project", "-p", required=True, help="Project name")
 def _update_project(project):
     update_project_cmd(project)
+
+
+@_click.group(name="learn")
+def learn_group():
+    """🧠 Discover and recommend skills for agents"""
+    pass
+
+@learn_group.command(name="skills")
+@_click.option("--agent", "-a", required=True, help="Agent name")
+def _learn_skills(agent):
+    learn_cmd(agent)
