@@ -74,6 +74,12 @@ from .commands import system_cmds as sys_cmds
 from .commands import help_cmds
 from .commands import survey_cmds
 
+# New mgmt commands (v2 CLI)
+from .commands.mgmt import (
+    create_group, delete_group, run_group, stop_group,
+    view_group, add_group, change_group, update_group,
+)
+
 # New mode CLIs
 from agentark.orchestration import (
     Router, Debate, Supervisor, Monitor, Chain
@@ -126,7 +132,7 @@ class AliasedGroup(click.Group):
 
 
 @click.group(cls=AliasedGroup, context_settings={"help_option_names": ["-h", "--help"]})
-@click.version_option(version="0.5.2", message="AgentArk v0.5.2 — 46 Agents, 30 commands, infinite capacity.")
+@click.version_option(version="0.5.4", message="AgentArk v0.5.4 — 46 Agents, 30 commands, infinite capacity.")
 @click.pass_context
 def cli(ctx):
     """⚓ AgentArk — One person, infinite capacity.
@@ -2010,6 +2016,16 @@ cli.add_command(crew_group)
 
 # Add session subcommand
 cli.add_command(session_cmds.session)
+
+# Add v2 mgmt commands
+cli.add_command(create_group)
+cli.add_command(delete_group)
+cli.add_command(run_group)
+cli.add_command(stop_group)
+cli.add_command(view_group)
+cli.add_command(add_group)
+cli.add_command(change_group)
+cli.add_command(update_group)
 
 
 if __name__ == "__main__":
