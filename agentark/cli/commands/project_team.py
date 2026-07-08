@@ -457,3 +457,162 @@ def _interactive_role_selection(project_name: str) -> list[str]:
             console.print(f"  [yellow]⚠ Unknown: {p}, skipping[/]")
 
     return selected
+
+
+# ══════════════════════════════════════════════════════════════════
+# HERMES LAUNCH — start Hermes sessions for project agents
+# ══════════════════════════════════════════════════════════════════
+
+
+def launch_hermes_cmd(
+    project_name: str,
+    role: str = "",
+    launch_all: bool = False,
+) -> None:
+    """Launch Hermes conversations for project agents.
+
+    Naming convention: <project>-<role> (e.g. finops-pm, finops-architect)
+
+    Examples:
+      agentark team launch finops               Interactive: pick which role
+      agentark team launch finops --role pm      Launch finops-pm
+      agentark team launch finops --all           Launch all project agents
+    """
+    pm = ProfileManager()
+
+    # ── Discover project agents ──
+    project_prefix = f"{project_name}-"
+    all_profiles = pm.list()
+    project_agents = sorted([
+        p for p in all_profiles if p.startswith(project_prefix)
+    ])
+
+    if not project_agents:
+        console.print()
+        console.print(Panel(
+            f"[yellow]⚠ No agents found for project '[bold]{project_name}[/]'[/]\n\n"
+            f"[dim]Create a team first:[/]\n"
+            f"  agentark team create-project {project_name} --preset saas\n"
+            f"  agentark team create-project {project_name} --roles pm,backend,frontend[/]",
+            title="Project Not Found",
+            border_style="yellow",
+        ))
+        console.print()
+        return
+
+    # ── Resolve target agents ──
+    targets: list[str] = []
+    if role:
+        target_name = f"{project_name}-{role}"
+        if target_name in project_agents:
+            targets = [target_name]
+        else:
+            console.print(f"[red]✗ Agent '{target_name}' not found in project '{project_name}'[/]")
+            _show_project_agents(project_agents, project_name)
+            return
+    elif launch_all:
+        targets = project_agents
+    else:
+        # Interactive selection
+        targets = _interactive_launch_selection(project_agents, project_name)
+
+    if not targets:
+        return
+
+    # ── Sync + Launch ──
+    from agentark.interface.hermes_sync import sync_profile_to_hermes, HERMES_PROFILES_DIR
+
+    console.print()
+    table = Table(box=box.ROUNDED, title=f"🚀 Launching Hermes — {project_name}")
+    table.add_column("Agent", style="cyan")
+    table.add_column("Status", style="green")
+    table.add_column("Command", style="dim")
+
+    for agent_name in targets:
+        try:
+            # Extract role from agent name (remove project prefix)
+            role_name = agent_name[len(project_prefix):]
+            display_name = f"{project_name}-{role_name}"
+
+            # Sync to Hermes if needed
+            result = sync_profile_to_hermes(
+                agent_name,
+                hermes_profile_name=agent_name,
+                hermes_display_name=display_name,
+            )
+
+            table.add_row(agent_name, "✅ Synced", f"hermes -p {agent_name}")
+
+        except Exception as exc:
+            table.add_row(agent_name, f"[red]✗ {exc}[/]", "-")
+
+    console.print(table)
+    console.print()
+
+    # ── Launch ──
+    if len(targets) == 1:
+        # Single agent — launch directly in this terminal
+        from agentark.interface.hermes_sync import start_hermes_profile
+        console.print(f"[cyan]⚡ Launching [bold]{targets[0]}[/] in Hermes...[/]")
+        console.print()
+        start_hermes_profile(targets[0])
+    else:
+        # Multiple agents — show launch commands (Hermes takes over terminal)
+        console.print("[cyan]📋 Launch commands (one per terminal):[/]")
+        console.print()
+        for agent_name in targets:
+            console.print(f"  [green]agentark team hermes {agent_name}[/]")
+        console.print()
+        console.print(f"[dim]{len(targets)} agents ready | Hermes profiles at {HERMES_PROFILES_DIR}[/]")
+        console.print()
+
+
+def _interactive_launch_selection(agents: list[str], project_name: str) -> list[str]:
+    """Let user pick which agents to launch."""
+    console.print()
+    console.print(Panel(
+        f"[bold cyan]🚀 Launch Hermes — [white]{project_name}[/][/]\n"
+        f"[dim]Select agents to start Hermes sessions[/]",
+        border_style="cyan",
+    ))
+
+    pm = ProfileManager()
+    for i, agent_name in enumerate(agents, 1):
+        try:
+            p = pm.load(agent_name)
+            role = p.soul.role or agent_name
+            model = p.model.default or "default"
+            console.print(f"  [{i:2d}] {agent_name:<25s} [green]{role:<20s}[/] [dim]model: {model}[/]")
+        except Exception:
+            console.print(f"  [{i:2d}] {agent_name:<25s} [dim](no profile)[/]")
+
+    console.print()
+    console.print("[dim]Enter comma-separated numbers, 'all', or press Enter to cancel[/]")
+    selection = Prompt.ask("Select", default="").strip()
+
+    if not selection:
+        return []
+
+    if selection.lower() == "all":
+        return agents
+
+    parts = [p.strip() for p in selection.split(",")]
+    selected = []
+    for p in parts:
+        if p.isdigit():
+            idx = int(p) - 1
+            if 0 <= idx < len(agents):
+                selected.append(agents[idx])
+        elif p in agents:
+            selected.append(p)
+
+    return selected
+
+
+def _show_project_agents(agents: list[str], project_name: str) -> None:
+    """Display existing project agents."""
+    console.print()
+    console.print(f"[dim]Available agents in '{project_name}':[/]")
+    for a in agents:
+        console.print(f"  • {a}")
+    console.print()
