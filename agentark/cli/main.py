@@ -66,6 +66,7 @@ from .commands import schedule_cmds
 from .commands import squad_cmds
 from .commands import sprint as sprint_cmds
 from .commands import chat_cmds
+from .commands import session as session_cmds
 
 # NEW command module wrappers
 from .commands import mode_cmds
@@ -180,7 +181,7 @@ def format_apex_help(self, ctx, formatter):
         ("Team & Agents", ["team", "mode"]),
         ("PM & Project", ["pm", "project", "survey", "dashboard"]),
         ("System", ["system"]),
-        ("Integration", ["help", "integrate", "origin"]),
+        ("Integration", ["help", "integrate", "origin", "session"]),
     ]
 
     all_cmds = []
@@ -785,6 +786,28 @@ def team_project_roles(project_name: str):
       agentark team project-roles finops
     """
     pt_cmds.project_roles_cmd(project_name)
+
+
+@team.command(name="launch")
+@click.argument("project_name")
+@click.option("--role", "-r", default="", help="Specific role to launch (e.g. 'pm')")
+@click.option("--all", "launch_all", is_flag=True, help="Launch all project agents")
+def team_launch(project_name: str, role: str, launch_all: bool):
+    """🚀 Launch Hermes sessions for project agents
+
+    Naming convention: <project>-<role> (e.g. finops-pm, finops-architect)
+
+    Examples:
+
+      agentark team launch finops               Interactive: pick which role
+    
+      agentark team launch finops --role pm      Launch finops-pm directly
+
+      agentark team launch finops --all           Show commands to launch all
+    """
+    pt_cmds.launch_hermes_cmd(
+        project_name, role=role, launch_all=launch_all
+    )
 
 
 # ════════════════════════════════════════════════════════════════
@@ -1984,6 +2007,9 @@ def dispatch():
 
 # Add crew subcommand
 cli.add_command(crew_group)
+
+# Add session subcommand
+cli.add_command(session_cmds.session)
 
 
 if __name__ == "__main__":

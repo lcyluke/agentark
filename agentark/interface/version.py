@@ -26,7 +26,7 @@ GITHUB_TAGS = "https://api.github.com/repos/lcyluke/agentark/tags"
 def get_current_version() -> str:
     """Get the installed Apex version."""
     try:
-        return pkg_version("apex-multiagent")
+        return pkg_version("agentark")
     except Exception:
         return "unknown"
 
