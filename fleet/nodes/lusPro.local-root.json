@@ -1,0 +1,18 @@
+{
+  "machine_id": "lusPro.local-root",
+  "hostname": "lusPro.local",
+  "ip": "198.18.0.1",
+  "os": "macos",
+  "timestamp": "2026-08-03T00:54:36.945195",
+  "cpu_cores": 16,
+  "cpu_usage_pct": 0.0,
+  "ram_total_mb": 0,
+  "ram_free_mb": 0,
+  "disk_total_gb": 1000.2,
+  "disk_free_gb": 89.9,
+  "profiles": 9,
+  "skills": 190,
+  "lan_peers": [],
+  "lan_peer_count": 0,
+  "lan_ssh_peers": 0
+}
