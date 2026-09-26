@@ -1,9 +1,9 @@
 {
   "machine_id": "lusPro.local-root",
   "hostname": "lusPro.local",
-  "ip": "127.0.0.1",
+  "ip": "192.168.68.54",
   "os": "macos",
-  "timestamp": "2026-09-25T20:03:55.384006",
+  "timestamp": "2026-09-25T20:05:55.910437",
   "cpu_cores": 16,
   "cpu_usage_pct": 0.0,
   "ram_total_mb": 0,
